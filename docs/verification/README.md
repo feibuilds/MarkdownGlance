@@ -18,6 +18,14 @@ The initial audit also uses [CPython benchmark data](cpython-benchmark.json)
 and [ST 4200 contract data](st4200-contract.json). Test procedures live in the
 [manual test plan](../manual-test-plan.md).
 
+**Step numbers in these records are the plan's numbering on the day they were
+written.** `c6f59c6` inserted a two-documents step at 10 and pushed the old
+10 to 15 down by one, so a record dated 2026-09-06 or earlier that says step
+*n* means step *n+1* from 10 upwards -- its "step 12: browser export" is the
+plan's step 13. The records are not renumbered: a dated measurement says what
+was run, and rewriting it to match a later plan would make it say something
+else.
+
 ## Follow-up
 
 Track the Windows absolute-image-path and TOC/outline layout defects in
