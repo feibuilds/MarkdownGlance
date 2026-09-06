@@ -69,23 +69,6 @@ def left_neighbour(layout: dict, group: int) -> Optional[int]:
     )
 
 
-def rightmost_in_row(layout: dict, group: int) -> int:
-    """Walk right from a group until nothing sits beside it.
-
-    A surface anchored here always gets a group of its own: `LayoutOwner`
-    reuses an existing right neighbour rather than splitting again, so
-    anchoring on the source group would drop the outline into the preview's
-    group as a second tab.
-    """
-    current = group
-    for _ in range(len(layout["cells"])):
-        neighbour = right_neighbour(layout, current)
-        if neighbour is None:
-            break
-        current = neighbour
-    return current
-
-
 def split_cell(layout: dict, cell_index: int, new_share: float) -> Tuple[dict, int]:
     cols = list(layout["cols"])
     rows = list(layout["rows"])
@@ -195,14 +178,25 @@ class LayoutOwner:
         session_id: str,
         width_px: float = 0.0,
     ) -> int:
-        """Acquire a group of this surface's own, never an existing neighbour."""
-        return self.acquire(
-            window,
-            rightmost_in_row(window.layout(), anchor_group),
-            role,
-            session_id,
-            width_px,
+        """Split the anchor for a group of this surface's own.
+
+        Never an existing neighbour, so the outline cannot land as a second
+        tab in the preview's group, and never a group this owner already made:
+        this used to walk right to the last group in the row, which is the
+        table of contents whenever one is open. The outline was then carved
+        out of the narrowest group in the window, and `fit` went on measuring
+        each panel against the other, so a pair of headings that wanted 186
+        and 161 pixels ended up with 30 and 95. Splitting the anchor keeps
+        every panel bounded by a group that is not itself a panel.
+        """
+        layout = window.layout()
+        share = share_for(role, width_px, group_width_px(window, anchor_group))
+        updated, new_group = split_cell(layout, anchor_group, share)
+        window.set_layout(updated)
+        self._owned.setdefault(window.id(), {})[new_group] = OwnedGroup(
+            new_group, layout, fingerprint(updated), {session_id}
         )
+        return new_group
 
     def fit(self, window, group: int, role: GroupRole, width_px: float) -> None:
         """Re-fit an owned group to its content.

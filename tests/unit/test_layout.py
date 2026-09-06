@@ -6,8 +6,8 @@ from MarkdownGlance.preview.presentation.layout import (
     ROLE_MINIMUM,
     ROLE_SHARE,
     LayoutOwner,
+    left_neighbour,
     refit_cell,
-    rightmost_in_row,
     share_for,
     split_cell,
 )
@@ -54,6 +54,11 @@ class FakeWindow:
 ONE = {"cols": [0.0, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1]]}
 
 
+def width_of(window, group):
+    """A group's width in the fake window's pixels."""
+    return window.active_view_in_group(group).viewport_extent()[0]
+
+
 class LayoutTest(unittest.TestCase):
     def test_split_one_by_one(self):
         layout, group = split_cell(ONE, 0, 0.5)
@@ -80,17 +85,69 @@ class LayoutTest(unittest.TestCase):
         result, _ = split_cell(layout, 0, 0.5)
         self.assertEqual(result["cols"], layout["cols"])
 
-    def test_rightmost_in_row_walks_past_every_neighbour(self):
-        layout = {
-            "cols": [0.0, 0.3, 0.6, 1.0],
-            "rows": [0.0, 1.0],
-            "cells": [[0, 0, 1, 1], [1, 0, 2, 1], [2, 0, 3, 1]],
-        }
-        self.assertEqual(rightmost_in_row(layout, 0), 2)
-        self.assertEqual(rightmost_in_row(layout, 2), 2)
-        self.assertEqual(rightmost_in_row(ONE, 0), 0)
-
     def test_acquire_beside_never_shares_an_existing_group(self):
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "preview")
+        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline")
+        self.assertNotEqual(outline, preview)
+        self.assertTrue(owner.is_owned(window, outline))
+        self.assertEqual(len(window.layout()["cells"]), 3)
+
+    def test_a_panel_is_never_split_out_of_another_panel(self):
+        """Issue #4: the outline used to be carved out of the table of contents.
+
+        Walking right to the last group in the row landed on the table of
+        contents whenever one was open, so both panels ended up measured
+        against each other and neither could reach the width its entries
+        needed. Every panel must border a group that is not itself a panel.
+        """
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        toc = owner.acquire(window, preview, GroupRole.TOC, "session", 160.0)
+        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline", 190.0)
+
+        layout = window.layout()
+        self.assertEqual(len({preview, toc, outline}), 3)
+        # The outline borders the source, which no session owns.
+        self.assertEqual(left_neighbour(layout, outline), 0)
+        self.assertFalse(owner.is_owned(window, 0))
+        # And the table of contents keeps the width it was given.
+        self.assertAlmostEqual(width_of(window, toc), 160.0, places=6)
+
+    def test_two_panels_both_reach_the_width_their_entries_need(self):
+        """Each panel gets what it asks for, up to its own role share.
+
+        Measured before the fix, on a 1920 px window: a table of contents that
+        wanted 161 px got 95, and an outline that wanted 186 px got 30, because
+        the second panel was carved out of the first. The widths here are the
+        same shape against this fake window's 1000 px.
+        """
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        toc = owner.acquire(window, preview, GroupRole.TOC, "session", 140.0)
+        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline", 120.0)
+        self.assertAlmostEqual(width_of(window, toc), 140.0, places=6)
+        self.assertAlmostEqual(width_of(window, outline), 120.0, places=6)
+
+    def test_a_panel_wider_than_its_role_share_is_still_capped(self):
+        """The ceiling is deliberate: one long heading may not take the window.
+
+        This is why a heading long enough to want 945 px still wraps, and why
+        the manual plan's "no entry may wrap" holds only for entries that fit
+        inside the share.
+        """
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline", 900.0)
+        self.assertAlmostEqual(
+            width_of(window, outline), 500.0 * ROLE_SHARE[GroupRole.OUTLINE], places=6
+        )
+
+    def test_the_outline_still_never_lands_in_the_preview_group(self):
         window = FakeWindow(ONE)
         owner = LayoutOwner()
         preview = owner.acquire(window, 0, GroupRole.PREVIEW, "preview")

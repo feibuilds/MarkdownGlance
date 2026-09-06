@@ -20,10 +20,25 @@ sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..", "..", "..", "..")))
 from MarkdownGlance.preview.application.ports import GroupRole  # noqa: E402
 from MarkdownGlance.preview.presentation.layout import (  # noqa: E402
     ROLE_SHARE,
-    rightmost_in_row,
+    right_neighbour,
     share_for,
     split_cell,
 )
+
+
+def rightmost_in_row(layout, group):
+    """The walk `acquire_beside` used before issue #4 was fixed.
+
+    Kept here rather than imported: the product no longer does this, and this
+    script is the record of what it used to do.
+    """
+    current = group
+    for _ in range(len(layout["cells"])):
+        neighbour = right_neighbour(layout, current)
+        if neighbour is None:
+            break
+        current = neighbour
+    return current
 
 WINDOW_PX = 1920.0
 SINGLE = {"cols": [0.0, 1.0], "rows": [0.0, 1.0], "cells": [[0, 0, 1, 1]]}
