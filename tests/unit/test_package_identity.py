@@ -48,7 +48,7 @@ class PackageIdentityTest(unittest.TestCase):
         with open(os.path.join(ROOT, name), encoding="utf-8") as source:
             return json.load(source)
 
-    def test_metadata_is_st4200_every_platform_and_dependency_free(self):
+    def test_metadata_is_st4200_every_platform_and_two_libraries(self):
         metadata = self.load("docs/package-control-entry.json")
         self.assertEqual(metadata["name"], "MarkdownGlance")
         release = metadata["releases"][0]
@@ -56,9 +56,30 @@ class PackageIdentityTest(unittest.TestCase):
         self.assertEqual(release["platforms"], ["*"])
         self.assertIs(release["tags"], True)
         self.assertEqual(metadata["labels"], ["markdown", "preview"])
-        # Package Control installs no library for this package; the absence of
-        # the file is the declaration, and an empty one is dead metadata.
-        self.assertFalse(os.path.exists(os.path.join(ROOT, "dependencies.json")))
+        # The parser and its fence extension come from Package Control, on
+        # every platform and host (ADR 0012). Nothing else is installed.
+        self.assertEqual(
+            self.load("dependencies.json"),
+            {"*": {"*": ["Markdown", "pymdown-extensions"]}},
+        )
+        self.assertFalse(os.path.exists(os.path.join(ROOT, "lib")))
+
+    def test_messages_are_the_install_note_and_nothing_routine(self):
+        # Package Control shows a message once and then it is gone, and users
+        # do not read a note for every release. Only a change that needs an
+        # action from the user earns one, and it stays short and links the
+        # changelog.
+        messages = self.load("messages.json")
+        self.assertEqual(messages["install"], "messages/install.txt")
+        with open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8") as source:
+            released = set(re.findall(r"^## \[(\d+\.\d+\.\d+)\]", source.read(), re.M))
+        for key, path in messages.items():
+            self.assertTrue(key == "install" or key in released, key)
+            with open(os.path.join(ROOT, path), encoding="utf-8") as source:
+                lines = source.read().rstrip("\n").split("\n")
+            self.assertLessEqual(len(lines), 8, path)
+            if key != "install":
+                self.assertIn("CHANGELOG", "\n".join(lines), path)
 
     def test_public_command_and_key_context_namespaces_are_unique(self):
         commands = self.load("Default.sublime-commands")
@@ -128,7 +149,6 @@ class PackageIdentityTest(unittest.TestCase):
         with open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8") as source:
             released = re.search(r"^## \[(\d+\.\d+\.\d+)\]", source.read(), re.M)
         self.assertEqual(reported, released.group(1))
-        self.assertIn(reported, self.load("messages.json"))
 
     def test_runtime_selector_is_python_38_compatible(self):
         with open(os.path.join(ROOT, ".python-version"), encoding="ascii") as source:

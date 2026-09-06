@@ -31,12 +31,15 @@ above follows your own theme here, for the same reason.
 - Local images, and remote images fetched asynchronously under strict limits.
 - GFM tables, typeset to the measured width of the preview.
 - Optional Mermaid diagrams, disabled by default.
+- `Open in Browser`, for the moment a page has to be seen at browser width or
+  handed to someone.
 
 ## Requirements
 
-Sublime Text build 4200 or newer — that is the whole list. The package is pure
-Python over the Sublime API, with no external dependency, and it is used on
-Linux, macOS and Windows.
+Sublime Text build 4200 or newer, on Linux, macOS or Windows. The package is
+pure Python over the Sublime API. Its parser is the Package Control `Markdown`
+library with `pymdown-extensions`, which Package Control installs beside it;
+nothing else is needed.
 
 ## Installation
 
@@ -55,8 +58,10 @@ this repository into the directory it opens, under the name `MarkdownGlance`:
 git clone https://github.com/pandadolphin/MarkdownGlance.git MarkdownGlance
 ```
 
-Then open a Markdown file and run **MarkdownGlance: Open Preview to the Side**
-from the Command Palette.
+Then run **Package Control: Satisfy Libraries** from the Command Palette so
+that the `Markdown` and `pymdown-extensions` libraries the package declares
+are installed, open a Markdown file, and run **MarkdownGlance: Open Preview to
+the Side**.
 
 #### If you do not use Git
 
@@ -65,13 +70,16 @@ You can install it by hand instead. No command line is needed.
 1. Go to the [latest release](https://github.com/pandadolphin/MarkdownGlance/releases/latest).
 2. Under **Assets**, click **Source code (zip)** to download the ZIP file.
 3. Unzip it. You get a folder with a version number in its name, like
-   `MarkdownGlance-0.3.1`.
+   `MarkdownGlance-0.4.0`.
 4. Rename that folder to `MarkdownGlance`. The name must be exactly this, or
    Sublime Text will not load the package.
 5. In Sublime Text, open **Preferences → Browse Packages…**. A file manager
    window opens.
 6. Move the `MarkdownGlance` folder into that window.
 7. Restart Sublime Text.
+8. Run **Package Control: Satisfy Libraries** from the Command Palette. It
+   installs the `Markdown` and `pymdown-extensions` libraries the package
+   declares; without them the preview cannot render.
 
 Now open a Markdown file and run **MarkdownGlance: Open Preview to the Side**
 from the Command Palette.
@@ -222,5 +230,6 @@ disk when I pause.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Vendored dependency attribution is recorded in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+MIT. See [LICENSE](LICENSE). The package vendors nothing; its parser comes
+from Package Control as the `Markdown` and `pymdown-extensions` libraries,
+under their own licenses.

@@ -4,6 +4,9 @@ import platform
 import statistics
 import time
 
+import markdown as markdown_lib
+import pymdownx
+
 from MarkdownGlance.preview.application.render_pipeline import render
 from MarkdownGlance.preview.domain.contracts import (
     AssetStatus,
@@ -53,7 +56,9 @@ def run(package_root, warmups=3, samples=100):
         "p95_ms": round(ordered[p95_index], 3),
         "python": platform.python_version(),
         "platform": platform.platform(),
-        "parser": "markdown2 2.3.9",
+        "parser": "Markdown {} + pymdown-extensions {}".format(
+            markdown_lib.__version__, pymdownx.__version__
+        ),
         "backend": "phantom_view",
         "cpu": platform.processor() or "unknown",
     }

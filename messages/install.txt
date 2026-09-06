@@ -1,7 +1,6 @@
-MarkdownGlance provides a same-window Markdown preview for Sublime Text 4.
-
-Mermaid rendering is disabled by default. If enabled, diagram source is sent
-to the configured Mermaid server. Remote images are fetched with size,
-dimension, timeout, redirect and scheme limits.
+MarkdownGlance previews Markdown in the same Sublime Text window.
 
 Open a Markdown file and run "MarkdownGlance: Open Preview to the Side".
+Mermaid rendering is off by default; enabling it sends diagram source to the
+configured Mermaid server. Remote images are fetched under size and timeout
+limits. Details: https://github.com/pandadolphin/MarkdownGlance#readme

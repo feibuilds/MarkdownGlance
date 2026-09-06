@@ -1,12 +1,14 @@
+import threading
 from typing import Protocol
 
-from ...lib.markdown2 import Markdown
+# Both are Package Control libraries, declared in `dependencies.json` and
+# installed beside the package rather than vendored with it. See ADR 0012.
+import markdown
 
-MARKDOWN_EXTRAS = (
-    "fenced-code-blocks",
-    "highlightjs-lang",
-    "cuddled-lists",
-    "header-ids",
+from .lists import ListExtension
+
+MARKDOWN_EXTENSIONS = (
+    "pymdownx.superfences",
     "tables",
 )
 
@@ -15,15 +17,22 @@ class MarkdownEngine(Protocol):
     def convert(self, source: str) -> str: ...
 
 
-class Markdown2Engine:
-    version = "2.3.9"
-    extras = MARKDOWN_EXTRAS
+class PythonMarkdownEngine:
+    version = markdown.__version__
+    extensions = MARKDOWN_EXTENSIONS
 
     def __init__(self) -> None:
-        self._engine = Markdown(extras=list(self.extras))
+        self._engine = markdown.Markdown(
+            extensions=[*self.extensions, ListExtension()]
+        )
+        # A Markdown instance keeps parse state between calls, and two render
+        # workers may convert at once.
+        self._lock = threading.Lock()
 
     def convert(self, source: str) -> str:
-        return str(self._engine.convert(source))
+        with self._lock:
+            self._engine.reset()
+            return str(self._engine.convert(source))
 
 
-DEFAULT_ENGINE = Markdown2Engine()
+DEFAULT_ENGINE = PythonMarkdownEngine()

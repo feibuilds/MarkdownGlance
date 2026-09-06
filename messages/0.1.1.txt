@@ -1,8 +1,0 @@
-# MarkdownGlance 0.1.1
-
-- Adds a Key Bindings entry under Preferences -> Package Settings ->
-  MarkdownGlance, and to the command palette.
-- Renames the settings palette entry to "Preferences: MarkdownGlance Settings".
-- Drops the developer contract-test and benchmark commands from the palette.
-- Ships only what Sublime Text loads: the installed package is 310 KB rather
-  than 3.2 MB.

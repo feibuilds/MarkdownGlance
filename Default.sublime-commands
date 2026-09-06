@@ -5,6 +5,7 @@
     {"caption": "MarkdownGlance: Zoom In", "command": "mdglance_zoom", "args": {"delta": 0.1}},
     {"caption": "MarkdownGlance: Zoom Out", "command": "mdglance_zoom", "args": {"delta": -0.1}},
     {"caption": "MarkdownGlance: Reset Zoom", "command": "mdglance_zoom", "args": {"reset": true}},
+    {"caption": "MarkdownGlance: Open in Browser", "command": "mdglance_open_in_browser"},
     {
         "caption": "Preferences: MarkdownGlance Settings",
         "command": "edit_settings",

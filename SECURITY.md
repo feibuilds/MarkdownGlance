@@ -22,5 +22,12 @@ process. Two features leave the machine, and both are bounded:
 - **Mermaid rendering** is disabled by default. Enabling it sends diagram
   source to the configured Mermaid server.
 
+`MarkdownGlance: Open in Browser` is the one command that starts a process:
+it writes the document as a standalone page under the temporary directory and
+hands it to the default browser. The page is the parser's own output, not the
+sanitised body the preview shows, since it is the user's own file opened
+locally. Raw HTML and scripts in that file run in the browser, as they would in
+any other Markdown-to-browser tool.
+
 `MarkdownGlance: Copy Diagnostics` redacts source text, paths, URLs and Mermaid
 payloads before anything reaches the clipboard.

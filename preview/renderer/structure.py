@@ -138,6 +138,26 @@ def _asset_key(source: str, request: RenderRequest) -> Optional[AssetKey]:
     )
 
 
+def _fence_classes(pre: ElementNode, code: Node) -> List[str]:
+    """Reduce a fenced block to `<pre><code class="lang">`.
+
+    superfences writes `class="highlight"` on the `pre` and prefixes the
+    language with `language-`; neither is styled here, and the bare language
+    is what the Mermaid check and the body HTML have always carried.
+    """
+    pre.attrs["class"] = " ".join(
+        token for token in pre.attrs.get("class", "").split() if token != "highlight"
+    )
+    if not isinstance(code, ElementNode) or code.tag != "code":
+        return []
+    classes = [
+        token[len("language-") :] if token.startswith("language-") else token
+        for token in code.attrs.get("class", "").split()
+    ]
+    code.attrs["class"] = " ".join(classes)
+    return classes
+
+
 def _replace_mermaid(
     nodes: List[Node],
     request: RenderRequest,
@@ -148,11 +168,7 @@ def _replace_mermaid(
             continue
         if node.tag == "pre" and len(node.children) == 1:
             code = node.children[0]
-            classes = (
-                code.attrs.get("class", "").split()
-                if isinstance(code, ElementNode)
-                else []
-            )
+            classes = _fence_classes(node, code)
             if (
                 isinstance(code, ElementNode)
                 and code.tag == "code"

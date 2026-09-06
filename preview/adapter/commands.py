@@ -121,7 +121,7 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
         settings = container.settings.get()
         payload = {
             "package": "MarkdownGlance",
-            "version": "0.3.1",
+            "version": "0.4.0",
             "sublime_build": sublime.version(),
             "platform": sublime.platform(),
             "architecture": sublime.arch(),
@@ -146,6 +146,46 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
         }
         sublime.set_clipboard(json.dumps(payload, indent=2, sort_keys=True))
         sublime.status_message("MarkdownGlance diagnostics copied")
+
+
+class MdglanceOpenInBrowserCommand(sublime_plugin.WindowCommand):
+    """Write the document as a standalone page and hand it to the browser.
+
+    The preview stays in the editor; this is for the moment a page has to be
+    seen the way a browser lays it out, or sent to someone. The page is the
+    parser's own output, unsanitised, since it is the user's file opened
+    locally, and it goes under the temporary directory, one file per source
+    path.
+    """
+
+    def run(self):
+        import hashlib
+        import pathlib
+        import tempfile
+        import webbrowser
+
+        from ..renderer.export import standalone_html
+
+        view = self.window.active_view()
+        if view is None:
+            return
+        source = view.substr(sublime.Region(0, view.size()))
+        name = view.file_name() or ""
+        title = os.path.basename(name) or "Untitled"
+        page = standalone_html(source, title, os.path.dirname(name))
+        directory = os.path.join(tempfile.gettempdir(), "MarkdownGlance")
+        os.makedirs(directory, exist_ok=True)
+        stem = os.path.splitext(title)[0]
+        digest = hashlib.sha1((name or str(view.id())).encode("utf-8")).hexdigest()[:8]
+        target = os.path.join(directory, "{}-{}.html".format(stem, digest))
+        with open(target, "w", encoding="utf-8") as sink:
+            sink.write(page)
+        webbrowser.open(pathlib.Path(target).as_uri())
+        sublime.status_message("MarkdownGlance: opened {} in the browser".format(title))
+
+    def is_enabled(self):
+        view = self.window.active_view()
+        return bool(view and view.match_selector(0, "text.html.markdown"))
 
 
 class MdglanceRunContractTestsCommand(sublime_plugin.WindowCommand):

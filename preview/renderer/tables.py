@@ -22,6 +22,7 @@ yet it falls back to a width that suits a narrow group.
 """
 
 import math
+import re
 import unicodedata
 from typing import List, Optional, Sequence, Tuple
 
@@ -324,6 +325,19 @@ def _lines(words: Sequence[Word], width: int) -> List[List[Word]]:
     return lines or [[]]
 
 
+_TEXT_ALIGN = re.compile(r"text-align\s*:\s*(left|right|center)", re.I)
+
+
+def _alignment(cell: ElementNode) -> str:
+    # Python-Markdown 3.2 writes `align="right"`; 3.4 and later write
+    # `style="text-align: right;"`. Package Control serves both, by host.
+    align = cell.attrs.get("align", "")
+    if not align:
+        matched = _TEXT_ALIGN.search(cell.attrs.get("style", ""))
+        align = matched.group(1) if matched else ""
+    return align.lower()
+
+
 def _padding(deficit: int, align: str) -> Tuple[int, int]:
     if deficit <= 0:
         return 0, 0
@@ -374,7 +388,7 @@ def _row_nodes(row: Row, widths: Sequence[int], ambiguous: int) -> List[ElementN
                 _cell_span(
                     lines[line] if line < len(lines) else [],
                     widths[index],
-                    cells[index].attrs.get("align", "").lower(),
+                    _alignment(cells[index]),
                     index == len(cells) - 1,
                 )
             )

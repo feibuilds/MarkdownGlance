@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted.
+Accepted; the parser choice is superseded by
+[ADR 0012](0012-package-control-markdown-library.md), which moves it to the
+Package Control `Markdown` library. The dialect and the characterized
+behaviour below still hold.
 
 ## Decision
 

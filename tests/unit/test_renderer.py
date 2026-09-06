@@ -123,7 +123,7 @@ Unicode: 中文 café 😀
         encoded = key.locator.split("/img/", 1)[1].split("?", 1)[0]
         encoded += "=" * (-len(encoded) % 4)
         payload = json.loads(base64.urlsafe_b64decode(encoded))
-        self.assertEqual(payload["code"], "flowchart LR\nA --> B\n")
+        self.assertEqual(payload["code"], "flowchart LR\nA --> B")
         self.assertNotIn(payload["code"], key.safe_label)
 
     def test_mermaid_theme_and_background_follow_the_colour_scheme(self):
@@ -231,16 +231,37 @@ class PreWhitespaceTest(unittest.TestCase):
         self.assertIn("&lt;script&gt;", html)
 
 
-class VendoredParserTest(unittest.TestCase):
-    def test_the_hash_salt_is_small(self):
-        """Upstream markdown2 writes `bytes(randint(0, 1000000))`.
+class DialectTest(unittest.TestCase):
+    """What markdown2 rendered that Python-Markdown alone would not.
 
-        That is not a random salt but a zero-filled buffer of random *length*,
-        prepended to every `_hash_text` call -- and `_hash_text` runs hundreds
-        of times per parse. Measured on a 69 KB document, the draw decided
-        whether a parse took 123 ms or 1628 ms, once per plugin_host. Keep the
-        salt small if the parser is ever re-vendored.
-        """
-        from MarkdownGlance.lib.markdown2 import SECRET_SALT
+    ADR 0012 moved the parser to the Package Control `Markdown` library; these
+    are the GitHub-flavoured shapes that move kept rendering.
+    """
 
-        self.assertLessEqual(len(SECRET_SALT), 32)
+    def body(self, markdown):
+        return render(request(markdown), FakeResolver()).body_html
+
+    def test_two_column_nested_list_nests(self):
+        html = self.body("- a\n  - b\n- c\n")
+        self.assertIn("<li>a<ul><li>b</li></ul></li>", html.replace("\n", ""))
+
+    def test_list_cuddled_to_its_paragraph_is_a_list(self):
+        html = self.body("Text\n- a\n- b\n")
+        self.assertIn("<p>Text</p>", html)
+        self.assertIn("<li>a</li>", html)
+
+    def test_fence_inside_a_list_item_is_a_code_block(self):
+        html = self.body("- a\n\n  ```py\n  x = 1\n  ```\n\n- b\n")
+        self.assertIn('<pre><code class="py">x = 1</code></pre>', html)
+
+    def test_fenced_block_carries_the_bare_language(self):
+        html = self.body("```mermaid\ngraph TD\n```\n")
+        self.assertIn('<pre><code class="mermaid">', html)
+        self.assertNotIn("highlight", html)
+        self.assertNotIn("language-", html)
+
+    def test_the_engine_is_reset_between_documents(self):
+        first = self.body("[a]: https://a.test\n\n[a]\n")
+        second = self.body("[a]\n")
+        self.assertIn("https://a.test", first)
+        self.assertNotIn("https://a.test", second)

@@ -77,8 +77,9 @@ release record is the copy that gets maintained, so it is not repeated here.
 
 Reload the package before measuring against them (`Tools → Reload Package`, or
 restart Sublime Text). A long-lived `sublime_text` keeps burning on the old
-phantom identity rule until `plugin_host` reloads, and `lib/markdown2.py`
-draws its salt at import, so a stale host also keeps the old one.
+phantom identity rule until `plugin_host` reloads. (Until ADR 0012 the
+vendored `markdown2` also drew its hash salt at import, so a stale host kept
+the old draw as well.)
 
 ## Mitigations, cheapest first
 

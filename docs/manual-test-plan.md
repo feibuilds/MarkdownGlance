@@ -49,6 +49,15 @@ forward-compatibility testing.
    the group follows. Switch `auto_width` off and confirm both widen back.
 11. Install beside MarkdownLivePreview. Check directory, module, command,
    settings and resource isolation; document the expected shortcut collision.
+12. Open in Browser: on a saved file with a relative image, a table, a nested
+   list and a fenced block inside a list item, run the command and confirm the
+   page opens, the image resolves, in-page heading links work and the list
+   shapes match the preview. Repeat on an unsaved buffer. Confirm the command
+   is absent from the palette on a non-Markdown view.
+13. Fresh install through Package Control: confirm the `Markdown` and
+   `pymdown-extensions` libraries are installed with the package and that a
+   preview renders without any other step; confirm the install note is the
+   only message shown.
 
 ## Automated prerequisites
 

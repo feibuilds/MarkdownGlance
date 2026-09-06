@@ -6,6 +6,34 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-06
+
+### Changed
+
+- **The parser is now the Package Control `Markdown` library** (Python-Markdown,
+  with `pymdown-extensions` for fenced code) instead of a vendored copy of
+  `markdown2`, as the channel review asked. Package Control installs both
+  beside the package; a manual install needs them too, see the README. A
+  small preprocessor keeps GitHub-flavoured lists rendering as before:
+  two-column nested items, a list cuddled to the paragraph above it, and a
+  fenced block inside an item. Rendering of the repository's own 24 Markdown
+  files is identical apart from three corrections: a code block no longer ends
+  in a blank line, `[Unreleased]`-style reference links resolve, and
+  `a_b_c` no longer becomes `a<em>b</em>c`. The 100 KiB benchmark is 5% faster.
+  [ADR 0012](docs/adr/0012-package-control-markdown-library.md) records the
+  decision and what each host receives.
+
+- **Package Control messages are down to the install note.** The per-release
+  notes are gone; a release will carry one only when it needs something from
+  you, kept to a few lines with a link to this changelog.
+
+### Added
+
+- **`MarkdownGlance: Open in Browser`** writes the document as a standalone
+  page under the temporary directory and opens it in the default browser, for
+  the moment a page has to be seen at browser width or handed to someone. The
+  preview itself is unchanged and still never leaves the editor.
+
 ## [0.3.1] - 2026-09-02
 
 ### Changed
@@ -243,7 +271,8 @@ First public release.
 - `MarkdownGlance: Copy Diagnostics`, which redacts source text, paths, URLs
   and Mermaid payloads.
 
-[Unreleased]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.1...HEAD
+[Unreleased]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.2.1...0.3.0
 [0.2.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.2.0...0.2.1
