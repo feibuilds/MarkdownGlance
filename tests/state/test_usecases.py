@@ -135,7 +135,6 @@ class Backend:
         self.focused = []
         self.navigations = []
         self.updates = []
-        self.revealed = []
         self.scrolled_to = {}
         self.titles = []
         self.themes = {}
@@ -180,9 +179,6 @@ class Backend:
 
     def restore_scroll(self, handle, ratio):
         self.scrolled_to[handle.id] = ratio
-
-    def reveal(self, handle):
-        self.revealed.append(handle.id)
 
     def scroll_ratio(self, handle):
         return self.scrolled_to.get(handle.id, 0.0)
@@ -528,18 +524,18 @@ class RenderedSessionTest(Fixture):
 class RepaintCostTest(RenderedSessionTest):
     """A repaint must not do work Sublime charges a full minihtml layout for."""
 
-    def test_a_repaint_reveals_nothing(self):
+    def test_a_repaint_of_unchanged_html_is_skipped(self):
         session = self.open()
-        # `reveal` focuses the group, the view, then the previous group back,
-        # and each focus change makes Sublime fire `on_activated`, which reads
-        # the theme and repaints -- landing here again. A repaint must not
-        # move a tab; only a focus change does, through `reveal_preview`.
-        self.assertEqual(self.backend.revealed, [])
+        painted = len(self.backend.updates)
 
         self.usecases.present(session, session.last_document)
         self.usecases.represent(session)
 
-        self.assertEqual(self.backend.revealed, [])
+        # The backend is asked three times over; only a changed document costs
+        # a minihtml layout, and the fake records every ask, so what this
+        # guards is that a repaint asks with the same bytes.
+        bodies = {html for _, html in self.backend.updates[painted:]}
+        self.assertEqual(len(bodies), 1)
 
     def test_an_unchanged_theme_does_not_repaint(self):
         session = self.open()

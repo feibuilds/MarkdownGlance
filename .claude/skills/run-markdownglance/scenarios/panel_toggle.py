@@ -37,9 +37,12 @@ def _half(ctx):
     """
     from MarkdownGlance.preview.adapter.container import container
 
-    views = _panels(ctx)
-    panel = container.panel.for_surface(views[0].id()) if views else None
-    html = container.backend._html.get(panel.surface.id, "") if panel else ""
+    stage = container.panel.stage(ctx.window.id())
+    html = (
+        container.backend._html.get(stage.surface.id, "")
+        if stage is not None and stage.surface is not None
+        else ""
+    )
     if '<div class="table-of-contents' in html:
         return "contents"
     return "outline" if '<div class="source-outline' in html else None

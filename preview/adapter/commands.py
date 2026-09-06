@@ -14,12 +14,12 @@ def _active_view(window):
     return sheet.view() if sheet is not None else None
 
 
-def _owned_panel(window):
+def _panel_focused(window):
     view = _active_view(window)
-    return (
-        container.panel.for_surface(view.id())
-        if view is not None and container.panel
-        else None
+    return bool(
+        view is not None
+        and container.panel
+        and container.panel.owns_surface(view.id())
     )
 
 
@@ -110,7 +110,7 @@ class MdglanceToggleOutlineCommand(sublime_plugin.WindowCommand):
         if not container.loaded:
             return False
         view = _active_view(self.window)
-        return bool(_owned_panel(self.window)) or bool(
+        return _panel_focused(self.window) or bool(
             _owned_session(self.window)
         ) or bool(view and view.match_selector(0, "text.html.markdown"))
 
@@ -132,7 +132,7 @@ class MdglanceZoomCommand(sublime_plugin.WindowCommand):
     def is_enabled(self):
         return bool(
             container.loaded
-            and (_owned_session(self.window) or _owned_panel(self.window))
+            and (_owned_session(self.window) or _panel_focused(self.window))
         )
 
 
@@ -288,9 +288,9 @@ class MdglanceRunContractTestsCommand(sublime_plugin.WindowCommand):
             backend.move(handle, 1)
             assert backend.group_of(handle) == 1
             self.window.focus_group(0)
-            backend.reveal(handle)
+            backend.restore_scroll(handle, 0.0)
+            assert backend.scroll_ratio(handle) == 0.0
             assert self.window.active_group() == 0
-            assert self.window.active_sheet_in_group(1).view().id() == handle.id
             backend.focus(handle)
             assert self.window.active_sheet().view().id() == handle.id
             backend.set_title(handle, "Contract renamed")

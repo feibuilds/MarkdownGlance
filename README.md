@@ -24,6 +24,8 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
 - **Keep your theme**: the preview follows your editor's colours.
 - **Navigate long documents** with one panel that shows the source outline
   while you edit and the preview's table of contents while you read.
+- **One preview, whatever you have open**: the preview and the contents panel
+  follow you between files rather than piling up a tab each.
 - **View images and tables**, including local and remote images.
 - **Add diagrams and formulas** with optional Mermaid and LaTeX math support.
 - **Open in Browser** when you want to see the document as a web page.
@@ -98,7 +100,13 @@ instead of `Ctrl` for the shortcuts below.
 
 **Toggle Preview** switches between your Markdown text and a full-screen
 preview. To zoom, click the preview first, then use the zoom keys or hold
-`Ctrl`/`Cmd` and scroll. Closing a preview leaves your source file open.
+`Ctrl`/`Cmd` and scroll. Closing a preview leaves your source files open.
+
+A window has one preview, however many Markdown files you have open in it. It
+shows whichever one you are working on and is named for it, and it remembers
+where you had scrolled to in each. Files you have not looked at yet are
+rendered the first time you focus them; after that, switching between them is
+immediate.
 
 **Open in Browser** creates a temporary HTML page and opens it in your default
 browser. It can display diagrams and formulas even when they are disabled in
@@ -120,8 +128,8 @@ in the user file.
 ## The contents panel
 
 Press `Ctrl+Shift+B` for a list of the document's headings beside it. Click one
-to go to it. There is one panel, and it shows the half that matches whatever
-you are looking at:
+to go to it. There is one panel per window, showing the file you are working
+on, and it shows the half that matches whatever you are looking at:
 
 - **Editing the source** — the headings of the file as you have written them,
   updating as you type, with your current section highlighted. Clicking one

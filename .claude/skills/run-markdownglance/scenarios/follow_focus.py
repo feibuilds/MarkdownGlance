@@ -51,17 +51,22 @@ def _preview_body(ctx):
     return container.backend._html.get(stage.surface.id, "")
 
 
+def _panel_body(ctx):
+    from MarkdownGlance.preview.adapter.container import container
+
+    stage = container.panel.stage(ctx.window.id())
+    if stage is None or stage.surface is None:
+        return ""
+    return container.backend._html.get(stage.surface.id, "")
+
+
 def _half(ctx):
-    """Which half the panel in front is painted with, read off its HTML.
+    """Which half the panel is painted with, read off its HTML.
 
     Matched on the opening tag, not the bare class name: the panel stylesheet
     carries rules for both halves whichever one is drawn.
     """
-    from MarkdownGlance.preview.adapter.container import container
-
-    view = _by_role(ctx, "panel").get(_front(ctx, "panel"))
-    panel = container.panel.for_surface(view.id()) if view is not None else None
-    html = container.backend._html.get(panel.surface.id, "") if panel else ""
+    html = _panel_body(ctx)
     if '<div class="table-of-contents' in html:
         return "contents"
     return "outline" if '<div class="source-outline' in html else None
@@ -71,6 +76,7 @@ def _fronts(ctx, document, half):
     title = document.split("-")[-1].capitalize() + " document"
     return {
         "one preview tab": len(_by_role(ctx, "preview")) == 1,
+        "one panel tab": len(_by_role(ctx, "panel")) == 1,
         "preview is titled {}".format(document): _front(ctx, "preview")
         == "Preview: {}.md".format(document),
         "preview is painted with {}".format(document): title in _preview_body(ctx),
@@ -111,7 +117,7 @@ def focus_alpha_source(ctx):
 
 
 def focus_alpha_panel(ctx):
-    ctx.window.focus_view(_by_role(ctx, "panel")["Contents: toc-alpha.md"])
+    ctx.window.focus_view(list(_by_role(ctx, "panel").values())[0])
 
 
 def focus_the_preview(ctx):
@@ -134,6 +140,7 @@ def gamma_followed(ctx, snap):
         and _front(ctx, "preview") == "Preview: toc-gamma.md"
         and _front(ctx, "panel") == "Contents: toc-gamma.md"
         and "Gamma document" in _preview_body(ctx)
+        and "Gamma one" in _panel_body(ctx)
     )
 
 
@@ -145,7 +152,9 @@ def check_gamma(ctx, snap):
             "three documents, still one preview tab": (
                 len(_by_role(ctx, "preview")) == 1
             ),
-            "three panels now": len(_by_role(ctx, "panel")) == 3,
+            "three documents, still one panel tab": (
+                len(_by_role(ctx, "panel")) == 1
+            ),
             "still three groups": len(ctx.window.layout()["cells"]) == 3,
         }
     )
@@ -157,14 +166,13 @@ def rendered(ctx, snap):
 
 
 def both_open(ctx, snap):
-    return ctx.settled(snap) and len(_by_role(ctx, "panel")) == 2
+    return ctx.settled(snap) and len(_by_role(ctx, "panel")) == 1
 
 
 def check_beta_front(ctx, snap):
     checks = {
         "two documents, one preview tab": len(_by_role(ctx, "preview")) == 1,
-        "two panels": len(_by_role(ctx, "panel")) == 2,
-        "one group holds the panels": len(_groups(ctx, "panel")) == 1,
+        "two documents, one panel tab": len(_by_role(ctx, "panel")) == 1,
         "three groups, not four": len(ctx.window.layout()["cells"]) == 3,
     }
     checks.update(_fronts(ctx, "toc-beta", "contents"))
@@ -179,9 +187,7 @@ def check_alpha_front(ctx, snap):
 
 def check_alpha_from_panel(ctx, snap):
     checks = _fronts(ctx, "toc-alpha", "outline")
-    checks.update(
-        _focus_held(ctx, _by_role(ctx, "panel")["Contents: toc-alpha.md"])
-    )
+    checks.update(_focus_held(ctx, list(_by_role(ctx, "panel").values())[0]))
     return checks
 
 

@@ -19,9 +19,21 @@ longest entry needs from per-character advances, and `LayoutOwner.acquire` and
 was split from — never wider than the role's share, never past the point where
 the fingerprint says the user has moved the divider by hand.
 
+A `PreviewSession` is a document, not a pane: its generations, its parsed
+document, its assets, its theme. The pane is a `PreviewStage`, one per window,
+holding the surface, which document is on it, and everything that belongs to
+the viewport rather than to any document -- the mode, the zoom, the table
+budget measured from its width, and where each document was scrolled to. That
+is what lets a window hold ten Markdown files and one preview tab.
+`SessionManager` owns the stages and decides which document goes on one; the
+use cases paint it, through `on_show`. Every paint asks `_showing_stage` first,
+so a document rendered while nobody is looking at it -- a Replace All across a
+project, a reload from disk -- reaches the panel's heading list and no surface.
+
 A second, independent surface is the contents panel: `application/panel.py`
-owns one per source buffer, keyed on `(window, buffer)`, reaching the host only
-through injected read-text, read-caret and reveal-line callables. It shares the
+splits the same way -- a `PanelDocument` per Markdown buffer, a `PanelStage`
+per window -- reaching the host only through injected read-text, read-caret and
+reveal-line callables. It shares the
 backend, the layout owner and the stylesheet with the preview, and nothing
 else: no render, no assets, no generations. `SessionManager.reconcile` asks
 `foreign_surface` before closing an owned surface it does not recognise, which

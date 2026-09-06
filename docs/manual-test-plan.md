@@ -57,21 +57,21 @@ forward-compatibility testing.
    Zoom; close the panel, the source, the group and the window; open panels for
    two files at once and switch between them.
    Automated as `run-markdownglance`'s `panel_toggle` scenario.
-10. Two documents: preview two Markdown files long enough for a panel each.
-   The previews share one group and the panels share another, and the tab in
-   front of each must belong to the focused document — click the first source,
-   its preview, its panel, then the second document's three, and confirm both
-   front tabs follow every time, that the panel shows the half matching what
-   you clicked, that the focus stays where you put it, and that the window
-   settles at once rather than flickering between the two documents. Then open
-   a third Markdown file that has never been previewed -- from the sidebar and
-   from Goto Anything, since a file opened that way is activated before it has
-   a syntax -- and confirm it gets a preview and a panel of its own, in front,
-   with the caret still in the file you opened. Repeat in Full Screen, where
-   the preview shares the source's group: clicking the source must leave the
-   source in front, and a third file must *not* get a preview of its own.
-   Automated as `run-markdownglance`'s `follow_focus` scenario, Side-by-Side
-   only.
+10. Several documents: preview two Markdown files long enough for a panel.
+   There must be exactly one preview tab and one contents tab however many
+   files are open, each named for the document on it. Click the first source,
+   the preview, the panel, then the second source, and confirm both follow
+   every time, that the panel shows the half matching what you clicked, that
+   the focus stays where you put it, and that the window settles at once
+   rather than flickering. Clicking the preview must not change the document
+   on it. Then open a third Markdown file that has never been previewed — from
+   the sidebar and from Goto Anything, since a file opened that way is
+   activated before it has a syntax — and confirm both follow it with the
+   caret still in the file you opened. Scroll one document's preview, switch
+   away and back, and confirm it comes back where you left it. Zoom, switch
+   documents, and confirm the zoom stays put. Repeat in Full Screen. Automated
+   as `run-markdownglance`'s `follow_focus` and `preview_switch` scenarios,
+   Side-by-Side only.
 11. Widths: with `auto_width` on, open a table of contents and an outline over
    documents with short headings and with one very long heading — no entry may
    wrap, and neither group may be wider than it was with the setting off. Drag

@@ -53,6 +53,7 @@ every check passed. Evidence goes to `/tmp/mdglance-st/evidence/<scenario>-<time
 .claude/skills/run-markdownglance/drive.sh preview       # smallest scenario, 1 phase
 .claude/skills/run-markdownglance/drive.sh follow_focus  # two documents, front tabs follow focus
 .claude/skills/run-markdownglance/drive.sh panel_toggle  # Ctrl+Shift+B with no preview open
+.claude/skills/run-markdownglance/drive.sh preview_switch # scroll, switch document, switch back
 .claude/skills/run-markdownglance/drive.sh math --xvfb   # same, on a private X server
 ```
 
@@ -89,7 +90,10 @@ colour-scheme switch and a diagnostics check; `scenarios/follow_focus.py` shows
 two documents open at once and a check that reads the window's groups rather
 than the snapshot; `scenarios/panel_toggle.py` shows a file opened without a
 preview, which means `window.open_file` rather than `ctx.open_fixture` and a
-`done` predicate of its own, since `ctx.settled` never holds without a session. A path to a `.py` outside the skill also works as the
+`done` predicate of its own, since `ctx.settled` never holds without a session;
+`scenarios/preview_switch.py` reads a view's viewport straight off the Sublime
+API, and puts each `check` in the phase that observes the state rather than the
+one that changes it. A path to a `.py` outside the skill also works as the
 scenario argument.
 
 ## Direct invocation

@@ -21,7 +21,6 @@ class View:
         self._markdown = markdown
         self.text = text
         self.row = 0
-        self.revealed = []
         self.name_value = "doc.md"
 
     def id(self):
@@ -101,7 +100,6 @@ class Backend:
         self.roles = {}
         self.titles = {}
         self.focused = []
-        self.revealed = []
         self.closed = []
         self.themes = {}
 
@@ -132,9 +130,6 @@ class Backend:
 
     def focus(self, handle):
         self.focused.append(handle.id)
-
-    def reveal(self, handle):
-        self.revealed.append(handle.id)
 
     def close(self, handle):
         self.closed.append(handle.id)
@@ -196,6 +191,8 @@ class Clock:
 
 
 class PanelControllerTest(unittest.TestCase):
+    """One panel per window, over the document the window is on."""
+
     def setUp(self):
         self.window = Window()
         self.backend = Backend()
@@ -225,6 +222,50 @@ class PanelControllerTest(unittest.TestCase):
             ),
         )
 
+    # -- helpers ---------------------------------------------------------
+
+    def stage(self):
+        return self.controller.stage(1)
+
+    def surface(self):
+        stage = self.stage()
+        return stage.surface if stage is not None else None
+
+    def html(self):
+        return self.backend.html.get(self.surface().id, "")
+
+    def record(self, view=None):
+        view = view or self.source
+        return self.controller.document(1, view.buffer_id())
+
+    def focus(self, view):
+        self.window.active = view
+        return view
+
+    def focus_panel(self):
+        view = View(self.surface().id, self.window, markdown=False)
+        self.window.active = view
+        return view
+
+    def other(self, identifier=2, markdown=True, text="# Other\n\n## Two\n"):
+        view = self.window.add(
+            View(identifier, self.window, markdown=markdown, text=text)
+        )
+        view.name_value = "other.md"
+        return view
+
+    def preview_view(self, identifier=90, buffer_id=None):
+        """A preview surface for a document, as the panel sees it focused."""
+        view = self.previews_by_id.get(identifier)
+        if view is None:
+            view = View(identifier, self.window, buffer_id=-identifier, markdown=False)
+            self.window.add(view)
+            self.previews[identifier] = Session(
+                buffer_id if buffer_id is not None else self.source.buffer_id()
+            )
+            self.previews_by_id[identifier] = view
+        return view
+
     def document(self, count=2):
         headings = tuple(
             Heading(index + 1, "H{}".format(index), "h{}".format(index), index, 0.1)
@@ -232,58 +273,34 @@ class PanelControllerTest(unittest.TestCase):
         )
         return PreviewDocument(1, "<p>body</p>", headings, (), (), ())
 
-    def render(self, count=2, focused="preview"):
-        """What `UseCases.present` hands the panel after a render.
-
-        Opening a preview leaves the focus on it, which is what decides the
-        half a panel opens on, so that is the default here too.
-        """
+    def render(self, view=None, count=2, focused="preview"):
+        """What `UseCases.present` hands the panel after a render."""
+        view = view or self.source
         if focused == "preview":
-            self.window.active = self.preview_view()
-        document = self.document(count)
-        self.controller.document_rendered(1, self.source.buffer_id(), document)
-        return document
-
-    def preview_view(self, identifier=90):
-        """A preview surface for the source, as the panel sees it focused."""
-        view = self.previews_by_id.get(identifier)
-        if view is None:
-            view = View(identifier, self.window, buffer_id=-identifier, markdown=False)
-            self.window.add(view)
-            self.previews[identifier] = Session(self.source.buffer_id())
-            self.previews_by_id[identifier] = view
-        return view
-
-    def surface(self):
-        session = self.controller.for_source(1, self.source.buffer_id())
-        return session.surface if session else None
-
-    def focus_surface(self):
-        handle = self.surface()
-        self.window.active = View(handle.id, self.window, markdown=False)
-        return handle
+            self.window.active = self.preview_view(buffer_id=view.buffer_id())
+        rendered = self.document(count)
+        self.controller.document_rendered(1, view.buffer_id(), rendered)
+        return rendered
 
     # -- opening ---------------------------------------------------------
 
     def test_toggle_opens_a_panel_in_its_own_group_and_focuses_it(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
-        self.assertIsNotNone(handle)
-        session = self.controller.for_surface(handle.id)
+        stage = self.stage()
+        self.assertIsNotNone(stage)
         self.assertEqual(
             [item[:3] for item in self.layout.acquired],
-            [(0, GroupRole.PANEL, session.id)],
+            [(0, GroupRole.PANEL, stage.id)],
         )
-        self.assertEqual(self.backend.roles[handle.id], "panel")
-        self.assertEqual(self.backend.titles[handle.id], "Contents: doc.md")
-        self.assertEqual(self.backend.focused, [handle.id])
-        self.assertIn("source-outline", self.backend.html[handle.id])
-        self.assertIn("/* css */", self.backend.html[handle.id])
+        self.assertEqual(self.backend.roles[stage.surface.id], "panel")
+        self.assertEqual(self.backend.titles[stage.surface.id], "Contents: doc.md")
+        self.assertEqual(self.backend.focused, [stage.surface.id])
+        self.assertIn("source-outline", self.html())
+        self.assertIn("/* css */", self.html())
 
     def test_the_group_is_asked_for_the_width_the_entries_need(self):
         self.controller.toggle(self.window)
-        session = self.controller.for_surface(self.surface().id)
-        wanted = outline_width_px(session.headings, 16)
+        wanted = outline_width_px(self.record().headings, 16)
         self.assertGreater(wanted, 0.0)
         self.assertAlmostEqual(self.layout.acquired[0][3], wanted)
         self.assertEqual(self.layout.fitted, [(1, GroupRole.PANEL, wanted)])
@@ -293,10 +310,9 @@ class PanelControllerTest(unittest.TestCase):
         self.source.text = "# One\n\n## A much longer heading than before\n"
         self.controller.refresh_for_source(self.source)
         self.clock.run_all()
-        session = self.controller.for_surface(self.surface().id)
         self.assertEqual(
             self.layout.fitted[-1],
-            (1, GroupRole.PANEL, outline_width_px(session.headings, 16)),
+            (1, GroupRole.PANEL, outline_width_px(self.record().headings, 16)),
         )
         self.assertGreater(self.layout.fitted[-1][2], self.layout.fitted[0][2])
 
@@ -307,23 +323,31 @@ class PanelControllerTest(unittest.TestCase):
         self.assertEqual(self.layout.fitted, [(1, GroupRole.PANEL, 0.0)])
 
     def test_a_non_markdown_view_opens_nothing(self):
-        self.window.active = self.window.add(View(2, self.window, markdown=False))
+        self.focus(self.window.add(View(2, self.window, markdown=False)))
         self.controller.toggle(self.window)
-        self.assertEqual(self.backend.alive, set())
+        self.assertIsNone(self.stage())
+
+    def test_asked_for_from_the_preview_it_opens_over_that_document(self):
+        self.focus(self.preview_view())
+
+        self.controller.toggle(self.window)
+
+        self.assertEqual(self.stage().showing, self.source.buffer_id())
 
     def test_second_press_from_the_source_focuses_the_open_panel(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
+        surface = self.surface()
         self.controller.toggle(self.window)
-        self.assertEqual(self.backend.focused, [handle.id, handle.id])
+        self.assertEqual(self.backend.focused, [surface.id, surface.id])
         self.assertEqual(self.backend.closed, [])
 
     def test_press_while_the_panel_is_focused_closes_it_and_returns_focus(self):
         self.controller.toggle(self.window)
-        handle = self.focus_surface()
+        surface = self.surface()
+        self.focus_panel()
         self.controller.toggle(self.window)
-        self.assertEqual(self.backend.closed, [handle.id])
-        self.assertIsNone(self.controller.for_surface(handle.id))
+        self.assertEqual(self.backend.closed, [surface.id])
+        self.assertIsNone(self.stage())
         self.assertEqual(self.window.focused[-1], self.source.id())
         self.assertEqual([item[0] for item in self.layout.released], [1])
 
@@ -332,28 +356,37 @@ class PanelControllerTest(unittest.TestCase):
     def test_the_heading_holding_the_caret_is_active(self):
         self.source.row = 5
         self.controller.toggle(self.window)
-        self.assertIn("source-outline-active", self.backend.html[self.surface().id])
+        self.assertIn("source-outline-active", self.html())
 
     def test_caret_moves_repaint_only_when_the_heading_changes(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
-        painted = self.backend.html[handle.id]
+        painted = self.html()
         self.source.row = 2
         self.controller.sync_caret(self.source)
-        self.assertEqual(self.backend.html[handle.id], painted)
+        self.assertEqual(self.html(), painted)
         self.source.row = 6
         self.controller.sync_caret(self.source)
-        self.assertNotEqual(self.backend.html[handle.id], painted)
+        self.assertNotEqual(self.html(), painted)
+
+    def test_the_caret_in_a_document_that_is_not_on_screen_repaints_nothing(self):
+        self.controller.toggle(self.window)
+        other = self.other()
+        self.controller.focus_changed(self.focus(other))
+        painted = self.html()
+        self.source.row = 6
+
+        self.controller.sync_caret(self.source)
+
+        self.assertEqual(self.html(), painted)
 
     def test_edits_repaint_once_the_debounce_elapses(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
         self.source.text = "# One\n\n## Two\n\n### Three\n"
         self.controller.refresh_for_source(self.source)
-        self.assertNotIn("Three", self.backend.html[handle.id])
+        self.assertNotIn("Three", self.html())
         self.assertEqual(self.clock.pending[1][0], 50)
         self.clock.run_all()
-        self.assertIn("Three", self.backend.html[handle.id])
+        self.assertIn("Three", self.html())
 
     def test_a_later_edit_cancels_the_pending_repaint(self):
         self.controller.toggle(self.window)
@@ -372,63 +405,72 @@ class PanelControllerTest(unittest.TestCase):
 
     def test_clicking_an_entry_reveals_that_line_and_marks_it_active(self):
         self.controller.toggle(self.window)
-        session = self.controller.for_surface(self.surface().id)
-        self.controller.navigate(self.window, session.action_token, 4)
+        self.controller.navigate(self.window, self.stage().action_token, line=4)
         self.assertEqual(self.reveals, [(1, 4)])
-        self.assertEqual(session.active, 1)
+        self.assertEqual(self.record().active, 1)
 
     def test_a_stale_token_or_line_navigates_nowhere(self):
         self.controller.toggle(self.window)
-        session = self.controller.for_surface(self.surface().id)
-        self.controller.navigate(self.window, "wrong", 4)
-        self.controller.navigate(self.window, session.action_token, 99)
+        self.controller.navigate(self.window, "wrong", line=4)
+        self.controller.navigate(self.window, self.stage().action_token, line=99)
         self.assertEqual(self.reveals, [])
 
-    def test_zoom_applies_only_while_the_outline_is_focused(self):
+    def test_zoom_applies_only_while_the_panel_is_focused(self):
         self.controller.toggle(self.window)
         self.assertFalse(self.controller.adjust_zoom(self.window, 0.1))
-        handle = self.focus_surface()
+        self.focus_panel()
         self.assertTrue(self.controller.adjust_zoom(self.window, 0.5))
-        self.assertIn("font-size: 24px", self.backend.html[handle.id])
+        self.assertIn("font-size: 24px", self.html())
         self.assertTrue(self.controller.adjust_zoom(self.window, reset=True))
-        self.assertIn("font-size: 16px", self.backend.html[handle.id])
+        self.assertIn("font-size: 16px", self.html())
 
     # -- lifecycle -------------------------------------------------------
 
-    def test_closing_the_source_closes_its_panel(self):
+    def test_closing_the_only_source_closes_its_panel(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
+        surface = self.surface()
         self.controller.source_closed(self.source)
-        self.assertEqual(self.backend.closed, [handle.id])
-        self.assertEqual(self.controller.sessions_in(1), [])
+        self.assertEqual(self.backend.closed, [surface.id])
+        self.assertIsNone(self.stage())
+
+    def test_closing_the_source_on_screen_shows_another(self):
+        other = self.other()
+        self.controller.toggle(self.window)
+        self.controller.focus_changed(self.focus(other))
+        self.assertEqual(self.stage().showing, other.buffer_id())
+
+        self.controller.source_closed(other)
+
+        self.assertEqual(self.backend.closed, [])
+        self.assertEqual(self.stage().showing, self.source.buffer_id())
+        self.assertEqual(self.backend.titles[self.surface().id], "Contents: doc.md")
 
     def test_closing_the_surface_releases_the_group_without_closing_twice(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
-        self.assertTrue(self.controller.surface_closed(handle.id))
+        surface = self.surface()
+        self.assertTrue(self.controller.surface_closed(surface.id))
         self.assertEqual(self.backend.closed, [])
         self.assertEqual([item[0] for item in self.layout.released], [1])
-        self.assertFalse(self.controller.owns_surface(handle.id))
+        self.assertFalse(self.controller.owns_surface(surface.id))
 
     def test_an_unknown_surface_is_not_claimed(self):
         self.assertFalse(self.controller.surface_closed(999))
 
     def test_reconcile_drops_a_panel_whose_view_vanished(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
-        self.backend.alive.discard(handle.id)
+        self.backend.alive.discard(self.surface().id)
         self.controller.reconcile(self.window)
-        self.assertEqual(self.controller.sessions_in(1), [])
+        self.assertIsNone(self.stage())
         self.assertEqual([item[0] for item in self.layout.released], [1])
 
     def test_window_close_and_unload_close_every_panel(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
+        surface = self.surface()
         self.controller.close_window(1)
-        self.assertEqual(self.backend.closed, [handle.id])
-        self.assertEqual(self.controller.sessions_in(1), [])
+        self.assertEqual(self.backend.closed, [surface.id])
+        self.assertIsNone(self.stage())
         self.controller.close_all()
-        self.assertEqual(self.backend.closed, [handle.id])
+        self.assertEqual(self.backend.closed, [surface.id])
 
     def test_the_panel_is_put_on_the_source_colour_scheme(self):
         # minihtml resolves the phantom's colour variables against the surface,
@@ -442,69 +484,8 @@ class PanelControllerTest(unittest.TestCase):
         self.assertEqual(self.backend.themes[self.surface().id].scheme, scheme)
 
 
-class FollowFocusTest(PanelControllerTest):
-    """The panel group holds one tab per document, so a document that has
-    never had a panel would otherwise leave another one's in front."""
-
-    def other(self, identifier=2, markdown=True):
-        view = self.window.add(
-            View(identifier, self.window, markdown=markdown, text="# Other\n")
-        )
-        self.window.active = view
-        return view
-
-    def test_focusing_a_document_with_no_panel_opens_one(self):
-        self.controller.toggle(self.window)
-        other = self.other()
-
-        self.controller.focus_changed(other)
-
-        panel = self.controller.for_source(1, other.buffer_id())
-        self.assertIsNotNone(panel)
-        self.assertIn("Other", self.backend.html[panel.surface.id])
-        self.assertIsNot(panel, self.controller.for_source(1, self.source.buffer_id()))
-
-    def test_the_panel_it_opens_does_not_take_the_focus(self):
-        self.controller.toggle(self.window)
-        other = self.other()
-        self.backend.focused = []
-
-        self.controller.focus_changed(other)
-
-        self.assertEqual(self.backend.focused, [])
-        self.assertIs(self.window.active, other)
-
-    def test_a_window_with_no_panel_opens_nothing(self):
-        other = self.other()
-
-        self.controller.focus_changed(other)
-
-        self.assertIsNone(self.controller.for_source(1, other.buffer_id()))
-
-    def test_a_panel_the_user_closed_stays_closed(self):
-        self.controller.toggle(self.window)
-        other = self.other()
-        self.controller.focus_changed(other)
-        panel = self.controller.for_source(1, other.buffer_id())
-        self.controller.surface_closed(panel.surface.id)
-        self.window.active = self.source
-        self.window.active = other
-
-        self.controller.focus_changed(other)
-
-        self.assertIsNone(self.controller.for_source(1, other.buffer_id()))
-
-    def test_a_view_that_is_not_markdown_opens_nothing(self):
-        self.controller.toggle(self.window)
-        other = self.other(3, markdown=False)
-
-        self.controller.focus_changed(other)
-
-        self.assertIsNone(self.controller.for_source(1, other.buffer_id()))
-
-
 class OneRegionTest(PanelControllerTest):
-    """The panel is one surface showing two halves, chosen by the focus."""
+    """One surface, two halves, several documents."""
 
     def setUp(self):
         super().setUp()
@@ -515,61 +496,42 @@ class OneRegionTest(PanelControllerTest):
             toc_minimum_headings=1,
         )
 
-    def focus(self, view):
-        self.window.active = view
-        return view
-
-    # -- opening ---------------------------------------------------------
+    # -- opening by itself ------------------------------------------------
 
     def test_a_render_opens_the_panel_on_the_table_of_contents(self):
         self.render()
-        handle = self.surface()
-        self.assertIsNotNone(handle)
-        self.assertIn("table-of-contents", self.backend.html[handle.id])
-        self.assertNotIn("source-outline", self.backend.html[handle.id])
+        self.assertIsNotNone(self.stage())
+        self.assertIn("table-of-contents", self.html())
+        self.assertNotIn('<div class="source-outline', self.html())
 
     def test_the_setting_off_opens_none_at_all(self):
         self.settings = RenderSettings(update_delay_ms=50, enable_toc=False)
         self.render()
-        self.assertIsNone(self.surface())
+        self.assertIsNone(self.stage())
 
     def test_a_document_below_the_threshold_opens_none(self):
         self.settings = RenderSettings(
             update_delay_ms=50, enable_toc=True, toc_minimum_headings=9
         )
         self.render()
-        self.assertIsNone(self.surface())
+        self.assertIsNone(self.stage())
 
     def test_a_panel_the_user_closed_is_not_reopened_by_the_next_render(self):
         self.render()
-        handle = self.surface()
-        self.assertTrue(self.controller.surface_closed(handle.id))
+        self.assertTrue(self.controller.surface_closed(self.surface().id))
         self.render()
-        self.assertIsNone(self.surface())
+        self.assertIsNone(self.stage())
 
     def test_the_user_asking_again_clears_the_dismissal(self):
         self.render()
         self.controller.surface_closed(self.surface().id)
+        self.focus(self.source)
         self.controller.toggle(self.window)
-        self.assertIsNotNone(self.surface())
-
-    # -- the two halves ---------------------------------------------------
-
-    def test_focusing_the_source_shows_the_outline_and_the_preview_the_contents(self):
-        self.render()
-        handle = self.surface()
-
-        self.controller.focus_changed(self.focus(self.source))
-        self.assertIn("source-outline", self.backend.html[handle.id])
-
-        preview = self.preview_view()
-        self.controller.focus_changed(self.focus(preview))
-        self.assertIn("table-of-contents", self.backend.html[handle.id])
+        self.assertIsNotNone(self.stage())
 
     def test_a_panel_nobody_asked_for_does_not_take_the_caret(self):
         # `window.new_file()` focuses the view it makes, so a panel opened by a
-        # render would otherwise land the caret in it while the user is
-        # reading the preview.
+        # render would otherwise land the caret in it.
         preview = self.focus(self.preview_view())
 
         self.render()
@@ -577,47 +539,46 @@ class OneRegionTest(PanelControllerTest):
         self.assertIs(self.window.active, preview)
         self.assertEqual(self.backend.focused, [])
 
+    # -- the two halves ---------------------------------------------------
+
+    def test_focusing_the_source_shows_the_outline_and_the_preview_the_contents(self):
+        self.render()
+        self.controller.focus_changed(self.focus(self.source))
+        self.assertIn('<div class="source-outline', self.html())
+
+        self.controller.focus_changed(self.focus(self.preview_view()))
+        self.assertIn('<div class="table-of-contents', self.html())
+
     def test_a_render_while_the_source_has_the_focus_leaves_the_outline(self):
-        # Editing with a preview open in the background: the panel is looking
-        # at what the caret is doing, and a render must not pull it away.
         self.controller.toggle(self.window)
-        handle = self.surface()
 
         self.render(focused="source")
 
-        self.assertIn("source-outline", self.backend.html[handle.id])
+        self.assertIn('<div class="source-outline', self.html())
 
     def test_focusing_the_panel_itself_leaves_the_half_it_is_showing(self):
         self.render()
-        handle = self.surface()
-        painted = self.backend.html[handle.id]
+        painted = self.html()
 
-        self.focus_surface()
-        self.controller.focus_changed(self.window.active)
+        self.controller.focus_changed(self.focus_panel())
 
-        self.assertEqual(self.backend.html[handle.id], painted)
+        self.assertEqual(self.html(), painted)
 
     def test_a_view_the_window_has_not_settled_on_moves_nothing(self):
-        # `reveal` activates views the user never chose on its way past; their
-        # callbacks arrive a tick late, when the window has settled elsewhere.
         self.render()
-        handle = self.surface()
-        painted = self.backend.html[handle.id]
+        painted = self.html()
         self.focus(self.preview_view())
 
         self.controller.focus_changed(self.source)
 
-        self.assertEqual(self.backend.html[handle.id], painted)
-        self.assertEqual(self.backend.revealed, [])
+        self.assertEqual(self.html(), painted)
 
     def test_with_no_preview_open_the_panel_stays_on_the_outline(self):
         self.controller.toggle(self.window)
-        handle = self.surface()
-        preview = self.preview_view()
 
-        self.controller.focus_changed(self.focus(preview))
+        self.controller.focus_changed(self.focus(self.preview_view()))
 
-        self.assertIn("source-outline", self.backend.html[handle.id])
+        self.assertIn('<div class="source-outline', self.html())
 
     def test_a_hand_opened_panel_shows_contents_with_the_setting_off(self):
         # The setting governs whether a panel opens by itself. One the user
@@ -625,97 +586,122 @@ class OneRegionTest(PanelControllerTest):
         self.settings = RenderSettings(update_delay_ms=50, enable_toc=False)
         self.controller.toggle(self.window)
         self.render(focused="source")
-        handle = self.surface()
 
         self.controller.focus_changed(self.focus(self.preview_view()))
 
-        self.assertIn("table-of-contents", self.backend.html[handle.id])
+        self.assertIn('<div class="table-of-contents', self.html())
 
-    def test_the_caret_does_not_repaint_the_table_of_contents(self):
+    # -- several documents ------------------------------------------------
+
+    def test_one_surface_serves_every_document_in_the_window(self):
         self.render()
-        handle = self.surface()
-        painted = self.backend.html[handle.id]
-        self.source.row = 6
+        surface = self.surface()
+        other = self.other()
 
-        self.controller.sync_caret(self.source)
+        self.controller.focus_changed(self.focus(other))
 
-        self.assertEqual(self.backend.html[handle.id], painted)
+        self.assertIs(self.surface(), surface)
+        self.assertEqual(self.stage().showing, other.buffer_id())
+        self.assertEqual(len(self.layout.acquired), 1)
+
+    def test_the_tab_is_named_for_the_document_on_it(self):
+        self.render()
+        other = self.other()
+
+        self.controller.focus_changed(self.focus(other))
+
+        self.assertEqual(self.backend.titles[self.surface().id], "Contents: other.md")
+
+    def test_switching_documents_shows_that_document_headings(self):
+        self.render()
+        other = self.other()
+
+        self.controller.focus_changed(self.focus(other))
+
+        self.assertIn("Other", self.html())
+        self.assertNotIn("One", self.html())
+
+    def test_a_render_for_a_document_that_is_not_on_screen_paints_nothing(self):
+        self.render()
+        other = self.other()
+        self.controller.focus_changed(self.focus(other))
+        painted = self.html()
+
+        self.render(count=4)
+
+        self.assertEqual(self.html(), painted)
+        # But its headings are kept, ready for when it comes back.
+        self.assertEqual(len(self.record().document), 4)
+
+    def test_a_document_with_no_render_of_its_own_shows_only_the_outline(self):
+        self.render()
+        other = self.other()
+        self.controller.focus_changed(self.focus(other))
+
+        self.controller.focus_changed(
+            self.focus(self.preview_view(91, buffer_id=other.buffer_id()))
+        )
+
+        self.assertIn('<div class="source-outline', self.html())
 
     # -- width ------------------------------------------------------------
 
     def test_each_half_is_measured_with_its_own_typeface(self):
-        document = self.render()
-        session = self.controller.for_surface(self.surface().id)
+        rendered = self.render()
         self.assertAlmostEqual(
-            self.layout.fitted[-1][2], toc_width_px(document.headings, 16)
+            self.layout.fitted[-1][2], toc_width_px(rendered.headings, 16)
         )
 
         self.controller.focus_changed(self.focus(self.source))
 
         self.assertAlmostEqual(
-            self.layout.fitted[-1][2], outline_width_px(session.headings, 16)
+            self.layout.fitted[-1][2], outline_width_px(self.record().headings, 16)
         )
 
     # -- navigation --------------------------------------------------------
 
     def test_clicking_a_contents_entry_scrolls_the_preview(self):
         self.render()
-        session = self.controller.for_surface(self.surface().id)
 
-        self.controller.navigate(self.window, session.action_token, slug="h1")
+        self.controller.navigate(self.window, self.stage().action_token, slug="h1")
 
         self.assertEqual(self.scrolled, [(1, self.source.buffer_id(), "h1")])
-        self.assertEqual(session.active_slug, "h1")
-        self.assertIn("table-of-contents-active", self.backend.html[session.surface.id])
+        self.assertEqual(self.record().active_slug, "h1")
+        self.assertIn("table-of-contents-active", self.html())
 
     def test_a_slug_that_is_not_in_the_document_scrolls_nowhere(self):
         self.render()
-        session = self.controller.for_surface(self.surface().id)
 
-        self.controller.navigate(self.window, session.action_token, slug="missing")
+        self.controller.navigate(self.window, self.stage().action_token, slug="missing")
 
         self.assertEqual(self.scrolled, [])
 
+    def test_a_link_clicked_in_the_preview_highlights_that_heading(self):
+        self.render()
+
+        self.controller.heading_shown(1, self.source.buffer_id(), "h1")
+
+        self.assertIn("table-of-contents-active", self.html())
+
     # -- lifecycle ---------------------------------------------------------
 
-    def test_closing_the_preview_closes_a_panel_the_render_opened(self):
+    def test_closing_the_preview_drops_the_contents_half(self):
         self.render()
-        handle = self.surface()
+        self.assertIn('<div class="table-of-contents', self.html())
 
         self.controller.document_closed(1, self.source.buffer_id())
 
-        self.assertEqual(self.backend.closed, [handle.id])
-        self.assertIsNone(self.surface())
-
-    def test_closing_the_preview_keeps_a_panel_the_user_opened(self):
-        self.controller.toggle(self.window)
-        self.render()
-        handle = self.surface()
-
-        self.controller.document_closed(1, self.source.buffer_id())
-
-        self.assertEqual(self.backend.closed, [])
-        self.assertIn("source-outline", self.backend.html[handle.id])
-
-    def test_a_document_that_falls_below_the_threshold_closes_the_panel(self):
-        self.render()
-        handle = self.surface()
-        self.settings = RenderSettings(
-            update_delay_ms=50, enable_toc=True, toc_minimum_headings=9
-        )
-
-        self.render()
-
-        self.assertEqual(self.backend.closed, [handle.id])
+        self.assertIsNotNone(self.stage())
+        self.assertIn('<div class="source-outline', self.html())
 
     def test_turning_the_setting_off_closes_a_panel_the_render_opened(self):
         self.render()
-        handle = self.surface()
+        surface = self.surface()
         self.settings = RenderSettings(update_delay_ms=50, enable_toc=False)
 
         self.controller.settings_changed()
 
-        self.assertEqual(self.backend.closed, [handle.id])
+        self.assertEqual(self.backend.closed, [surface.id])
 
     def test_turning_the_setting_off_keeps_a_panel_the_user_opened(self):
         self.controller.toggle(self.window)
