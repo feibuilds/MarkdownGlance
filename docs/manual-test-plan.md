@@ -100,3 +100,25 @@ are developer commands, kept out of the command palette; run them from the
 Sublime console with `window.run_command("mdglance_run_contract_tests")` and
 `window.run_command("mdglance_run_benchmark")`.
 Attach JSON evidence from `docs/verification/` to the release record.
+
+### Unattended HTTP export check
+
+From the parent checkout, with `Markdown` and `pymdown-extensions` available
+in the Python environment, run:
+
+```bash
+python3 -m MarkdownGlance.tests.browser_export --open-browser \
+  --output MarkdownGlance/docs/verification/http-browser.json
+```
+
+This starts a temporary server on `127.0.0.1`, opens the default browser,
+checks ten image/layout/fragment-link assertions, writes JSON, and stops the
+server. Exit status is 0 on success and 1 on failure or timeout (120 seconds
+by default; override with `--timeout`). Without `--open-browser`, a browser
+agent can open the URL printed to stdout instead.
+
+Only fixed synthetic fixtures are served from memory; there is no directory
+listing or general file access. This checks HTTP rendering with the real
+export renderer. Keep step 13's native export command, file permissions and
+saved-file URL checks separate: an HTTP pass does not certify `file://`
+navigation or image resolution from an unsaved buffer.
