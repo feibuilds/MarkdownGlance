@@ -12,7 +12,7 @@ from ..domain.contracts import (
     ThemeSnapshot,
 )
 from ..domain.paths import HOST
-from .markdown_engine import DEFAULT_ENGINE, MarkdownEngine
+from .markdown_engine import MarkdownEngine, default_engine
 from .model import ElementNode, Node, StructuredDoc, TextNode
 from .stylesheet import root_font_px
 from .tables import budgets, replace_tables
@@ -202,11 +202,11 @@ def _replace_mermaid(
 
 def parse(
     request: RenderRequest,
-    engine: MarkdownEngine = DEFAULT_ENGINE,
+    engine: Optional[MarkdownEngine] = None,
     mermaid_url_builder: Optional[MermaidUrlBuilder] = None,
 ) -> StructuredDoc:
     parser = _TreeParser()
-    parser.feed(engine.convert(request.markdown))
+    parser.feed((engine or default_engine()).convert(request.markdown))
     parser.close()
     _replace_mermaid(parser.roots, request, mermaid_url_builder)
 

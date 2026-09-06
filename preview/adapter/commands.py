@@ -33,8 +33,39 @@ def _owned_session(window):
     )
 
 
+LIBRARIES_MESSAGE = (
+    "MarkdownGlance needs the Package Control librar{plural} {names}, which "
+    "{verb} not installed.\n\n"
+    "Run \"Package Control: Satisfy Libraries\" from the Command Palette, then "
+    "restart Sublime Text. Package Control installs them with the package; a "
+    "manual install has to ask for them."
+)
+
+
+def libraries_missing(report=True):
+    """True, after telling the user what to do, when the parser is absent.
+
+    The libraries are looked up without being imported, so this is cheap and
+    cannot itself fail.
+    """
+    from ..renderer.markdown_engine import missing_libraries
+
+    names = missing_libraries()
+    if names and report:
+        sublime.error_message(
+            LIBRARIES_MESSAGE.format(
+                plural="ies" if len(names) > 1 else "y",
+                names=" and ".join(names),
+                verb="are" if len(names) > 1 else "is",
+            )
+        )
+    return bool(names)
+
+
 class MdglanceOpenSideBySideCommand(sublime_plugin.WindowCommand):
     def run(self):
+        if libraries_missing():
+            return
         container.reconcile(self.window)
         session = _owned_session(self.window)
         if session is not None:
@@ -56,6 +87,8 @@ class MdglanceOpenSideBySideCommand(sublime_plugin.WindowCommand):
 
 class MdglanceToggleFullScreenCommand(sublime_plugin.WindowCommand):
     def run(self):
+        if libraries_missing():
+            return
         container.usecases.toggle_full_screen(self.window)
 
     def is_enabled(self):
@@ -121,7 +154,7 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
         settings = container.settings.get()
         payload = {
             "package": "MarkdownGlance",
-            "version": "0.4.0",
+            "version": "0.4.1",
             "sublime_build": sublime.version(),
             "platform": sublime.platform(),
             "architecture": sublime.arch(),
@@ -164,6 +197,8 @@ class MdglanceOpenInBrowserCommand(sublime_plugin.WindowCommand):
         import tempfile
         import webbrowser
 
+        if libraries_missing():
+            return
         from ..renderer.export import standalone_html
 
         view = self.window.active_view()
@@ -173,15 +208,38 @@ class MdglanceOpenInBrowserCommand(sublime_plugin.WindowCommand):
         name = view.file_name() or ""
         title = os.path.basename(name) or "Untitled"
         page = standalone_html(source, title, os.path.dirname(name))
+        # The page may hold an unsaved buffer, so the directory and the file
+        # are private to the user on hosts that honour modes; the file is
+        # created fresh each time rather than followed if something else has
+        # put an entry under that name.
         directory = os.path.join(tempfile.gettempdir(), "MarkdownGlance")
-        os.makedirs(directory, exist_ok=True)
         stem = os.path.splitext(title)[0]
         digest = hashlib.sha1((name or str(view.id())).encode("utf-8")).hexdigest()[:8]
         target = os.path.join(directory, "{}-{}.html".format(stem, digest))
-        with open(target, "w", encoding="utf-8") as sink:
-            sink.write(page)
-        webbrowser.open(pathlib.Path(target).as_uri())
-        sublime.status_message("MarkdownGlance: opened {} in the browser".format(title))
+        try:
+            os.makedirs(directory, mode=0o700, exist_ok=True)
+            if os.path.lexists(target):
+                os.remove(target)
+            descriptor = os.open(
+                target, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600
+            )
+            with os.fdopen(descriptor, "w", encoding="utf-8") as sink:
+                sink.write(page)
+        except OSError as error:
+            sublime.error_message(
+                "MarkdownGlance could not write the page for the browser.\n\n"
+                "{}\n\n{}".format(target, error)
+            )
+            return
+        if webbrowser.open(pathlib.Path(target).as_uri()):
+            sublime.status_message(
+                "MarkdownGlance: opened {} in the browser".format(title)
+            )
+        else:
+            sublime.error_message(
+                "MarkdownGlance wrote the page but no browser could be started. "
+                "Open it yourself:\n\n{}".format(target)
+            )
 
     def is_enabled(self):
         view = self.window.active_view()

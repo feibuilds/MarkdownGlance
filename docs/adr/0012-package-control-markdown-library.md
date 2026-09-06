@@ -75,3 +75,30 @@ release pairs.
   is CommonMark's rule and stricter than markdown2 was.
 - The salt-size test that guarded a markdown2 performance trap is gone with
   the parser.
+
+## Amendments, 0.4.1
+
+A review of 0.4.0 before it was verified in Sublime Text found four defects,
+each reproduced against both library pairs and fixed:
+
+- **Pygments.** superfences hands every fenced block to Pygments whenever it
+  can be imported, and Pygments is a Package Control library that other
+  packages (MarkdownPreview among them) install into the same host. The
+  highlighted form is `<div class="highlight"><pre>` with no `code` element
+  and no language, so a Mermaid fence was no longer a diagram. The engine now
+  registers `pymdownx.highlight` with `use_pygments: False`, and a test holds
+  that on the live engine. CI environments carry only the declared libraries
+  and could not have seen this.
+- **Libraries are never imported at module level.** `markdown` and `pymdownx`
+  are looked up with `importlib.util.find_spec` at load and on the first
+  command; when absent, a dialog names them and the fix. Before, a manual
+  install without them failed to import at all. The engine is built on first
+  use.
+- **Two preprocessor mistakes.** A `>` line inside a fence was read as a
+  change of quote depth and reset the fence; a heading or rule at an item's
+  content column ended the list. The fence is now checked before the quote
+  prefix, and a rule or heading ends the list only outside every open item.
+- **The browser page** had a `<base>`, which also captured `#id` links. It now
+  resolves relative images and links in the tree, gives headings the preview's
+  slugs (`same-2`, not toc's `same_1`), is written private to the user, and
+  reports a browser that would not start.

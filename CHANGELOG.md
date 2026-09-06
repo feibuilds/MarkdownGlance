@@ -6,6 +6,45 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-09-06
+
+Fixes from a review of 0.4.0 before it was verified in Sublime Text; none of
+them changes the channel entry.
+
+### Fixed
+
+- **A Mermaid fence stopped being a diagram when Pygments was installed.**
+  superfences hands every fenced block to Pygments whenever it can be
+  imported, and Pygments is a Package Control library other packages (for one,
+  MarkdownPreview) install. Highlighted, a block is a `div` with no `code`
+  element and no language class, so the preview saw code where a diagram was
+  asked for. Pygments is now switched off explicitly, and a test holds it off.
+
+- **`Open in Browser` sent `#heading` links to the directory.** The page
+  carried a `<base>` so that relative images resolved beside the source, and
+  a base URL captures fragment links too. Relative images and links are now
+  resolved in the tree and the `<base>` is gone. The page also gives headings
+  the ids the preview does (`same`, `same-2`), not Python-Markdown's
+  (`same_1`), so a link that works in one works in the other.
+
+- **Two list-shape mistakes in the preprocessor.** A code line starting with
+  `>` inside a fence reset the fence and let the lines after it be rewritten
+  as a list; and a heading or rule at an item's content column ended the list
+  instead of belonging to the item. Both now render as they did in 0.3.1.
+
+- **Missing libraries are a message, not a dead package.** The parser was
+  imported at load, so a manual install without the libraries failed to load
+  at all and left a traceback in the console. The libraries are now looked up
+  without being imported; at load, and again on the first command, a dialog
+  says which are missing and to run **Package Control: Satisfy Libraries**
+  and restart. The README's manual steps now satisfy the libraries before the
+  restart rather than after.
+
+- **`Open in Browser` reports a browser that would not start**, with the path
+  of the page it wrote, instead of claiming success; the page and its
+  directory are created private to the user on hosts that honour modes, and
+  the file is replaced rather than followed.
+
 ## [0.4.0] - 2026-09-06
 
 ### Changed
@@ -271,7 +310,8 @@ First public release.
 - `MarkdownGlance: Copy Diagnostics`, which redacts source text, paths, URLs
   and Mermaid payloads.
 
-[Unreleased]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.1...HEAD
+[0.4.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.2.1...0.3.0

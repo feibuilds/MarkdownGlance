@@ -52,8 +52,12 @@ def normalise(lines: List[str]) -> List[str]:
     for line in lines:
         matched = QUOTE.match(line)
         prefix = matched.group(0) if matched else ""
-        rest = line[len(prefix) :]
         key = prefix.replace(" ", "")
+        if fence is not None and key != quote:
+            # Inside a fence a `>` is text. Only the block's own quote prefix
+            # is stripped, and a line without it is still the block's.
+            prefix, key = "", quote
+        rest = line[len(prefix) :]
         if key != quote:
             # A different block-quote depth is a different document.
             quote, stack, fence, in_list, prev_blank = key, [], None, False, True
@@ -77,15 +81,18 @@ def normalise(lines: List[str]) -> List[str]:
             continue
 
         indent = len(rest) - len(rest.lstrip(" "))
-        if HR.match(rest) or HEADING.match(rest):
-            stack, in_list, prev_blank = [], False, False
-            out.append(line)
-            continue
-
         while stack and indent < stack[-1][0]:
             stack.pop()
 
-        marker = MARKER.match(rest)
+        # A rule or a heading at the item's content column is the item's own;
+        # one outside every open item ends the list.
+        block = HR.match(rest) or HEADING.match(rest)
+        if block and not stack:
+            in_list, prev_blank = False, False
+            out.append(line)
+            continue
+
+        marker = None if block else MARKER.match(rest)
         # Four columns past the enclosing content is an indented code block,
         # whatever the line looks like.
         code_col = stack[-1][0] + TAB if stack else TAB

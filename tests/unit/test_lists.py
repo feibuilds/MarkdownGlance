@@ -76,6 +76,24 @@ class ListNormaliserTest(unittest.TestCase):
         # follows the block is separated from it like one after a paragraph.
         self.assertEqual(run("~~~\n```\n- a\n~~~\n- b"), "~~~\n```\n- a\n~~~\n\n- b")
 
+    def test_a_quote_line_inside_a_fence_is_text(self):
+        # `>` at the start of a code line is not a block quote and must not
+        # reset the fence; the list shapes after it are code too.
+        text = "```\n> quoted\nText\n- a\n  - b\n```"
+        self.assertEqual(run(text), text)
+
+    def test_a_quoted_fence_keeps_its_own_prefix(self):
+        text = "> ```\n> - a\n>   - b\n> ```"
+        self.assertEqual(run(text), text)
+
+    def test_a_heading_or_rule_at_the_content_column_belongs_to_the_item(self):
+        self.assertEqual(
+            run("- a\n\n  # Heading\n\n  paragraph\n\n- b"),
+            "- a\n\n    # Heading\n\n    paragraph\n\n- b",
+        )
+        self.assertEqual(run("- a\n\n  ---\n- b"), "- a\n\n    ---\n- b")
+        self.assertEqual(run("- a\n\n  * * *\n- b"), "- a\n\n    * * *\n- b")
+
     def test_block_quote_is_its_own_document(self):
         self.assertEqual(run("> Text\n> - a\n>   - b"), "> Text\n>\n> - a\n>     - b")
         # Leaving the quote resets the list.

@@ -60,8 +60,9 @@ git clone https://github.com/pandadolphin/MarkdownGlance.git MarkdownGlance
 
 Then run **Package Control: Satisfy Libraries** from the Command Palette so
 that the `Markdown` and `pymdown-extensions` libraries the package declares
-are installed, open a Markdown file, and run **MarkdownGlance: Open Preview to
-the Side**.
+are installed, restart Sublime Text, open a Markdown file, and run
+**MarkdownGlance: Open Preview to the Side**. Until the libraries are there
+the package says so in a dialog rather than rendering.
 
 #### If you do not use Git
 
@@ -70,16 +71,17 @@ You can install it by hand instead. No command line is needed.
 1. Go to the [latest release](https://github.com/pandadolphin/MarkdownGlance/releases/latest).
 2. Under **Assets**, click **Source code (zip)** to download the ZIP file.
 3. Unzip it. You get a folder with a version number in its name, like
-   `MarkdownGlance-0.4.0`.
+   `MarkdownGlance-0.4.1`.
 4. Rename that folder to `MarkdownGlance`. The name must be exactly this, or
    Sublime Text will not load the package.
 5. In Sublime Text, open **Preferences → Browse Packages…**. A file manager
    window opens.
 6. Move the `MarkdownGlance` folder into that window.
-7. Restart Sublime Text.
-8. Run **Package Control: Satisfy Libraries** from the Command Palette. It
+7. Run **Package Control: Satisfy Libraries** from the Command Palette. It
    installs the `Markdown` and `pymdown-extensions` libraries the package
-   declares; without them the preview cannot render.
+   declares; without them the preview cannot render, and the package tells
+   you so in a dialog.
+8. Restart Sublime Text.
 
 Now open a Markdown file and run **MarkdownGlance: Open Preview to the Side**
 from the Command Palette.
@@ -98,6 +100,14 @@ with the new release.
 | Preferences: MarkdownGlance Settings | — |
 | Preferences: MarkdownGlance Key Bindings | — |
 | MarkdownGlance: Copy Diagnostics | — |
+| MarkdownGlance: Open in Browser | — |
+
+**Open in Browser** writes the document as a standalone page under the
+temporary directory and opens it in your default browser, for the moment a
+page has to be seen at browser width or handed to someone. It is the parser's
+own output, not the sanitised body the preview shows: raw HTML and scripts in
+the file run in the browser, as they would with any other Markdown-to-browser
+tool. The live preview itself still renders inside Sublime Text.
 
 On macOS, `Cmd` replaces `Ctrl`. The zoom keys apply only while the preview
 itself is focused, and every command is in the command palette with or without

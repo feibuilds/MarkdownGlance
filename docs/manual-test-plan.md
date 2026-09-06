@@ -50,14 +50,28 @@ forward-compatibility testing.
 11. Install beside MarkdownLivePreview. Check directory, module, command,
    settings and resource isolation; document the expected shortcut collision.
 12. Open in Browser: on a saved file with a relative image, a table, a nested
-   list and a fenced block inside a list item, run the command and confirm the
-   page opens, the image resolves, in-page heading links work and the list
-   shapes match the preview. Repeat on an unsaved buffer. Confirm the command
-   is absent from the palette on a non-Markdown view.
-13. Fresh install through Package Control: confirm the `Markdown` and
+   list, a fenced block inside a list item and two headings with the same
+   text linked as `#same` and `#same-2`, run the command and confirm the page
+   opens, the image resolves, both heading links stay on the page and the list
+   shapes match the preview. Put the file in a directory whose name has a
+   space and a `#`. Repeat on an unsaved buffer. Confirm the command is absent
+   from the palette on a non-Markdown view. On Linux, `ls -l` the page under
+   `$TMPDIR/MarkdownGlance` and confirm mode 600.
+13. Fresh install through Package Control (`Add Repository` with this
+   repository while the channel entry is pending): confirm the `Markdown` and
    `pymdown-extensions` libraries are installed with the package and that a
    preview renders without any other step; confirm the install note is the
-   only message shown.
+   only message shown. In the console, `import markdown, pymdownx` and print
+   both `__version__` and `__file__`: 3.2.2 and 8.1.1, from the Python 3.8
+   library directory.
+14. Manual install without the libraries: clone into Packages and start
+   Sublime Text. A dialog must name the two libraries and the fix; the console
+   must show no traceback; the commands stay in the palette and repeat the
+   dialog. Run Satisfy Libraries, restart, confirm the preview renders.
+15. Pygments present: install MarkdownPreview beside this package (it brings
+   the Pygments library), restart, and confirm a Mermaid fence with
+   `enable_mermaid` on is still a diagram and a fenced block still has its
+   language class.
 
 ## Automated prerequisites
 

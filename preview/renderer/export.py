@@ -2,18 +2,21 @@
 
 The preview itself never leaves the editor; this is the one place the parser's
 output is written for something other than minihtml. It is the document as
-the parser produced it, the way MarkdownPreview would render it, with heading
-ids so that in-page links work and a `base` so that relative images resolve
-beside the source file.
+the parser produced it, the way MarkdownPreview would render it, with the
+same heading ids the preview gives (so a link that works in one works in the
+other) and every relative image and link resolved beside the source file.
+
+There is deliberately no `<base>`: a document base URL also captures `#id`
+links, which would then leave the page for the source directory.
 """
 
 import html
 import pathlib
+from typing import Dict, Optional
+from urllib.parse import urljoin, urlsplit
 
-import markdown
-
-from .lists import ListExtension
-from .markdown_engine import MARKDOWN_EXTENSIONS
+from .markdown_engine import build_markdown
+from .structure import _slug
 
 STYLE = """
 :root { color-scheme: light dark; }
@@ -31,18 +34,47 @@ th, td { border: 1px solid rgba(127,127,127,0.4); padding: 0.3rem 0.6rem; }
 img { max-width: 100%; }
 """
 
+HEADINGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
+
+def _is_relative(url: str) -> bool:
+    parsed = urlsplit(url)
+    return bool(url) and not parsed.scheme and not url.startswith(("#", "//"))
+
+
+def _make_extension(base_uri: Optional[str]):
+    from markdown.extensions import Extension
+    from markdown.treeprocessors import Treeprocessor
+
+    class PageProcessor(Treeprocessor):
+        def run(self, root):
+            counts: Dict[str, int] = {}
+            for element in root.iter():
+                if element.tag in HEADINGS:
+                    base = _slug("".join(element.itertext()))
+                    counts[base] = counts.get(base, 0) + 1
+                    count = counts[base]
+                    element.set("id", base if count == 1 else "{}-{}".format(base, count))
+                elif base_uri and element.tag in ("img", "a"):
+                    name = "src" if element.tag == "img" else "href"
+                    value = element.get(name, "")
+                    if _is_relative(value):
+                        element.set(name, urljoin(base_uri, value))
+
+    class PageExtension(Extension):
+        def extendMarkdown(self, md):  # type: ignore[override]
+            # After inline processing (priority 20), so the tree is complete.
+            md.treeprocessors.register(PageProcessor(md), "mdglance_page", 5)
+
+    return PageExtension()
+
 
 def standalone_html(source: str, title: str, base_dir: str) -> str:
-    engine = markdown.Markdown(extensions=[*MARKDOWN_EXTENSIONS, "toc", ListExtension()])
-    body = engine.convert(source)
-    base = (
-        '<base href="{}/">\n'.format(pathlib.Path(base_dir).resolve().as_uri())
-        if base_dir
-        else ""
-    )
+    base_uri = pathlib.Path(base_dir).resolve().as_uri() + "/" if base_dir else None
+    body = build_markdown([_make_extension(base_uri)]).convert(source)
     return (
         "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n"
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        "<title>{title}</title>\n{base}<style>{style}</style>\n</head>\n"
+        "<title>{title}</title>\n<style>{style}</style>\n</head>\n"
         "<body>\n{body}\n</body>\n</html>\n"
-    ).format(title=html.escape(title), base=base, style=STYLE, body=body)
+    ).format(title=html.escape(title), style=STYLE, body=body)

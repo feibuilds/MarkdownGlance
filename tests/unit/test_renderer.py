@@ -260,6 +260,50 @@ class DialectTest(unittest.TestCase):
         self.assertNotIn("highlight", html)
         self.assertNotIn("language-", html)
 
+    def test_pygments_is_never_used_even_when_installed(self):
+        # superfences hands blocks to Pygments whenever it can be imported,
+        # and Pygments is a Package Control library other packages install.
+        # Highlighted, a block is a `div` with no `code` and no language, so
+        # Mermaid fences stop being diagrams.
+        from MarkdownGlance.preview.renderer.markdown_engine import default_engine
+
+        engine = default_engine()._engine
+        highlight = next(
+            extension
+            for extension in engine.registeredExtensions
+            if type(extension).__module__.startswith("pymdownx.highlight")
+        )
+        self.assertIs(highlight.getConfig("use_pygments"), False)
+        self.assertIs(engine.preprocessors["fenced_code_block"].use_pygments, False)
+
+    def test_the_libraries_are_not_imported_at_module_level(self):
+        # A missing library must produce a message, not a package that fails
+        # to load; so nothing under `preview` may import them at the top.
+        import ast
+        import pathlib
+
+        from MarkdownGlance.preview.renderer.markdown_engine import missing_libraries
+
+        self.assertEqual(missing_libraries(), [])
+        root = pathlib.Path(__file__).parents[2] / "preview"
+        for path in root.rglob("*.py"):
+            if path.name == "lists.py":
+                # An extension has to subclass the library's classes; it is
+                # itself imported only inside `build_markdown`.
+                continue
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            for node in tree.body:
+                names = []
+                if isinstance(node, ast.Import):
+                    names = [alias.name for alias in node.names]
+                elif isinstance(node, ast.ImportFrom) and node.module:
+                    names = [node.module]
+                for name in names:
+                    self.assertFalse(
+                        name.split(".")[0] in ("markdown", "pymdownx"),
+                        "{} imports {} at module level".format(path.name, name),
+                    )
+
     def test_the_engine_is_reset_between_documents(self):
         first = self.body("[a]: https://a.test\n\n[a]\n")
         second = self.body("[a]\n")
