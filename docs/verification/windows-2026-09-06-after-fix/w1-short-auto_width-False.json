@@ -1,0 +1,130 @@
+{
+  "auto_width": false,
+  "document": "short.md",
+  "layout": {
+    "cols": [
+      0.0,
+      0.35,
+      0.5,
+      0.825,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "short.md"
+        ],
+        "sheets": 1,
+        "width_px": 536.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: short.md"
+        ],
+        "sheets": 1,
+        "width_px": 542.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "TOC: short.md"
+        ],
+        "sheets": 1,
+        "width_px": 283.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: short.md"
+        ],
+        "sheets": 1,
+        "width_px": 239.0
+      }
+    ],
+    "num_groups": 4,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [
+    "6.9s opened short.md",
+    "9.9s posted w1-short-auto_width-True -> go",
+    "13.2s opened long.md",
+    "16.1s posted w1-long-auto_width-True -> go",
+    "19.4s opened short.md"
+  ],
+  "outline": {
+    "active": 0,
+    "group": 3,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Short"
+      },
+      {
+        "level": 2,
+        "line": 8,
+        "text": "Alpha"
+      },
+      {
+        "level": 2,
+        "line": 15,
+        "text": "Beta"
+      },
+      {
+        "level": 3,
+        "line": 22,
+        "text": "Gamma"
+      },
+      {
+        "level": 3,
+        "line": 28,
+        "text": "Delta"
+      }
+    ],
+    "open": true,
+    "width_px": 239.0,
+    "zoom": 1.0
+  },
+  "phase": "w1-short-auto_width-False",
+  "toc": {
+    "group": 2,
+    "headings": [
+      "Short",
+      "Alpha",
+      "Beta",
+      "Gamma",
+      "Delta"
+    ],
+    "open": true,
+    "width_px": 283.0
+  }
+}

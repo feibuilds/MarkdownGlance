@@ -1,0 +1,12 @@
+{
+  "log": [
+    "5.8s posted i0-start -> go",
+    "6.7s opened images.md",
+    "11.2s posted i1-http-allowed -> go",
+    "11.7s allow_insecure_remote_images off",
+    "12.9s posted i2-http-blocked -> go",
+    "13.3s suite images finished"
+  ],
+  "phase": "z-finished",
+  "suite": "images"
+}

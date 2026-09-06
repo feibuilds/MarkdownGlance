@@ -1,0 +1,88 @@
+{
+  "layout": {
+    "cols": [
+      0.0,
+      0.361194,
+      0.5,
+      0.877266,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "short.md"
+        ],
+        "width_px": 465.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: short.md"
+        ],
+        "width_px": 536.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "TOC: short.md"
+        ],
+        "width_px": 163.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: short.md"
+        ],
+        "width_px": 185.0
+      }
+    ],
+    "num_groups": 4
+  },
+  "panels": {
+    "outline": {
+      "group": 3,
+      "headings": [
+        "Short",
+        "Alpha",
+        "Beta",
+        "Gamma",
+        "Delta"
+      ],
+      "width_px": 185.0
+    },
+    "toc": {
+      "group": 2,
+      "width_px": 163.0
+    }
+  },
+  "source_group": 0,
+  "wanted": {
+    "outline": 186,
+    "toc": 161
+  }
+}
