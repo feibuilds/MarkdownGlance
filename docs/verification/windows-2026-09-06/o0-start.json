@@ -1,0 +1,39 @@
+{
+  "fixtures": {
+    "kinds.md": true,
+    "long.md": true,
+    "none.md": true,
+    "second.md": true,
+    "short.md": true
+  },
+  "layout": {
+    "cols": [
+      0.0,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [],
+        "sheets": 0,
+        "width_px": 1696.0
+      }
+    ],
+    "num_groups": 1,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [],
+  "phase": "o0-start",
+  "python": "3.8.12 (heads/openssl-dirty:2b6e738, Nov 30 2022, 15:57:42) [MSC v.1900 64 bit (AMD64)]",
+  "sublime_version": "4200",
+  "windows": "Windows-10-10.0.26200"
+}

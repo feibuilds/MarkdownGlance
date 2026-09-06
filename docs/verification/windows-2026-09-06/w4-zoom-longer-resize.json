@@ -1,0 +1,249 @@
+{
+  "after_resize": {
+    "active": 0,
+    "group": 3,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Short"
+      },
+      {
+        "level": 2,
+        "line": 8,
+        "text": "Alpha"
+      },
+      {
+        "level": 2,
+        "line": 15,
+        "text": "Beta"
+      },
+      {
+        "level": 3,
+        "line": 22,
+        "text": "Gamma"
+      },
+      {
+        "level": 3,
+        "line": 28,
+        "text": "Delta"
+      },
+      {
+        "level": 2,
+        "line": 37,
+        "text": "A heading long enough that the panel has to grow to fit it"
+      },
+      {
+        "level": 2,
+        "line": 40,
+        "text": "After the resize"
+      }
+    ],
+    "open": true,
+    "width_px": 14.0,
+    "zoom": 1.0
+  },
+  "base": {
+    "active": 0,
+    "group": 3,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Short"
+      },
+      {
+        "level": 2,
+        "line": 8,
+        "text": "Alpha"
+      },
+      {
+        "level": 2,
+        "line": 15,
+        "text": "Beta"
+      },
+      {
+        "level": 3,
+        "line": 22,
+        "text": "Gamma"
+      },
+      {
+        "level": 3,
+        "line": 28,
+        "text": "Delta"
+      }
+    ],
+    "open": true,
+    "width_px": 30.0,
+    "zoom": 1.0
+  },
+  "layout": {
+    "cols": [
+      0.0,
+      0.5,
+      0.904757,
+      0.971427,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "short.md"
+        ],
+        "sheets": 1,
+        "width_px": 500.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: short.md"
+        ],
+        "sheets": 1,
+        "width_px": 440.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "TOC: short.md"
+        ],
+        "sheets": 1,
+        "width_px": 56.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: short.md"
+        ],
+        "sheets": 1,
+        "width_px": 14.0
+      }
+    ],
+    "num_groups": 4,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [
+    "6.9s opened short.md",
+    "9.8s posted w1-short-auto_width-True -> go",
+    "13.2s opened long.md",
+    "16.1s posted w1-long-auto_width-True -> go",
+    "19.4s opened short.md",
+    "22.4s posted w1-short-auto_width-False -> go",
+    "25.7s opened long.md",
+    "28.6s posted w1-long-auto_width-False -> go",
+    "31.9s opened long.md",
+    "38.6s posted w2-drag-wins -> go",
+    "44.0s posted w3-reopen-refits -> go",
+    "47.3s opened short.md"
+  ],
+  "longer_heading": {
+    "active": 0,
+    "group": 3,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Short"
+      },
+      {
+        "level": 2,
+        "line": 8,
+        "text": "Alpha"
+      },
+      {
+        "level": 2,
+        "line": 15,
+        "text": "Beta"
+      },
+      {
+        "level": 3,
+        "line": 22,
+        "text": "Gamma"
+      },
+      {
+        "level": 3,
+        "line": 28,
+        "text": "Delta"
+      },
+      {
+        "level": 2,
+        "line": 37,
+        "text": "A heading long enough that the panel has to grow to fit it"
+      }
+    ],
+    "open": true,
+    "width_px": 30.0,
+    "zoom": 1.0
+  },
+  "phase": "w4-zoom-longer-resize",
+  "resize": {
+    "done": true,
+    "hwnd": 1180340,
+    "ok": true,
+    "requested": [
+      1280,
+      860
+    ]
+  },
+  "zoomed": {
+    "active": 0,
+    "group": 3,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Short"
+      },
+      {
+        "level": 2,
+        "line": 8,
+        "text": "Alpha"
+      },
+      {
+        "level": 2,
+        "line": 15,
+        "text": "Beta"
+      },
+      {
+        "level": 3,
+        "line": 22,
+        "text": "Gamma"
+      },
+      {
+        "level": 3,
+        "line": 28,
+        "text": "Delta"
+      }
+    ],
+    "open": true,
+    "width_px": 30.0,
+    "zoom": 1.5
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "after_typing": {
+    "active": 3,
+    "group": 2,
+    "headings": [
+      {
+        "level": 1,
+        "line": 5,
+        "text": "ATX one"
+      },
+      {
+        "level": 2,
+        "line": 9,
+        "text": "Setext two"
+      },
+      {
+        "level": 2,
+        "line": 20,
+        "text": "ATX three"
+      },
+      {
+        "level": 1,
+        "line": 26,
+        "text": "Setext one"
+      },
+      {
+        "level": 2,
+        "line": 32,
+        "text": "Typed while open"
+      }
+    ],
+    "open": true,
+    "width_px": 240.0,
+    "zoom": 1.0
+  },
+  "log": [
+    "5.3s posted o0-start -> go",
+    "6.2s opened kinds.md",
+    "7.0s posted o1-no-preview -> go",
+    "11.1s posted o2-with-preview -> go",
+    "12.4s posted o3-heading-kinds -> go"
+  ],
+  "moves": [
+    {
+      "active": 0,
+      "expected": 0,
+      "line": 5,
+      "text": "ATX one"
+    },
+    {
+      "active": 1,
+      "expected": 1,
+      "line": 9,
+      "text": "Setext two"
+    },
+    {
+      "active": 2,
+      "expected": 2,
+      "line": 20,
+      "text": "ATX three"
+    },
+    {
+      "active": 3,
+      "expected": 3,
+      "line": 26,
+      "text": "Setext one"
+    }
+  ],
+  "phase": "o4-caret-and-typing",
+  "typed_present": true
+}

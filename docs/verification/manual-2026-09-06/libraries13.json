@@ -1,0 +1,15 @@
+{
+  "python": "3.8.12 (default, Mar 28 2024, 15:38:26) \n[Clang 15.0.6 ]",
+  "sublime": "4200",
+  "markdown": [
+    "3.2.2",
+    "/tmp/mdglance-manual-a576p_jy/sublime/Data/Lib/python38/markdown/__init__.py"
+  ],
+  "pymdownx": [
+    "8.1.1",
+    "/tmp/mdglance-manual-a576p_jy/sublime/Data/Lib/python38/pymdownx/__init__.py"
+  ],
+  "messages": [
+    "Package Control Messages\n========================\n\n\nMarkdownGlance\n--------------\n\n  MarkdownGlance previews Markdown in the same Sublime Text window.\n  \n  Open a Markdown file and run \"MarkdownGlance: Open Preview to the Side\".\n  Mermaid rendering is off by default; enabling it sends diagram source to the\n  configured Mermaid server. Remote images are fetched under size and timeout\n  limits. Details: https://github.com/pandadolphin/MarkdownGlance#readme\n"
+  ]
+}

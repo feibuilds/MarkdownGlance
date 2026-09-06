@@ -1,0 +1,39 @@
+{
+  "log": [
+    "5.3s posted o0-start -> go",
+    "6.2s opened kinds.md",
+    "7.0s posted o1-no-preview -> go",
+    "11.1s posted o2-with-preview -> go"
+  ],
+  "outline": {
+    "active": null,
+    "group": 2,
+    "headings": [
+      {
+        "level": 1,
+        "line": 5,
+        "text": "ATX one"
+      },
+      {
+        "level": 2,
+        "line": 9,
+        "text": "Setext two"
+      },
+      {
+        "level": 2,
+        "line": 20,
+        "text": "ATX three"
+      },
+      {
+        "level": 1,
+        "line": 26,
+        "text": "Setext one"
+      }
+    ],
+    "open": true,
+    "width_px": 192.0,
+    "zoom": 1.0
+  },
+  "phase": "o3-heading-kinds",
+  "source": "---\ntitle: Front matter\nsubtitle: this closing rule must not read as a setext underline\n---\n\n# ATX one\n\nBody text under the first heading.\n\nSetext two\n----------\n\nMore body, so the setext heading above has something after it.\n\n```\n# Not a heading, it is inside a fence\nSetext inside a fence\n---------------------\n```\n\n## ATX three ##\n\nThe closing hashes above must be trimmed from the entry.\n\n#hashtag is not a heading, and neither is this paragraph.\n\nSetext one\n==========\n\nLast paragraph.\n"
+}

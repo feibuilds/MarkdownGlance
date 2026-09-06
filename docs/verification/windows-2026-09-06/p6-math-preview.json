@@ -1,0 +1,57 @@
+{
+  "assets": [
+    {
+      "colour": "216,222,233",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:6fcb9c3e"
+    },
+    {
+      "colour": "216,222,233",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:0a473631"
+    },
+    {
+      "colour": "216,222,233",
+      "display": true,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:f56bd749"
+    },
+    {
+      "colour": "216,222,233",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:41fede69"
+    }
+  ],
+  "body_html": "written to p6-math-preview-body.html (915 bytes)",
+  "code_math": 0,
+  "generation": 5,
+  "images": 3,
+  "inline_placeholders": 1,
+  "loading": 0,
+  "log": [
+    "9.3s posted p0-start -> go",
+    "0.7s export fixture open",
+    "17.9s posted p1-export-saved -> go",
+    "0.3s app theme light=True",
+    "16.5s posted p2-export-other-theme -> go",
+    "10.5s posted p3-export-plain -> go",
+    "0.3s unsaved buffer ready",
+    "14.5s posted p4-export-unsaved -> go",
+    "1.7s posted p5-non-markdown -> go",
+    "2.5s math preview opened"
+  ],
+  "pending": [],
+  "phase": "p6-math-preview",
+  "settings": {
+    "enable_math": true
+  },
+  "theme": {
+    "background": "#303841",
+    "foreground": "#d8dee9",
+    "is_dark": true
+  },
+  "unavailable": 1
+}

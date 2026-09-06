@@ -1,0 +1,275 @@
+{
+  "after_drag": {
+    "cols": [
+      0.0,
+      0.5,
+      0.825,
+      0.8275,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "long.md"
+        ],
+        "sheets": 1,
+        "width_px": 795.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 542.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "TOC: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 0.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 280.0
+      }
+    ],
+    "num_groups": 4,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "after_repaint": {
+    "cols": [
+      0.0,
+      0.5,
+      0.825,
+      0.8275,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "long.md"
+        ],
+        "sheets": 1,
+        "width_px": 795.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 542.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "TOC: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 0.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 280.0
+      }
+    ],
+    "num_groups": 4,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "dragged_to": 0.8275,
+  "fitted": {
+    "cols": [
+      0.0,
+      0.5,
+      0.825,
+      0.9475,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "long.md"
+        ],
+        "sheets": 1,
+        "width_px": 795.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 542.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "TOC: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 192.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: long.md"
+        ],
+        "sheets": 1,
+        "width_px": 72.0
+      }
+    ],
+    "num_groups": 4,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [
+    "6.9s opened short.md",
+    "9.8s posted w1-short-auto_width-True -> go",
+    "13.2s opened long.md",
+    "16.1s posted w1-long-auto_width-True -> go",
+    "19.4s opened short.md",
+    "22.4s posted w1-short-auto_width-False -> go",
+    "25.7s opened long.md",
+    "28.6s posted w1-long-auto_width-False -> go",
+    "31.9s opened long.md"
+  ],
+  "outline": {
+    "active": 0,
+    "group": 3,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Long"
+      },
+      {
+        "level": 2,
+        "line": 7,
+        "text": "Alpha"
+      },
+      {
+        "level": 2,
+        "line": 13,
+        "text": "A deliberately long heading that the panel has to be wide enough to show on one line"
+      },
+      {
+        "level": 3,
+        "line": 19,
+        "text": "Gamma"
+      },
+      {
+        "level": 3,
+        "line": 24,
+        "text": "Delta"
+      },
+      {
+        "level": 2,
+        "line": 28,
+        "text": "Padding"
+      },
+      {
+        "level": 2,
+        "line": 39,
+        "text": "A heading typed after the drag"
+      }
+    ],
+    "open": true,
+    "width_px": 280.0,
+    "zoom": 1.0
+  },
+  "phase": "w2-drag-wins"
+}

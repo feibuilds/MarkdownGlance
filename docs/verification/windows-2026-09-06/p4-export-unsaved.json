@@ -1,0 +1,41 @@
+{
+  "app_theme_light": 1,
+  "listing": {
+    "dir_mode": "0o40777",
+    "directory": "C:\\Users\\tester\\AppData\\Local\\Temp\\MarkdownGlance",
+    "entries": [
+      {
+        "bytes": 3560,
+        "mode": "0o100666",
+        "mtime": 1788719419.9382794,
+        "name": "Untitled-9e6a55b6.html"
+      },
+      {
+        "bytes": 3625,
+        "mode": "0o100666",
+        "mtime": 1788719393.9183517,
+        "name": "export-check-28ee2d69.html"
+      },
+      {
+        "bytes": 1368,
+        "mode": "0o100666",
+        "mtime": 1788719408.6739962,
+        "name": "plain-export-d3774ac6.html"
+      }
+    ],
+    "exists": true
+  },
+  "log": [
+    "9.3s posted p0-start -> go",
+    "0.7s export fixture open",
+    "17.9s posted p1-export-saved -> go",
+    "0.3s app theme light=True",
+    "16.5s posted p2-export-other-theme -> go",
+    "10.5s posted p3-export-plain -> go",
+    "0.3s unsaved buffer ready"
+  ],
+  "page": "written to p4-export-unsaved.html (3457 bytes)",
+  "phase": "p4-export-unsaved",
+  "settle_s": 10.0,
+  "target": "C:\\Users\\tester\\AppData\\Local\\Temp\\MarkdownGlance\\Untitled-9e6a55b6.html"
+}

@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "name": "MarkdownPreview",
+    "version": "2.8.2",
+    "sublime_text": "3000 - 4200",
+    "platforms": [
+      "*"
+    ],
+    "python_version": "3.3",
+    "url": "https://facelessuser.github.io/MarkdownPreview/",
+    "issues": "https://github.com/facelessuser/MarkdownPreview/issues",
+    "author": [
+      "facelessuser"
+    ],
+    "description": "Markdown preview and build plugin for Sublime Text",
+    "labels": [
+      "markdown",
+      "preview",
+      "build system"
+    ],
+    "libraries": [],
+    "install_time": 1788661836.5665355,
+    "release_time": "2026-03-21 03:47:38"
+  },
+  "python_version": "3.3",
+  "dependencies": {
+    "*": {
+      ">=3000": [
+        "pygments",
+        "pyyaml",
+        "python-markdown",
+        "pymdownx"
+      ]
+    }
+  }
+}

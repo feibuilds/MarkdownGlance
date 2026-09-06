@@ -1,0 +1,30 @@
+{
+  "app_theme_light": 0,
+  "desktop": "C:\\Users\\tester\\Desktop",
+  "fixtures_present": {
+    "C:\\Users\\tester\\Desktop\\fixture space #hash\\export-check.md": true,
+    "C:\\Users\\tester\\Desktop\\fixture space #hash\\plain-export.md": true,
+    "C:\\Users\\tester\\Desktop\\fixture space #hash\\plain.txt": true,
+    "C:\\Users\\tester\\Desktop\\math.md": true
+  },
+  "log": [],
+  "network": [
+    {
+      "bytes": 2048,
+      "status": 200,
+      "url": "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
+    },
+    {
+      "bytes": 218,
+      "status": 200,
+      "url": "https://latex.codecogs.com/png.latex?a"
+    }
+  ],
+  "phase": "p0-start",
+  "python": "3.8.12 (heads/openssl-dirty:2b6e738, Nov 30 2022, 15:57:42) [MSC v.1900 64 bit (AMD64)]",
+  "sublime_arch": "x64",
+  "sublime_platform": "windows",
+  "sublime_version": "4200",
+  "tempdir": "C:\\Users\\tester\\AppData\\Local\\Temp",
+  "windows": "Windows-10-10.0.26200"
+}

@@ -1,0 +1,68 @@
+{
+  "cases": [
+    [
+      "relative",
+      "pixel.png"
+    ],
+    [
+      "absolute-drive",
+      "C:/Users/tester/Desktop/images/pixel.png"
+    ],
+    [
+      "absolute-rooted",
+      "/Users/tester/Desktop/images/pixel.png"
+    ],
+    [
+      "absolute-file-url",
+      "file:///C:/Users/tester/Desktop/images/pixel.png"
+    ],
+    [
+      "missing",
+      "nope.png"
+    ],
+    [
+      "oversized-local",
+      "huge-header.png"
+    ],
+    [
+      "extensionless",
+      "pixel-noext"
+    ],
+    [
+      "remote-https",
+      "https://latex.codecogs.com/png.latex?a"
+    ],
+    [
+      "remote-redirect",
+      "http://10.0.2.2:8100/redirect.png"
+    ],
+    [
+      "remote-timeout",
+      "http://10.0.2.2:8100/slow.png"
+    ],
+    [
+      "remote-invalid",
+      "http://10.0.2.2:8100/notimage.png"
+    ],
+    [
+      "remote-oversized",
+      "http://10.0.2.2:8100/huge.png"
+    ]
+  ],
+  "fixture": "C:\\Users\\tester\\Desktop\\images\\images.md",
+  "https_probe": {
+    "bytes": 218,
+    "status": 200,
+    "url": "https://latex.codecogs.com/png.latex?a"
+  },
+  "imgserver": {
+    "bytes": 16,
+    "status": 200,
+    "url": "http://10.0.2.2:8100/ping"
+  },
+  "log": [],
+  "phase": "i0-start",
+  "python": "3.8.12 (heads/openssl-dirty:2b6e738, Nov 30 2022, 15:57:42) [MSC v.1900 64 bit (AMD64)]",
+  "sublime_version": "4200",
+  "windows": "Windows-10-10.0.26200"
+}

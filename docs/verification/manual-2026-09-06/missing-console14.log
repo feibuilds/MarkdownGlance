@@ -1,0 +1,64 @@
+startup, version: 4200 linux x64 channel: stable
+executable: /tmp/mdglance-manual-a576p_jy/missing-replay/sublime_text
+application: /tmp/mdglance-manual-a576p_jy/missing-replay
+working dir: /home/fruit/dev/MarkdownGlance
+packages path: /tmp/mdglance-manual-a576p_jy/missing-replay/Data/Packages
+state path: /tmp/mdglance-manual-a576p_jy/missing-replay/Data/Local
+zip path: /tmp/mdglance-manual-a576p_jy/missing-replay/Packages
+zip path: /tmp/mdglance-manual-a576p_jy/missing-replay/Data/Installed Packages
+ignored_packages: ["Vintage"]
+generating syntax summary
+generating meta info summary
+pre session restore time: 1.28416
+startup time: 1.38243
+first paint time: 1.40549
+reloading plugin Default.arithmetic
+reloading plugin Default.auto_indent_tag
+reloading plugin Default.block
+reloading plugin Default.colors
+reloading plugin Default.comment
+reloading plugin Default.convert_color_scheme
+reloading plugin Default.convert_syntax
+reloading plugin Default.copy_path
+reloading plugin Default.echo
+reloading plugin Default.exec
+reloading plugin Default.fold
+reloading plugin Default.goto_line
+reloading plugin Default.history_list
+reloading plugin Default.html_print
+reloading plugin Default.indentation
+reloading plugin Default.install_package_control
+reloading plugin Default.keymap
+reloading plugin Default.kill_ring
+reloading plugin Default.mark
+reloading plugin Default.new_templates
+reloading plugin Default.open_context_url
+reloading plugin Default.open_in_browser
+reloading plugin Default.pane
+reloading plugin Default.paragraph
+reloading plugin Default.paste_from_history
+reloading plugin Default.profile
+reloading plugin Default.quick_panel
+reloading plugin Default.rename
+reloading plugin Default.run_syntax_tests
+reloading plugin Default.save_on_focus_lost
+reloading plugin Default.scroll
+reloading plugin Default.set_unsaved_view_name
+reloading plugin Default.settings
+reloading plugin Default.show_scope_name
+reloading plugin Default.side_bar
+reloading plugin Default.sort
+reloading plugin Default.switch_file
+reloading plugin Default.symbol
+reloading plugin Default.transform
+reloading plugin Default.transpose
+reloading plugin Default.ui
+reloading plugin CSS.css_completions
+reloading plugin Diff.diff
+reloading plugin HTML.encode_html_entities
+reloading plugin HTML.html_completions
+reloading plugin MarkdownGlance.plugin
+plugins loaded
+error: MarkdownGlance needs the Package Control libraries Markdown and pymdown-extensions, which are not installed.
+
+Run "Package Control: Satisfy Libraries" from the Command Palette, then restart Sublime Text. Package Control installs them with the package; a manual install has to ask for them.

@@ -1,0 +1,426 @@
+{
+  "total": 70,
+  "failed": 0,
+  "results": [
+    {
+      "group": "p1 saved file",
+      "claim": "image src found",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "image resolved beside the source",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "space and hash encoded in the URL",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "no drive letter left bare",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "no <base> element",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "heading id \"same\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "heading id \"same-2\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "link to #same",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "link to #same-2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "table rows",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "right-aligned cell",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "nested list",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "fenced python inside a list item",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "mermaid fence became a diagram element",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "mermaid arrows survive as entities",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "mermaid script pinned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "katex stylesheet pinned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "integrity on every cdn tag",
+      "pass": true,
+      "detail": "4"
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "arithmatex inline formula",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "arithmatex display formula",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "prose dollars left alone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "image src found",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "image resolved beside the source",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "space and hash encoded in the URL",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "no drive letter left bare",
+      "pass": true,
+      "detail": "file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png"
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "no <base> element",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "heading id \"same\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "heading id \"same-2\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "link to #same",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "link to #same-2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "table rows",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "right-aligned cell",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "nested list",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "fenced python inside a list item",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "mermaid fence became a diagram element",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "mermaid arrows survive as entities",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "mermaid script pinned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "katex stylesheet pinned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "integrity on every cdn tag",
+      "pass": true,
+      "detail": "4"
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "arithmatex inline formula",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "arithmatex display formula",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p2 other system theme",
+      "claim": "prose dollars left alone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p3 page with neither",
+      "claim": "title is the plain fixture",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p3 page with neither",
+      "claim": "no katex",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p3 page with neither",
+      "claim": "no mermaid",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p3 page with neither",
+      "claim": "no render script",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p3 page with neither",
+      "claim": "no integrity tags",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p3 page with neither",
+      "claim": "the fence still rendered",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "image src found",
+      "pass": true,
+      "detail": "pixel.png"
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "unsaved keeps the relative src",
+      "pass": true,
+      "detail": "pixel.png"
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "no <base> element",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "heading id \"same\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "heading id \"same-2\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "link to #same",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "link to #same-2",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "table rows",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "right-aligned cell",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "nested list",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "fenced python inside a list item",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "mermaid fence became a diagram element",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "mermaid arrows survive as entities",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "mermaid script pinned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "katex stylesheet pinned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "integrity on every cdn tag",
+      "pass": true,
+      "detail": "4"
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "arithmatex inline formula",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "arithmatex display formula",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "prose dollars left alone",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 vs p2",
+      "claim": "the same page served both themes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p1 saved file",
+      "claim": "title is the file name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "p4 unsaved buffer",
+      "claim": "title is Untitled",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

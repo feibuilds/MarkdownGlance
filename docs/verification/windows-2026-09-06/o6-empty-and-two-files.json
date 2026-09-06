@@ -1,0 +1,170 @@
+{
+  "kinds": {
+    "active": 4,
+    "group": 2,
+    "headings": [
+      {
+        "level": 1,
+        "line": 5,
+        "text": "ATX one"
+      },
+      {
+        "level": 2,
+        "line": 9,
+        "text": "Setext two"
+      },
+      {
+        "level": 2,
+        "line": 20,
+        "text": "ATX three"
+      },
+      {
+        "level": 1,
+        "line": 26,
+        "text": "Setext one"
+      },
+      {
+        "level": 2,
+        "line": 32,
+        "text": "Typed while open"
+      }
+    ],
+    "open": true,
+    "width_px": 161.0,
+    "zoom": 1.0
+  },
+  "layout": {
+    "cols": [
+      0.0,
+      0.5,
+      0.85,
+      0.955,
+      0.9865,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "kinds.md",
+          "none.md"
+        ],
+        "sheets": 2,
+        "width_px": 795.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 585.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "Outline: kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 161.0
+      },
+      {
+        "cell": [
+          3,
+          0,
+          4,
+          1
+        ],
+        "group": 3,
+        "names": [
+          "Outline: none.md",
+          "second.md"
+        ],
+        "sheets": 2,
+        "width_px": 0.0
+      },
+      {
+        "cell": [
+          4,
+          0,
+          5,
+          1
+        ],
+        "group": 4,
+        "names": [
+          "Outline: second.md"
+        ],
+        "sheets": 1,
+        "width_px": 4.0
+      }
+    ],
+    "num_groups": 5,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [
+    "5.3s posted o0-start -> go",
+    "6.2s opened kinds.md",
+    "7.0s posted o1-no-preview -> go",
+    "11.1s posted o2-with-preview -> go",
+    "12.4s posted o3-heading-kinds -> go",
+    "17.3s posted o4-caret-and-typing -> go",
+    "21.1s posted o5-clicks -> go",
+    "21.9s opened none.md",
+    "24.4s opened second.md"
+  ],
+  "none": {
+    "active": null,
+    "group": 3,
+    "headings": [],
+    "open": true,
+    "width_px": 0.0,
+    "zoom": 1.0
+  },
+  "phase": "o6-empty-and-two-files",
+  "second": {
+    "active": 0,
+    "group": 4,
+    "headings": [
+      {
+        "level": 1,
+        "line": 0,
+        "text": "Second file"
+      },
+      {
+        "level": 2,
+        "line": 5,
+        "text": "Second alpha"
+      },
+      {
+        "level": 2,
+        "line": 9,
+        "text": "Second beta"
+      }
+    ],
+    "open": true,
+    "width_px": 4.0,
+    "zoom": 1.0
+  },
+  "sessions_in_window": 3
+}

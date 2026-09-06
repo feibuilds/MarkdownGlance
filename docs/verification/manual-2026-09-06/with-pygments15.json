@@ -1,0 +1,19 @@
+{
+  "python": "3.8.12 (default, Mar 28 2024, 15:38:26) \n[Clang 15.0.6 ]",
+  "markdown": [
+    "3.2.2",
+    "/tmp/mdglance-manual-a576p_jy/manual-sublime/Data/Lib/python38/markdown/__init__.py"
+  ],
+  "pymdownx": [
+    "8.1.1",
+    "/tmp/mdglance-manual-a576p_jy/manual-sublime/Data/Lib/python38/pymdownx/__init__.py"
+  ],
+  "pygments_available": true,
+  "parser_html": "<h1>Coexistence check</h1>\n<pre class=\"highlight\"><code class=\"language-mermaid\">flowchart LR\n    A[MarkdownGlance] --&gt; B[Mermaid diagram]</code></pre>\n\n<pre class=\"highlight\"><code class=\"language-python\">print(\"language class survives\")</code></pre>",
+  "language_python": true,
+  "language_mermaid": true,
+  "pygments": [
+    "2.19.2",
+    "/tmp/mdglance-manual-a576p_jy/manual-sublime/Data/Lib/python38/pygments/__init__.py"
+  ]
+}

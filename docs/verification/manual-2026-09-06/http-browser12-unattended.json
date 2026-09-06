@@ -1,0 +1,57 @@
+{
+  "status": "pass",
+  "checks": [
+    {
+      "name": "relative image decoded at 160 x 64",
+      "passed": true
+    },
+    {
+      "name": "image uses encoded space and hash directory",
+      "passed": true
+    },
+    {
+      "name": "no base element",
+      "passed": true
+    },
+    {
+      "name": "table has header and two data rows",
+      "passed": true
+    },
+    {
+      "name": "nested list has two children",
+      "passed": true
+    },
+    {
+      "name": "nested list is visually indented",
+      "passed": true
+    },
+    {
+      "name": "fenced Python block stays inside list item",
+      "passed": true
+    },
+    {
+      "name": "duplicate headings have distinct IDs",
+      "passed": true
+    },
+    {
+      "name": "click #same stays on page and selects heading",
+      "passed": true
+    },
+    {
+      "name": "click #same-2 stays on page and selects heading",
+      "passed": true
+    }
+  ],
+  "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+  "url": "http://127.0.0.1:38307/fixture%20space%20%23hash/preview.html",
+  "transport": "http",
+  "synthetic_fixture": true,
+  "file_navigation_tested": false,
+  "python": "3.10.12",
+  "requests": [
+    "/",
+    "/fixture space #hash/preview.html",
+    "/fixture space #hash/pixel.png"
+  ],
+  "rendered_html_sha256": "0a763e7c207f0e90a6eb4d6eb43429ec9712c1e259cfb8e1a61972b8bb29d7b7"
+}

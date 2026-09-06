@@ -1,0 +1,26 @@
+{
+  "app_theme_light": 1,
+  "listing": {
+    "dir_mode": "0o40777",
+    "directory": "C:\\Users\\tester\\AppData\\Local\\Temp\\MarkdownGlance",
+    "entries": [
+      {
+        "bytes": 3625,
+        "mode": "0o100666",
+        "mtime": 1788719393.9183517,
+        "name": "export-check-28ee2d69.html"
+      }
+    ],
+    "exists": true
+  },
+  "log": [
+    "9.3s posted p0-start -> go",
+    "0.7s export fixture open",
+    "17.9s posted p1-export-saved -> go",
+    "0.3s app theme light=True"
+  ],
+  "page": "written to p2-export-other-theme.html (3522 bytes)",
+  "phase": "p2-export-other-theme",
+  "settle_s": 12.0,
+  "target": "C:\\Users\\tester\\AppData\\Local\\Temp\\MarkdownGlance\\export-check-28ee2d69.html"
+}

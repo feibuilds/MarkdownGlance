@@ -1,0 +1,20 @@
+{
+  "log": [
+    "6.9s opened short.md",
+    "9.8s posted w1-short-auto_width-True -> go",
+    "13.2s opened long.md",
+    "16.1s posted w1-long-auto_width-True -> go",
+    "19.4s opened short.md",
+    "22.4s posted w1-short-auto_width-False -> go",
+    "25.7s opened long.md",
+    "28.6s posted w1-long-auto_width-False -> go",
+    "31.9s opened long.md",
+    "38.6s posted w2-drag-wins -> go",
+    "44.0s posted w3-reopen-refits -> go",
+    "47.3s opened short.md",
+    "63.1s posted w4-zoom-longer-resize -> go",
+    "63.5s suite widths finished"
+  ],
+  "phase": "z-finished",
+  "suite": "widths"
+}

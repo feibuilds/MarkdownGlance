@@ -1,0 +1,106 @@
+{
+  "layout_after": {
+    "cols": [
+      0.0,
+      0.879009,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 1462.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Outline: kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 191.0
+      }
+    ],
+    "num_groups": 2,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "layout_before": {
+    "cols": [
+      0.0,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 1696.0
+      }
+    ],
+    "num_groups": 1,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [
+    "5.3s posted o0-start -> go",
+    "6.2s opened kinds.md"
+  ],
+  "outline": {
+    "active": null,
+    "group": 1,
+    "headings": [
+      {
+        "level": 1,
+        "line": 5,
+        "text": "ATX one"
+      },
+      {
+        "level": 2,
+        "line": 9,
+        "text": "Setext two"
+      },
+      {
+        "level": 2,
+        "line": 20,
+        "text": "ATX three"
+      },
+      {
+        "level": 1,
+        "line": 26,
+        "text": "Setext one"
+      }
+    ],
+    "open": true,
+    "width_px": 191.0,
+    "zoom": 1.0
+  },
+  "phase": "o1-no-preview",
+  "source_group": 0
+}

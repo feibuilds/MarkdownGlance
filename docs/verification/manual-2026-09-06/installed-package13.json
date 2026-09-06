@@ -1,0 +1,22 @@
+{
+  "checkout": "4597f585545c56f46e61d1cdb95e23573d2e056b",
+  "metadata": {
+    "name": "MarkdownGlance",
+    "version": "2026.09.06.02.00.02",
+    "sublime_text": "*",
+    "platforms": [
+      "*"
+    ],
+    "python_version": "3.8",
+    "url": "https://github.com/pandadolphin/MarkdownGlance",
+    "issues": "https://github.com/pandadolphin/MarkdownGlance/issues",
+    "author": "pandadolphin",
+    "description": "Live Markdown preview for Sublime Text 4, rendered in an editor group of the same window \u2014 no browser, no WebView, no external process.",
+    "labels": [],
+    "libraries": [],
+    "install_time": 1788661334.2799156,
+    "release_time": "2026-09-06 02:00:02"
+  },
+  "matching_tracked_files": 66,
+  "differing_tracked_files": []
+}

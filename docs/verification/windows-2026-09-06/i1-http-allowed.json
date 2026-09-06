@@ -1,0 +1,136 @@
+{
+  "allow_insecure_remote_images": true,
+  "body_html": "written to i1-http-allowed-body.html (1430 bytes)",
+  "log": [
+    "5.9s posted i0-start -> go",
+    "6.7s opened images.md"
+  ],
+  "phase": "i1-http-allowed",
+  "preview": {
+    "assets": [
+      {
+        "colour": null,
+        "display": false,
+        "host": "C:\\Users\\tester\\Desktop\\images\\pixel.png",
+        "label": "local_image:pixel.png:0f084c4a"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "C:Users\\tester\\Desktop\\images\\pixel.png",
+        "label": "local_image:pixel.png:a558e28d"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "C:\\Users\\tester\\Desktop\\images\\nope.png",
+        "label": "local_image:nope.png:4972006b"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "C:\\Users\\tester\\Desktop\\images\\huge-header.png",
+        "label": "local_image:huge-header.png:3c79d306"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "C:\\Users\\tester\\Desktop\\images\\pixel-noext",
+        "label": "local_image:pixel-noext:a95dafbc"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "https://latex.codecogs.com/png.latex",
+        "label": "remote_image:latex.codecogs.com:c89eec4b"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "http://10.0.2.2:8100/redirect.png",
+        "label": "remote_image:10.0.2.2:a589e404"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "http://10.0.2.2:8100/slow.png",
+        "label": "remote_image:10.0.2.2:9b0bef4a"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "http://10.0.2.2:8100/notimage.png",
+        "label": "remote_image:10.0.2.2:a23956e7"
+      },
+      {
+        "colour": null,
+        "display": false,
+        "host": "http://10.0.2.2:8100/huge.png",
+        "label": "remote_image:10.0.2.2:54e8f6c5"
+      }
+    ],
+    "code_math": 0,
+    "generation": 3,
+    "images": 5,
+    "inline_placeholders": 0,
+    "loading": 0,
+    "pending": [],
+    "settings": {
+      "enable_math": false
+    },
+    "theme": {
+      "background": "#303841",
+      "foreground": "#d8dee9",
+      "is_dark": true
+    },
+    "unavailable": 4
+  },
+  "results": {
+    "absolute-drive": {
+      "result": "Unavailable"
+    },
+    "absolute-file-url": {
+      "result": "Unavailable"
+    },
+    "absolute-rooted": {
+      "height": 64,
+      "result": "image",
+      "width": 160
+    },
+    "extensionless": {
+      "height": 64,
+      "result": "image",
+      "width": 160
+    },
+    "missing": {
+      "result": "Unavailable"
+    },
+    "oversized-local": {
+      "result": "Too large"
+    },
+    "relative": {
+      "height": 64,
+      "result": "image",
+      "width": 160
+    },
+    "remote-https": {
+      "height": 8,
+      "result": "image",
+      "width": 9
+    },
+    "remote-invalid": {
+      "result": "Unavailable"
+    },
+    "remote-oversized": {
+      "result": "Too large"
+    },
+    "remote-redirect": {
+      "height": 64,
+      "result": "image",
+      "width": 160
+    },
+    "remote-timeout": {
+      "result": "Timed out"
+    }
+  }
+}

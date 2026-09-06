@@ -1,0 +1,69 @@
+{
+  "distinct_groups": true,
+  "layout": {
+    "cols": [
+      0.0,
+      0.5,
+      0.87858,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 795.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 633.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "Outline: kinds.md"
+        ],
+        "sheets": 1,
+        "width_px": 192.0
+      }
+    ],
+    "num_groups": 3,
+    "rows": [
+      0.0,
+      1.0
+    ]
+  },
+  "log": [
+    "5.3s posted o0-start -> go",
+    "6.2s opened kinds.md",
+    "7.0s posted o1-no-preview -> go"
+  ],
+  "outline_group": 2,
+  "phase": "o2-with-preview",
+  "preview_group": 1,
+  "sheets_in_outline_group": 1
+}

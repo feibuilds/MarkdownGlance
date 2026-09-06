@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>export-check.md</title>
+<style>
+:root { color-scheme: light dark; }
+body {
+  max-width: 48rem; margin: 2rem auto; padding: 0 1rem;
+  font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+pre, code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.9em; }
+pre { padding: 0.75rem 1rem; overflow-x: auto; background: rgba(127,127,127,0.12); }
+code { background: rgba(127,127,127,0.12); padding: 0.1em 0.3em; border-radius: 3px; }
+pre code { background: none; padding: 0; }
+blockquote { margin: 0; padding: 0 1rem; border-left: 0.25rem solid rgba(127,127,127,0.4); }
+table { border-collapse: collapse; }
+th, td { border: 1px solid rgba(127,127,127,0.4); padding: 0.3rem 0.6rem; }
+img { max-width: 100%; }
+pre.mermaid[data-processed] { background: none; text-align: center; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" integrity="sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" integrity="sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js" integrity="sha384-o+g/BxPwhi0C3RK7oQBxQuNimeafQ3GE/ST4iT2BxVI4Wzt60SH4pq9iXVYujjaS" crossorigin="anonymous"></script>
+</head>
+<body>
+<h1 id="export-check">Export check</h1>
+<p><img alt="Relative image" src="file:///C:/Users/tester/Desktop/fixture%20space%20%23hash/pixel.png" /></p>
+<p><a href="#same">First same</a> · <a href="#same-2">Second same</a></p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th align="right">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alpha</td>
+<td align="right">42</td>
+</tr>
+<tr>
+<td>Beta</td>
+<td align="right">99</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Parent one<ul>
+<li>Child one</li>
+<li>Child two</li>
+</ul>
+</li>
+<li>
+<p>Parent two</p>
+</li>
+<li>
+<p>Ordered one</p>
+<pre class="highlight"><code class="language-python">print("nested fence")</code></pre>
+
+</li>
+<li>
+<p>Ordered two</p>
+</li>
+</ul>
+<h2 id="diagram">Diagram</h2>
+<pre class="mermaid">flowchart LR
+    Source[Markdown source] --&gt; Parse[parse]
+    Parse --&gt; Page[standalone page]</pre>
+
+<h2 id="formulas">Formulas</h2>
+<p>Inline <span class="arithmatex">\(a^2 + b^2 = c^2\)</span> in a sentence, and a display block:</p>
+<div class="arithmatex">\[
+\int_0^1 x\,dx = \frac{1}{2}
+\]</div>
+<p>It costs $5 and $6, which is not math.</p>
+<h2 id="same">Same</h2>
+<p>First heading target.</p>
+<h2 id="same-2">Same</h2>
+<p>Second heading target.</p>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "\\(", right: "\\)", display: false},
+        {left: "\\[", right: "\\]", display: true}
+      ],
+      throwOnError: false
+    });
+  }
+  if (window.mermaid) {
+    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    mermaid.initialize({startOnLoad: false, theme: dark ? "dark" : "default"});
+    mermaid.run();
+  }
+});
+</script>
+</body>
+</html>

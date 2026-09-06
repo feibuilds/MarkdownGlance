@@ -1,0 +1,390 @@
+{
+  "total": 64,
+  "failed": 0,
+  "results": [
+    {
+      "group": "step 6 http allowed",
+      "claim": "absolute-rooted -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "absolute-rooted -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "extensionless -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "extensionless -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "missing -> Unavailable",
+      "pass": true,
+      "detail": "Unavailable"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "missing -> Unavailable",
+      "pass": true,
+      "detail": "Unavailable"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "oversized-local -> Too large",
+      "pass": true,
+      "detail": "Too large"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "oversized-local -> Too large",
+      "pass": true,
+      "detail": "Too large"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "relative -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "relative -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "remote-https -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "remote-https -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "remote-invalid -> Unavailable",
+      "pass": true,
+      "detail": "Unavailable"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "remote-invalid -> Blocked by settings",
+      "pass": true,
+      "detail": "Blocked by settings"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "remote-oversized -> Too large",
+      "pass": true,
+      "detail": "Too large"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "remote-oversized -> Blocked by settings",
+      "pass": true,
+      "detail": "Blocked by settings"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "remote-redirect -> image",
+      "pass": true,
+      "detail": "image"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "remote-redirect -> Blocked by settings",
+      "pass": true,
+      "detail": "Blocked by settings"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "remote-timeout -> Timed out",
+      "pass": true,
+      "detail": "Timed out"
+    },
+    {
+      "group": "step 6 http blocked",
+      "claim": "remote-timeout -> Blocked by settings",
+      "pass": true,
+      "detail": "Blocked by settings"
+    },
+    {
+      "group": "step 6 KNOWN DEFECT",
+      "claim": "absolute-drive does not resolve (Unavailable)",
+      "pass": true,
+      "detail": "Unavailable"
+    },
+    {
+      "group": "step 6 KNOWN DEFECT",
+      "claim": "absolute-file-url does not resolve (Unavailable)",
+      "pass": true,
+      "detail": "Unavailable"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "relative decodes to 160x64",
+      "pass": true,
+      "detail": "160x64"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "absolute-rooted decodes to 160x64",
+      "pass": true,
+      "detail": "160x64"
+    },
+    {
+      "group": "step 6 http allowed",
+      "claim": "extensionless decodes to 160x64",
+      "pass": true,
+      "detail": "160x64"
+    },
+    {
+      "group": "step 9 no preview",
+      "claim": "the outline adds a group",
+      "pass": true,
+      "detail": "1 -> 2"
+    },
+    {
+      "group": "step 9 no preview",
+      "claim": "that group holds only the outline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 with preview",
+      "claim": "outline group is not the preview's",
+      "pass": true,
+      "detail": "outline 2 preview 1"
+    },
+    {
+      "group": "step 9 with preview",
+      "claim": "outline is not a tab beside the preview",
+      "pass": true,
+      "detail": "1"
+    },
+    {
+      "group": "step 9 heading kinds",
+      "claim": "exactly the four real headings",
+      "pass": true,
+      "detail": "[(1, 'ATX one'), (2, 'Setext two'), (2, 'ATX three'), (1, 'Setext one')]"
+    },
+    {
+      "group": "step 9 heading kinds",
+      "claim": "front matter keys are in the source",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 heading kinds",
+      "claim": "no front-matter entry",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 heading kinds",
+      "claim": "nothing from inside the fence",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 heading kinds",
+      "claim": "#hashtag is not a heading",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 heading kinds",
+      "claim": "closing hashes trimmed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 caret",
+      "claim": "line 5 activates entry 0",
+      "pass": true,
+      "detail": "0"
+    },
+    {
+      "group": "step 9 caret",
+      "claim": "line 9 activates entry 1",
+      "pass": true,
+      "detail": "1"
+    },
+    {
+      "group": "step 9 caret",
+      "claim": "line 20 activates entry 2",
+      "pass": true,
+      "detail": "2"
+    },
+    {
+      "group": "step 9 caret",
+      "claim": "line 26 activates entry 3",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "group": "step 9 typing",
+      "claim": "a heading typed live appears",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 clicks",
+      "claim": "entry at line 5 moves the caret there",
+      "pass": true,
+      "detail": "5"
+    },
+    {
+      "group": "step 9 clicks",
+      "claim": "entry at line 20 moves the caret there",
+      "pass": true,
+      "detail": "20"
+    },
+    {
+      "group": "step 9 clicks",
+      "claim": "entry at line 32 moves the caret there",
+      "pass": true,
+      "detail": "32"
+    },
+    {
+      "group": "step 9 no headings",
+      "claim": "an empty document gets an empty outline",
+      "pass": true,
+      "detail": "0"
+    },
+    {
+      "group": "step 9 two files",
+      "claim": "three outlines open at once",
+      "pass": true,
+      "detail": "3"
+    },
+    {
+      "group": "step 9 two files",
+      "claim": "each outline has its own group",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 9 zoom",
+      "claim": "zoom in changes the outline's zoom",
+      "pass": true,
+      "detail": "1.25"
+    },
+    {
+      "group": "step 9 zoom",
+      "claim": "reset puts it back",
+      "pass": true,
+      "detail": "1.0"
+    },
+    {
+      "group": "step 9 close",
+      "claim": "the toggle closes the outline",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 10 not wider",
+      "claim": "short toc with auto_width on <= off",
+      "pass": true,
+      "detail": "95.0 vs 192.0"
+    },
+    {
+      "group": "step 10 not wider",
+      "claim": "long toc with auto_width on <= off",
+      "pass": true,
+      "detail": "192.0 vs 192.0"
+    },
+    {
+      "group": "step 10 not wider",
+      "claim": "short outline with auto_width on <= off",
+      "pass": true,
+      "detail": "30.0 vs 72.0"
+    },
+    {
+      "group": "step 10 not wider",
+      "claim": "long outline with auto_width on <= off",
+      "pass": true,
+      "detail": "72.0 vs 72.0"
+    },
+    {
+      "group": "step 10 narrow end",
+      "claim": "short headings fit narrower than long ones",
+      "pass": true,
+      "detail": "30.0 vs 72.0"
+    },
+    {
+      "group": "step 10 outline alone",
+      "claim": "with no other panel the outline is readable (>=150px)",
+      "pass": true,
+      "detail": "191.0"
+    },
+    {
+      "group": "step 10 KNOWN DEFECT",
+      "claim": "with a table of contents open the outline is a sliver (<100px)",
+      "pass": true,
+      "detail": "72.0"
+    },
+    {
+      "group": "step 10 KNOWN DEFECT",
+      "claim": "the outline cell is the role share of the toc cell, not the source's",
+      "pass": true,
+      "detail": "[0.0, 0.5, 0.825, 0.9475, 1.0]"
+    },
+    {
+      "group": "step 10 drag",
+      "claim": "a dragged divider survives a repaint",
+      "pass": true,
+      "detail": "[0.0, 0.5, 0.825, 0.8275, 1.0] vs [0.0, 0.5, 0.825, 0.8275, 1.0]"
+    },
+    {
+      "group": "step 10 drag",
+      "claim": "the drag actually moved the divider",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "step 10 reopen",
+      "claim": "closing and reopening hands the fit back",
+      "pass": true,
+      "detail": "71.0 vs 280.0"
+    },
+    {
+      "group": "step 10 resize",
+      "claim": "the editor window really resized",
+      "pass": true,
+      "detail": "500.0"
+    },
+    {
+      "group": "step 10 zoom",
+      "claim": "zooming the outline changes its zoom",
+      "pass": true,
+      "detail": "1.5"
+    },
+    {
+      "group": "step 10 KNOWN DEFECT",
+      "claim": "pinned width does not follow zoom",
+      "pass": true,
+      "detail": "30.0 vs 30.0"
+    },
+    {
+      "group": "step 10 KNOWN DEFECT",
+      "claim": "pinned width does not follow a longer heading",
+      "pass": true,
+      "detail": "30.0 vs 30.0"
+    }
+  ]
+}

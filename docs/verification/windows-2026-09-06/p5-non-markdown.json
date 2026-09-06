@@ -1,0 +1,17 @@
+{
+  "file": "C:\\Users\\tester\\Desktop\\fixture space #hash\\plain.txt",
+  "is_enabled": false,
+  "log": [
+    "9.3s posted p0-start -> go",
+    "0.7s export fixture open",
+    "17.9s posted p1-export-saved -> go",
+    "0.3s app theme light=True",
+    "16.5s posted p2-export-other-theme -> go",
+    "10.5s posted p3-export-plain -> go",
+    "0.3s unsaved buffer ready",
+    "14.5s posted p4-export-unsaved -> go"
+  ],
+  "matches_markdown": false,
+  "phase": "p5-non-markdown",
+  "syntax": "Packages/Text/Plain text.tmLanguage"
+}

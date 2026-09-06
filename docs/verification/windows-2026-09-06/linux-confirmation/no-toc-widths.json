@@ -1,0 +1,70 @@
+{
+  "layout": {
+    "cols": [
+      0.0,
+      0.5,
+      0.85,
+      1.0
+    ],
+    "groups": [
+      {
+        "cell": [
+          0,
+          0,
+          1,
+          1
+        ],
+        "group": 0,
+        "names": [
+          "long.md"
+        ],
+        "width_px": 670.0
+      },
+      {
+        "cell": [
+          1,
+          0,
+          2,
+          1
+        ],
+        "group": 1,
+        "names": [
+          "Preview: long.md"
+        ],
+        "width_px": 495.0
+      },
+      {
+        "cell": [
+          2,
+          0,
+          3,
+          1
+        ],
+        "group": 2,
+        "names": [
+          "Outline: long.md"
+        ],
+        "width_px": 203.0
+      }
+    ],
+    "num_groups": 3
+  },
+  "panels": {
+    "outline": {
+      "group": 2,
+      "headings": [
+        "Long",
+        "Alpha",
+        "A deliberately long heading that the panel has to be wide enough to show on one line",
+        "Gamma",
+        "Delta",
+        "Padding"
+      ],
+      "width_px": 203.0
+    },
+    "toc": {
+      "group": null,
+      "width_px": 0.0
+    }
+  }
+}
