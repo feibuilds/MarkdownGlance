@@ -52,8 +52,10 @@ forward-compatibility testing.
    panel opens by itself. Open a preview *after* the panel and confirm the
    preview gets a group of its own rather than replacing the panel, and that
    the caret stays where it was when a panel opens by itself. Then toggle focus
-   and close; zoom; close the panel, the source, the group and the window; open
-   panels for two files at once and switch between them.
+   and close: the panel's pane must go with it, leaving the source and the
+   preview and no empty pane, whether or not you dragged a divider first.
+   Zoom; close the panel, the source, the group and the window; open panels for
+   two files at once and switch between them.
    Automated as `run-markdownglance`'s `panel_toggle` scenario.
 10. Two documents: preview two Markdown files long enough for a panel each.
    The previews share one group and the panels share another, and the tab in

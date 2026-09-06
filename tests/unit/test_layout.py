@@ -29,6 +29,7 @@ class FakeWindow:
     def __init__(self, layout):
         self._layout = copy.deepcopy(layout)
         self._sheets = {}
+        self._views = {}
         self.empty_groups = set()
 
     def id(self):
@@ -42,6 +43,15 @@ class FakeWindow:
 
     def sheets_in_group(self, group):
         return self._sheets.get(group, [])
+
+    def views_in_group(self, group):
+        return list(self._views.get(group, []))
+
+    def set_view_index(self, view, group, index):
+        for views in self._views.values():
+            if view in views:
+                views.remove(view)
+        self._views.setdefault(group, []).insert(index, view)
 
     def active_view_in_group(self, group):
         if group in self.empty_groups or group >= len(self._layout["cells"]):
@@ -200,19 +210,93 @@ class LayoutTest(unittest.TestCase):
             width_of(window, panel), 500.0 * ROLE_SHARE[GroupRole.PANEL], places=6
         )
 
-    def test_owner_restores_only_exact_empty_layout(self):
+    def test_an_untouched_layout_is_put_back_exactly(self):
         window = FakeWindow(ONE)
         owner = LayoutOwner()
         group = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+
         owner.release(window, group, "session", restore=True)
+
         self.assertEqual(window.layout(), ONE)
 
+    def test_a_layout_that_has_moved_loses_the_empty_cell_instead(self):
+        """Restoring what was recorded would undo the drag as well."""
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
         group = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
         changed = window.layout()
         changed["cols"][1] = 0.6
         window.set_layout(changed)
+
         owner.release(window, group, "session", restore=True)
-        self.assertEqual(window.layout(), changed)
+
+        # One group again, and the boundary the user dragged is simply gone
+        # with the cell it belonged to.
+        self.assertEqual(window.layout(), ONE)
+
+    def test_one_panel_fitting_does_not_freeze_the_other_group(self):
+        """A fingerprint asks whether the *user* moved a divider.
+
+        Every group of this owner's shares one, so a change this owner made
+        itself -- a fit, a split, a collapse -- has to be taken as read, or the
+        first fit would look like a drag to every other group and freeze it.
+        """
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        panel = owner.acquire_panel(window, 0, "session", 200.0)
+
+        owner.fit(window, preview, GroupRole.PREVIEW, 300.0)
+        owner.fit(window, panel, GroupRole.PANEL, 150.0)
+
+        self.assertAlmostEqual(width_of(window, panel), 150.0, places=6)
+
+    def test_a_group_that_is_not_empty_is_left_alone(self):
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        group = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        window._sheets[group] = ["a sheet"]
+        before = window.layout()
+
+        owner.release(window, group, "session", restore=True)
+
+        self.assertEqual(window.layout(), before)
+
+    def test_closing_a_panel_between_two_groups_moves_the_views_down(self):
+        """Sublime keeps a view on its group index across `set_layout`.
+
+        The panel can be opened before the preview, which makes it cell 1 and
+        the preview cell 2. Dropping cell 1 renumbers the preview to 1, and
+        its views have to be carried across or they stay in a group that is
+        now the panel's old space.
+        """
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        panel = owner.acquire_panel(window, 0, "session")
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        self.assertEqual((panel, preview), (1, 2))
+        window._views = {0: ["source"], 2: ["preview view"]}
+
+        owner.release(window, panel, "session", restore=True)
+
+        self.assertEqual(len(window.layout()["cells"]), 2)
+        self.assertEqual(window.views_in_group(0), ["source"])
+        self.assertEqual(window.views_in_group(1), ["preview view"])
+        # And the owner still knows where the preview group went.
+        self.assertTrue(owner.is_owned(window, 1))
+        self.assertEqual(owner.groups_of(window, "session"), [1])
+
+    def test_releasing_the_renumbered_group_still_gives_it_back(self):
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        panel = owner.acquire_panel(window, 0, "session")
+        owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        owner.release(window, panel, "session", restore=True)
+
+        owner.release_all(window, "session", restore=True)
+
+        self.assertEqual(window.layout(), ONE)
+        self.assertFalse(owner.is_owned(window, 1))
 
 
 class ShareTest(unittest.TestCase):

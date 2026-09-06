@@ -42,6 +42,11 @@ tested. Tracked as
 
 Evidence: [Windows Finding 2 and Linux confirmation](../verification/windows-2026-09-06.md#finding-2-the-outline-is-carved-out-of-the-table-of-contents-group).
 
+Overtaken by ADR 0014 (2026-09-07), which leaves one panel where there were
+two: there is no second panel to carve a group out of, `acquire_beside` is
+gone, and `acquire_panel` walks right past groups this owner made and stops at
+the first it did not. The regression tests below moved with it and still hold.
+
 With source, preview and TOC open, opening the outline splits the TOC group.
 At the tested revision, `preview/presentation/layout.py`
 (`LayoutOwner.acquire_beside` and `share_for`) then sizes both panels against

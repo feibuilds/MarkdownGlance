@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import FrozenSet, Optional, Set, Tuple
+from typing import FrozenSet, Optional, Tuple
 
 from ..domain.contracts import (
     AssetKey,
@@ -46,7 +46,6 @@ class PreviewSession:
     successful_generation: int = 0
     last_document: Optional[PreviewDocument] = None
     pending_assets: FrozenSet[AssetKey] = frozenset()
-    layout_groups: Set[int] = field(default_factory=set)
     action_token: str = ""
     settings: RenderSettings = field(default_factory=RenderSettings)
     theme: ThemeSnapshot = field(default_factory=ThemeSnapshot)

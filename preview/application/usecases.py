@@ -129,8 +129,6 @@ class UseCases:
             group = self.layout_owner.acquire(
                 window, source_group, GroupRole.PREVIEW, session.id
             )
-            if self.layout_owner.is_owned(window, group):
-                session.layout_groups.add(group)
         session.preview_surface = self.backend.create(
             window, group, "Preview: {}".format(session.source_name), session.id
         )
@@ -189,16 +187,12 @@ class UseCases:
             return
         session.state = SessionState.MOVING
         self.backend.move(session.preview_surface, session.source_group)
-        for group in sorted(session.layout_groups, reverse=True):
-            self.layout_owner.release(window, group, session.id, restore=True)
-        session.layout_groups.clear()
+        self.layout_owner.release_all(window, session.id, restore=True)
 
         if mode == PreviewMode.SIDE_BY_SIDE:
             preview_group = self.layout_owner.acquire(
                 window, session.source_group, GroupRole.PREVIEW, session.id
             )
-            if self.layout_owner.is_owned(window, preview_group):
-                session.layout_groups.add(preview_group)
             self.backend.move(session.preview_surface, preview_group)
         session.mode = mode
         self.backend.focus(session.preview_surface)

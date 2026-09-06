@@ -1,7 +1,7 @@
 import bisect
 import json
 from dataclasses import dataclass
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from ..application.ports import GroupRole
 
@@ -32,7 +32,9 @@ MIN_CELL = 0.05
 @dataclass
 class OwnedGroup:
     group: int
-    previous_layout: dict
+    # The layout this owner left when it made the group. `fit` compares it to
+    # decide whether the user has dragged the divider since; releasing does
+    # not, because it takes the cell out of whatever the layout is now.
     fingerprint: str
     holders: Set[str]
     role: GroupRole = GroupRole.PREVIEW
@@ -89,6 +91,50 @@ def split_cell(layout: dict, cell_index: int, new_share: float) -> Tuple[dict, i
     cells[cell_index] = [c0_after, r0_after, insertion, r1_after]
     cells.append([insertion, r0_after, c1_after, r1_after])
     return {"cols": cols, "rows": rows, "cells": cells}, len(cells) - 1
+
+
+def compact(layout: dict, cells: list) -> dict:
+    """Rebuild a layout around a new cell list, dropping unused boundaries."""
+    used_cols = sorted({index for cell in cells for index in (cell[0], cell[2])})
+    used_rows = sorted({index for cell in cells for index in (cell[1], cell[3])})
+    columns = {old: new for new, old in enumerate(used_cols)}
+    rows = {old: new for new, old in enumerate(used_rows)}
+    return {
+        "cols": [layout["cols"][index] for index in used_cols],
+        "rows": [layout["rows"][index] for index in used_rows],
+        "cells": [
+            [columns[c0], rows[r0], columns[c1], rows[r1]]
+            for c0, r0, c1, r1 in cells
+        ],
+    }
+
+
+def remove_cell(layout: dict, index: int) -> Optional[dict]:
+    """The layout without one cell, its span given to a neighbour.
+
+    The inverse of `split_cell`, except that it works on a layout that has
+    moved on since: the span goes to whichever neighbour shares the cell's
+    exact row span, left for preference, so every other boundary in the window
+    stays where the user left it.
+
+    Returns None when neither neighbour does -- in a grid, removing a cell
+    would leave a hole no single neighbour can fill -- and when the cell is the
+    only one, since a window must have a group.
+    """
+    cells = [list(cell) for cell in layout["cells"]]
+    if not 0 <= index < len(cells) or len(cells) < 2:
+        return None
+    c0, _, c1, _ = cells[index]
+    left = left_neighbour(layout, index)
+    right = right_neighbour(layout, index)
+    if left is not None:
+        cells[left][2] = c1
+    elif right is not None:
+        cells[right][0] = c0
+    else:
+        return None
+    del cells[index]
+    return compact(layout, cells)
 
 
 def group_width_px(window, group: int) -> float:
@@ -168,13 +214,13 @@ class LayoutOwner:
                 if held is not None:
                     held.holders.add(session_id)
                 return right_group
-        previous = layout
         share = share_for(role, width_px, group_width_px(window, anchor_group))
         updated, new_group = split_cell(layout, anchor_group, share)
         window.set_layout(updated)
         owned[new_group] = OwnedGroup(
-            new_group, previous, fingerprint(updated), {session_id}, role
+            new_group, fingerprint(updated), {session_id}, role
         )
+        self._restamp(window, updated)
         return new_group
 
     def acquire_panel(
@@ -212,8 +258,9 @@ class LayoutOwner:
         updated, new_group = split_cell(layout, group, share)
         window.set_layout(updated)
         owned[new_group] = OwnedGroup(
-            new_group, layout, fingerprint(updated), {session_id}, GroupRole.PANEL
+            new_group, fingerprint(updated), {session_id}, GroupRole.PANEL
         )
+        self._restamp(window, updated)
         return new_group
 
     def fit(self, window, group: int, role: GroupRole, width_px: float) -> None:
@@ -244,10 +291,31 @@ class LayoutOwner:
         if updated is None:
             return
         window.set_layout(updated)
-        owned.fingerprint = fingerprint(updated)
+        self._restamp(window, updated)
 
     def is_owned(self, window, group: int) -> bool:
         return group in self._owned.get(window.id(), {})
+
+    def release_all(self, window, session_id: str, restore: bool = True) -> None:
+        """Give back every group this session holds.
+
+        Highest group first, because releasing one can renumber the groups
+        after it and a lower index never moves.
+        """
+        groups = self._owned.get(window.id(), {})
+        held = sorted(
+            (group for group, owned in groups.items() if session_id in owned.holders),
+            reverse=True,
+        )
+        for group in held:
+            self.release(window, group, session_id, restore=restore)
+
+    def groups_of(self, window, session_id: str) -> List[int]:
+        """The groups this owner is holding on one session's behalf."""
+        groups = self._owned.get(window.id(), {})
+        return sorted(
+            group for group, owned in groups.items() if session_id in owned.holders
+        )
 
     def release(
         self, window, group: int, session_id: str, restore: bool = True
@@ -259,16 +327,63 @@ class LayoutOwner:
         owned.holders.discard(session_id)
         if owned.holders:
             return
-        may_restore = (
-            restore
-            and not window.sheets_in_group(group)
-            and fingerprint(window.layout()) == owned.fingerprint
-        )
+        empty = restore and not window.sheets_in_group(group)
         groups.pop(group, None)
-        if may_restore:
-            window.set_layout(owned.previous_layout)
+        if empty:
+            # Out of the layout the window has *now*, never out of one recorded
+            # when the group was made: another group of this owner's may have
+            # been added since, or the user may have dragged a divider, and
+            # putting back the old layout would undo both.
+            self._collapse(window, group)
         if not groups:
             self._owned.pop(window.id(), None)
+
+    def _collapse(self, window, group: int) -> bool:
+        """Take one empty group out of the window, and renumber what follows.
+
+        Sublime keeps a view on its group *index* across `set_layout`, so
+        removing a cell in the middle would leave every group after it holding
+        the views of its neighbour. The views are read before the change and
+        put back afterwards, and this owner's own registry is renumbered the
+        same way.
+        """
+        layout = window.layout()
+        updated = remove_cell(layout, group)
+        if updated is None:
+            return False
+        contents = [
+            list(window.views_in_group(index))
+            for index in range(len(layout["cells"]))
+        ]
+        window.set_layout(updated)
+        for index, views in enumerate(contents):
+            if index == group:
+                continue
+            target = index - 1 if index > group else index
+            for position, view in enumerate(views):
+                window.set_view_index(view, target, position)
+        groups = self._owned.get(window.id(), {})
+        moved = {}
+        for owned_group, owned in groups.items():
+            if owned_group == group:
+                continue
+            owned.group = owned_group - 1 if owned_group > group else owned_group
+            moved[owned.group] = owned
+        self._owned[window.id()] = moved
+        self._restamp(window, updated)
+        return True
+
+    def _restamp(self, window, layout: dict) -> None:
+        """Take this owner's own layout change as read.
+
+        A fingerprint answers one question -- has the *user* moved a divider
+        since we last set the layout -- so a change this owner made itself must
+        not be mistaken for one, or `fit` would stop moving a group the moment
+        another one was opened or closed beside it.
+        """
+        stamp = fingerprint(layout)
+        for owned in self._owned.get(window.id(), {}).values():
+            owned.fingerprint = stamp
 
     def invalidate(self, window) -> None:
         self._owned.pop(window.id(), None)

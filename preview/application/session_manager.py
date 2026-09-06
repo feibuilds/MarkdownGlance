@@ -102,8 +102,7 @@ class SessionManager:
             self.backend.close(session.preview_surface)
 
         if window is not None:
-            for group in sorted(session.layout_groups, reverse=True):
-                self.layout_owner.release(window, group, session.id, restore=restore)
+            self.layout_owner.release_all(window, session.id, restore=restore)
         self._remove(session)
 
     def _remove(self, session: PreviewSession) -> None:

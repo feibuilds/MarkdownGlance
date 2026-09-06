@@ -22,6 +22,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Closing a side panel left an empty pane behind** whenever the window had
+  changed since the panel was opened -- which, with the contents panel, is any
+  time you open the preview after it. The layout owner used to put back the
+  layout it had recorded when it made the group, and only while the window
+  still matched it exactly; it now takes the empty cell out of the current
+  layout and gives the space to the pane beside it, so every other divider
+  stays where you left it.
+
 - **A preview opened after the panel landed inside the panel's group**, where
   it took the panel's place instead of appearing beside it -- the command
   looked as though it had done nothing at all. `LayoutOwner` reused any group

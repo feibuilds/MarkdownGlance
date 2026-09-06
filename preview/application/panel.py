@@ -15,7 +15,7 @@ document in through `document_rendered`; nothing here reaches back for one.
 """
 
 import os.path
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 from ..domain.contracts import Heading, SourceHeading, ThemeSnapshot
@@ -49,7 +49,6 @@ class PanelSession:
     # the user opened by hand stays until they close it.
     automatic: bool = False
     zoom: float = 1.0
-    layout_groups: Set[int] = field(default_factory=set)
     debounce_handle: object = None
 
 
@@ -182,8 +181,6 @@ class PanelController:
             new_action_token(),
             automatic=automatic,
         )
-        if self.layout_owner.is_owned(window, group):
-            panel.layout_groups.add(group)
         self._by_source[key] = panel
         self._by_surface[surface.id] = panel
         self.refresh(panel, source)
@@ -206,11 +203,8 @@ class PanelController:
 
     def _release(self, panel: PanelSession, window=None, restore=True) -> None:
         window = window or self.window_for_id(panel.window_id)
-        if window is None:
-            return
-        for group in sorted(panel.layout_groups, reverse=True):
-            self.layout_owner.release(window, group, panel.id, restore=restore)
-        panel.layout_groups.clear()
+        if window is not None:
+            self.layout_owner.release_all(window, panel.id, restore=restore)
 
     def surface_closed(self, surface_id: int) -> bool:
         """True when the closed view was a panel this controller owned."""

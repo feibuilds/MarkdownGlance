@@ -5,6 +5,11 @@ panel opens *by itself*, never what one the user asked for is allowed to show.
 So the panel here opens on the source outline beside a file that has never
 been rendered, gains its table-of-contents half the moment a preview appears
 behind it, and closes on the third press of the toggle.
+
+It is also the layout scenario. Opening the panel first is what makes the
+preview split a second group rather than land inside the panel's, and what
+makes closing the panel a cell removed from the middle of the window rather
+than a layout put back; the last two phases count the groups after each.
 """
 
 import os.path
@@ -107,13 +112,41 @@ def check_contents_half(ctx, snap):
 
 
 def check_closed(ctx, snap):
-    # The group it leaves behind is empty rather than gone: `LayoutOwner`
-    # restores the layout it recorded only while the window still matches it,
-    # and opening the preview in phase three moved it on. See
-    # docs/todos/empty-pane-after-a-panel-closes.md.
+    from MarkdownGlance.preview.adapter.container import container
+
+    session = container.manager.for_source(ctx.window.id(), STATE["source"].buffer_id())
     return {
         "the panel is gone": not _panels(ctx),
-        "the source and the preview are still there": _groups(ctx) == 3,
+        "its group went with it": _groups(ctx) == 2,
+        "no empty pane is left": all(
+            ctx.window.views_in_group(group) for group in range(_groups(ctx))
+        ),
+        "the source is still in the first group": (
+            ctx.window.get_view_index(STATE["source"])[0] == 0
+        ),
+        "the preview came with its group": (
+            container.backend.group_of(session.preview_surface) == 1
+        ),
+    }
+
+
+def close_preview(ctx):
+    from MarkdownGlance.preview.adapter.container import container
+
+    session = container.manager.for_source(ctx.window.id(), STATE["source"].buffer_id())
+    STATE["preview"] = session.preview_surface.id
+    ctx.window.run_command("close_by_index", {"group": 1, "index": 0})
+
+
+def preview_gone(ctx, snap):
+    return not any(view.id() == STATE["preview"] for view in ctx.window.views())
+
+
+def check_one_group(ctx, snap):
+    return {
+        "the preview is gone": preview_gone(ctx, snap),
+        "the window is back to one group": _groups(ctx) == 1,
+        "the source is still open": STATE["source"] in ctx.window.views(),
     }
 
 
@@ -122,4 +155,10 @@ PHASES = [
     phase("panel-toggled-on", action=toggle_on, done=panel_open, check=check_outline_only),
     phase("preview-opened", action=open_preview, done=rendered, check=check_contents_half),
     phase("panel-toggled-off", action=toggle_off, done=panel_gone, check=check_closed),
+    phase(
+        "preview-closed",
+        action=close_preview,
+        done=preview_gone,
+        check=check_one_group,
+    ),
 ]

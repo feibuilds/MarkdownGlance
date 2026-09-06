@@ -37,9 +37,15 @@ class FakeBackend:
 class FakeLayout:
     def __init__(self):
         self.releases = []
+        # The owner holds group 1 for the session under test.
+        self.held = {"s": {1}}
 
     def release(self, window, group, session_id, restore=True):
         self.releases.append((group, restore))
+
+    def release_all(self, window, session_id, restore=True):
+        for group in sorted(self.held.get(session_id, ()), reverse=True):
+            self.release(window, group, session_id, restore=restore)
 
 
 class FakeResolver:
@@ -68,7 +74,6 @@ def session():
         completed_generation=1,
         successful_generation=1,
         last_document=object(),
-        layout_groups={1},
     )
 
 

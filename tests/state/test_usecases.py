@@ -214,10 +214,23 @@ class Layout:
         self.acquired = []
         self.fitted = []
         self.releases = []
+        # Which groups this owner is holding for whom, the way the real one
+        # tracks holders: the callers no longer keep group numbers of their own.
+        self.held = {}
 
     def acquire(self, window, anchor, role, session_id, width_px=0.0):
         self.acquired.append((anchor, role, session_id, width_px))
+        self.held.setdefault(session_id, set()).add(anchor + 1)
         return anchor + 1
+
+    def acquire_panel(self, window, anchor_group, session_id, width_px=0.0):
+        self.acquired.append((anchor_group, GroupRole.PANEL, session_id, width_px))
+        self.held.setdefault(session_id, set()).add(anchor_group + 1)
+        return anchor_group + 1
+
+    def release_all(self, window, session_id, restore=True):
+        for group in sorted(self.held.pop(session_id, ()), reverse=True):
+            self.release(window, group, session_id, restore=restore)
 
     def fit(self, window, group, role, width_px):
         self.fitted.append((group, role, width_px))

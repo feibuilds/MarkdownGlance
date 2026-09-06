@@ -66,5 +66,17 @@ stranger than one that does not.
   its own role. And `window.new_file()` focuses the view it makes, so a panel
   opened by a render took the caret with it; the focus is now read before the
   surface exists and given back afterwards.
-- Still open: closing the panel after the layout has moved leaves an empty
-  pane. See [the note](../todos/empty-pane-after-a-panel-closes.md).
+- `LayoutOwner` no longer records the layout a group was split out of. It
+  takes the cell out of whatever layout the window has *now*, giving the span
+  to a neighbour, which is the only thing that works once a second group of
+  its own has been added since -- the panel can be opened before the preview,
+  so that is a normal sequence rather than a corner. Removing a cell renumbers
+  the groups after it, and Sublime keeps a view on its group index across
+  `set_layout`, so the views are carried across by hand and this owner's
+  registry is renumbered with them. The sessions stop caching group numbers
+  altogether: the owner already knows which groups a session holds, and
+  `release_all` asks it.
+- One fingerprint per owned group answers one question -- has the *user*
+  dragged a divider -- so every layout change this owner makes itself is
+  stamped across all of them. Without that, opening or closing one group would
+  look like a drag to every other and freeze its width.
