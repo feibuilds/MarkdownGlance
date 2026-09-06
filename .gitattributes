@@ -2,6 +2,7 @@
 # editor does not load at runtime is excluded from it here: 3 MB of ADRs and
 # Phase 0 evidence, the test suite, and the repository's own scaffolding.
 /.github            export-ignore
+/.claude            export-ignore
 /docs               export-ignore
 /tests              export-ignore
 /.gitattributes     export-ignore

@@ -2,3 +2,11 @@ __pycache__/
 *.pyc
 *.sublime-workspace
 docs/promotion/
+
+# The agent scaffolding: the run-markdownglance skill is tracked, anything else
+# a tool drops in .claude (settings.local.json, session state) is not. .agents
+# is another agent's private copy of the same skill; keep one source of truth
+# under .claude and do not commit a second.
+/.claude/*
+!/.claude/skills/
+/.agents/
