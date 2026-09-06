@@ -284,6 +284,47 @@ def _replace_math(
         _replace_math(node.children, request, math_url_builder)
 
 
+def _number_ordered_lists(nodes: Sequence[Node]) -> None:
+    """Make minihtml list numbers literal text, with a counter per list."""
+    for node in nodes:
+        if not isinstance(node, ElementNode):
+            continue
+        if node.tag == "ol":
+            try:
+                number = int(node.attrs.get("start", "1"))
+            except ValueError:
+                number = 1
+            node.tag = "div"
+            node.attrs["class"] = (
+                node.attrs.get("class", "") + " mg-ordered-list"
+            ).strip()
+            for item in node.children:
+                if not isinstance(item, ElementNode) or item.tag != "li":
+                    continue
+                item.tag = "div"
+                item.attrs["class"] = (
+                    item.attrs.get("class", "") + " mg-ordered-item"
+                ).strip()
+                # Loose lists start with a paragraph, sometimes after whitespace.
+                # Put the marker inside it so it does not occupy its own line.
+                first = next(
+                    (
+                        child
+                        for child in item.children
+                        if not isinstance(child, TextNode) or child.text.strip()
+                    ),
+                    None,
+                )
+                target = (
+                    first
+                    if isinstance(first, ElementNode) and first.tag == "p"
+                    else item
+                )
+                target.children.insert(0, TextNode("{}. ".format(number)))
+                number += 1
+        _number_ordered_lists(node.children)
+
+
 def parse(
     request: RenderRequest,
     engine: Optional[MarkdownEngine] = None,
@@ -344,6 +385,7 @@ def parse(
         root_font_px(request.zoom),
         request.settings.table_max_columns,
     )
+    _number_ordered_lists(parser.roots)
     replace_tables(parser.roots, latin, cjk)
 
     return StructuredDoc(

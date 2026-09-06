@@ -14,6 +14,7 @@ MARKDOWN_EXTENSIONS = (
     "pymdownx.highlight",
     "pymdownx.arithmatex",
     "tables",
+    "sane_lists",
 )
 
 # superfences hands a fenced block to Pygments whenever Pygments can be

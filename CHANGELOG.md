@@ -6,6 +6,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Numbered lists now display explicit numbers in the minihtml preview, including
+  non-1 starts and nested lists. Loose items keep the number in their first
+  paragraph. Adjacent ordered and unordered lists separated by a blank line
+  retain their own list types. Wrapped lines do not yet use hanging indents.
+
 ## [0.4.2] - 2026-09-06
 
 ### Added
