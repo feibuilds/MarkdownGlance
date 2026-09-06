@@ -72,7 +72,7 @@ You can install it by hand instead. No command line is needed.
 1. Go to the [latest release](https://github.com/pandadolphin/MarkdownGlance/releases/latest).
 2. Under **Assets**, click **Source code (zip)** to download the ZIP file.
 3. Unzip it. You get a folder with a version number in its name, like
-   `MarkdownGlance-0.4.1`.
+   `MarkdownGlance-0.4.2`.
 4. Rename that folder to `MarkdownGlance`. The name must be exactly this, or
    Sublime Text will not load the package.
 5. In Sublime Text, open **Preferences → Browse Packages…**. A file manager

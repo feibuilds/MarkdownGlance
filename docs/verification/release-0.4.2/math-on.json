@@ -1,0 +1,69 @@
+{
+  "assets": [
+    {
+      "background": null,
+      "colour": "216,222,233",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:6fcb9c3e"
+    },
+    {
+      "background": null,
+      "colour": "216,222,233",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:0a473631"
+    },
+    {
+      "background": null,
+      "colour": "216,222,233",
+      "display": true,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:f56bd749"
+    },
+    {
+      "background": null,
+      "colour": "216,222,233",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:41fede69"
+    }
+  ],
+  "block_placeholders": 0,
+  "body_html": "<h1 id=\"math-check\">Math check</h1>\n<p>Inline <span class=\"math-inline\"><img src=\"data:REDACTED\" alt=\"a^2 + b^2 = c^2\" width=\"95\" height=\"18\" style=\"width: 5.9375rem; height: 1.1250rem\"></span> in a sentence, and <span class=\"math-inline\"><img src=\"data:REDACTED\" alt=\"\\alpha \\to \\beta\" width=\"52\" height=\"16\" style=\"width: 3.2812rem; height: 1.0312rem\"></span> too.</p>\n<p>It costs $5 and $6, which is not math.</p>\n<p class=\"math-display\"><img src=\"data:REDACTED\" alt=\"\\int_0^1 x\\,dx = \\frac{1}{2}\" width=\"100\" height=\"46\" style=\"width: 6.2500rem; height: 2.9062rem\"></p>\n<p>A broken one <span class=\"math-inline\"><span class=\"mdglance-asset-placeholder-inline\"><strong>Unavailable</strong> (formula source is sent to latex.codecogs.com)</span></span> stays inline, and the line keeps its shape.</p>\n<p><code>$x$</code> in code and a fence:</p>\n<pre><code>$y$</code></pre>\n\n<p>Last paragraph, after the fence.</p>",
+  "checks": {
+    "all in one foreground colour": true,
+    "four math assets": true,
+    "invalid formula is an inline placeholder": true,
+    "no error card": true,
+    "one display formula": true,
+    "prices and code are not math": true,
+    "privacy caption shown once": true,
+    "three formulas are images": true
+  },
+  "code_math": 0,
+  "error_cards": 0,
+  "generation": 5,
+  "headings": 1,
+  "images": 3,
+  "inline_placeholders": 1,
+  "loading": 0,
+  "log": [
+    "2.0s MarkdownGlance.sublime-settings: enable_math = True",
+    "2.5s preview opened"
+  ],
+  "pending": [],
+  "privacy_captions": 1,
+  "session": true,
+  "settings": {
+    "enable_math": true,
+    "enable_mermaid": false
+  },
+  "theme": {
+    "background": "#303841",
+    "foreground": "#d8dee9",
+    "is_dark": true
+  },
+  "timed_out": false,
+  "unavailable": 1
+}

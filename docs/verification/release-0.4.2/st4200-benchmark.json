@@ -1,0 +1,13 @@
+{
+  "backend": "phantom_view",
+  "cpu": "x86_64",
+  "fixture_bytes": 102445,
+  "p50_ms": 434.822,
+  "p95_ms": 469.917,
+  "parser": "Markdown 3.2.2 + pymdown-extensions 8.1.1",
+  "platform": "Linux-6.8.0-138-generic-x86_64-with-glibc2.17",
+  "python": "3.8.12",
+  "samples": 100,
+  "sublime_build": "4200",
+  "warmups": 3
+}

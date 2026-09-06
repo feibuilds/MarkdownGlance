@@ -1,0 +1,66 @@
+{
+  "assets": [
+    {
+      "background": null,
+      "colour": "51,51,51",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:ae04f1df"
+    },
+    {
+      "background": null,
+      "colour": "51,51,51",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:0dafb300"
+    },
+    {
+      "background": null,
+      "colour": "51,51,51",
+      "display": true,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:6eca63bf"
+    },
+    {
+      "background": null,
+      "colour": "51,51,51",
+      "display": false,
+      "host": "https://latex.codecogs.com/png.image",
+      "label": "math:latex.codecogs.com:eceb3142"
+    }
+  ],
+  "block_placeholders": 0,
+  "body_html": "<h1 id=\"math-check\">Math check</h1>\n<p>Inline <span class=\"math-inline\"><img src=\"data:REDACTED\" alt=\"a^2 + b^2 = c^2\" width=\"95\" height=\"18\" style=\"width: 5.9375rem; height: 1.1250rem\"></span> in a sentence, and <span class=\"math-inline\"><img src=\"data:REDACTED\" alt=\"\\alpha \\to \\beta\" width=\"52\" height=\"16\" style=\"width: 3.2812rem; height: 1.0312rem\"></span> too.</p>\n<p>It costs $5 and $6, which is not math.</p>\n<p class=\"math-display\"><img src=\"data:REDACTED\" alt=\"\\int_0^1 x\\,dx = \\frac{1}{2}\" width=\"100\" height=\"46\" style=\"width: 6.2500rem; height: 2.9062rem\"></p>\n<p>A broken one <span class=\"math-inline\"><span class=\"mdglance-asset-placeholder-inline\"><strong>Unavailable</strong> (formula source is sent to latex.codecogs.com)</span></span> stays inline, and the line keeps its shape.</p>\n<p><code>$x$</code> in code and a fence:</p>\n<pre><code>$y$</code></pre>\n\n<p>Last paragraph, after the fence.</p>",
+  "checks": {
+    "diagnostics copied": true,
+    "no formula in diagnostics": true
+  },
+  "code_math": 0,
+  "error_cards": 0,
+  "generation": 11,
+  "headings": 1,
+  "images": 3,
+  "inline_placeholders": 1,
+  "loading": 0,
+  "log": [
+    "2.0s MarkdownGlance.sublime-settings: enable_math = True",
+    "2.5s preview opened",
+    "4.0s phase math-on done",
+    "7.5s Preferences.sublime-settings: color_scheme = 'Breakers.sublime-color-scheme'",
+    "9.0s phase light-scheme done"
+  ],
+  "pending": [],
+  "privacy_captions": 1,
+  "session": true,
+  "settings": {
+    "enable_math": true,
+    "enable_mermaid": false
+  },
+  "theme": {
+    "background": "#fcfdfd",
+    "foreground": "#333333",
+    "is_dark": false
+  },
+  "timed_out": false,
+  "unavailable": 1
+}

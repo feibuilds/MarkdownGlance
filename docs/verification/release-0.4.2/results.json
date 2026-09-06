@@ -1,0 +1,17 @@
+[
+  {
+    "theme": "light",
+    "mermaid_svg": 1,
+    "math": 2,
+    "transport": "file"
+  },
+  {
+    "theme": "dark",
+    "mermaid_svg": 1,
+    "math": 2,
+    "transport": "file"
+  },
+  {
+    "offline_source_fallback": "pass"
+  }
+]

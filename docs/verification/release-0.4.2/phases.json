@@ -1,0 +1,22 @@
+[
+  {
+    "name": "math-on",
+    "screenshot": true,
+    "timeout": 90
+  },
+  {
+    "name": "light-scheme",
+    "screenshot": true,
+    "timeout": 90
+  },
+  {
+    "name": "diagnostics",
+    "screenshot": false,
+    "timeout": 90
+  },
+  {
+    "name": "math-off",
+    "screenshot": true,
+    "timeout": 90
+  }
+]

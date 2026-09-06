@@ -1,0 +1,40 @@
+{
+  "assets": [],
+  "block_placeholders": 0,
+  "body_html": "<h1 id=\"math-check\">Math check</h1>\n<p>Inline <code class=\"math\">$a^2 + b^2 = c^2$</code> in a sentence, and <code class=\"math\">$\\alpha \\to \\beta$</code> too.</p>\n<p>It costs $5 and $6, which is not math.</p>\n<pre><code class=\"math\">\\int_0^1 x\\,dx = \\frac{1}{2}</code></pre>\n<p>A broken one <code class=\"math\">$\\frac{a$</code> stays inline, and the line keeps its shape.</p>\n<p><code>$x$</code> in code and a fence:</p>\n<pre><code>$y$</code></pre>\n\n<p>Last paragraph, after the fence.</p>",
+  "checks": {
+    "display block is pre": true,
+    "four formulas as code": true,
+    "no assets": true
+  },
+  "code_math": 4,
+  "error_cards": 0,
+  "generation": 12,
+  "headings": 1,
+  "images": 0,
+  "inline_placeholders": 0,
+  "loading": 0,
+  "log": [
+    "2.0s MarkdownGlance.sublime-settings: enable_math = True",
+    "2.5s preview opened",
+    "4.0s phase math-on done",
+    "7.5s Preferences.sublime-settings: color_scheme = 'Breakers.sublime-color-scheme'",
+    "9.0s phase light-scheme done",
+    "12.5s phase diagnostics done",
+    "13.0s MarkdownGlance.sublime-settings: enable_math = False"
+  ],
+  "pending": [],
+  "privacy_captions": 0,
+  "session": true,
+  "settings": {
+    "enable_math": false,
+    "enable_mermaid": false
+  },
+  "theme": {
+    "background": "#fcfdfd",
+    "foreground": "#333333",
+    "is_dark": false
+  },
+  "timed_out": false,
+  "unavailable": 0
+}
