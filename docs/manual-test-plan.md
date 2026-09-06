@@ -63,10 +63,15 @@ forward-compatibility testing.
    its preview, its panel, then the second document's three, and confirm both
    front tabs follow every time, that the panel shows the half matching what
    you clicked, that the focus stays where you put it, and that the window
-   settles at once rather than flickering between the two documents. Repeat in
-   Full Screen, where the preview shares the source's group: clicking the
-   source must leave the source in front. Automated as `run-markdownglance`'s
-   `follow_focus` scenario, Side-by-Side only.
+   settles at once rather than flickering between the two documents. Then open
+   a third Markdown file that has never been previewed -- from the sidebar and
+   from Goto Anything, since a file opened that way is activated before it has
+   a syntax -- and confirm it gets a preview and a panel of its own, in front,
+   with the caret still in the file you opened. Repeat in Full Screen, where
+   the preview shares the source's group: clicking the source must leave the
+   source in front, and a third file must *not* get a preview of its own.
+   Automated as `run-markdownglance`'s `follow_focus` scenario, Side-by-Side
+   only.
 11. Widths: with `auto_width` on, open a table of contents and an outline over
    documents with short headings and with one very long heading — no entry may
    wrap, and neither group may be wider than it was with the setting off. Drag

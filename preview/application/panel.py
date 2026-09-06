@@ -153,6 +153,9 @@ class PanelController:
 
     def _open(self, window, source, automatic: bool) -> Optional[PanelSession]:
         source_group, _ = window.get_view_index(source)
+        # `new_file` focuses the view it makes. Only `toggle` wants that, and
+        # it focuses the panel itself afterwards.
+        was_focused = self._active_view(window)
         session_id = new_session_id()
         key = (window.id(), source.buffer_id())
         self._dismissed.discard(key)
@@ -184,6 +187,8 @@ class PanelController:
         self._by_source[key] = panel
         self._by_surface[surface.id] = panel
         self.refresh(panel, source)
+        if was_focused is not None:
+            window.focus_view(was_focused)
         return panel
 
     def _title(self, name: str) -> str:
@@ -281,13 +286,9 @@ class PanelController:
             )
             if source is None:
                 return
-            was_focused = self._active_view(window)
             panel = self._open(window, source, automatic=True)
             if panel is None:
                 return
-            # A panel nobody asked for must not take the caret with it.
-            if was_focused is not None:
-                window.focus_view(was_focused)
         had_document = bool(panel.document)
         panel.document = headings
         if panel.automatic and not self._still_wanted(panel, None, headings):
@@ -438,12 +439,32 @@ class PanelController:
             panel = self.for_source(window.id(), view.buffer_id())
             showing = False
         if panel is None:
+            panel = self._follow(window, view)
+        if panel is None:
             return
         showing = showing and bool(panel.document)
         if showing != panel.showing_preview:
             panel.showing_preview = showing
             self._present(panel, self._source_view(panel, window))
         self.backend.reveal(panel.surface)
+
+    def _follow(self, window, view) -> Optional[PanelSession]:
+        """Give a newly focused document a panel, in a window that has one.
+
+        The panel group holds one tab per document; without this the tab in
+        front stays on whichever document had one, so the panel ends up
+        describing a file the user is no longer looking at. A window with a
+        panel open is a window the user asked for one in, which is the answer
+        for the document they have just moved to as well -- but not for one
+        whose panel they closed by hand.
+        """
+        if not self._is_markdown(view):
+            return None
+        if (window.id(), view.buffer_id()) in self._dismissed:
+            return None
+        if not self.sessions_in(window.id()):
+            return None
+        return self._open(window, view, automatic=False)
 
     def adjust_zoom(self, window, delta: float = 0.0, reset: bool = False) -> bool:
         active = self._active_view(window)

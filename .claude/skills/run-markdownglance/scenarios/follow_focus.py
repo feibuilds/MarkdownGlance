@@ -7,6 +7,11 @@ the name of whatever Sublime has at the front of the two shared groups, checks
 that the focus stayed where it was put (`reveal` moves it away and back), and
 checks which half of the panel is on screen: the source outline while a source
 has the focus, the rendered table of contents while a preview has it.
+
+The last phase opens a third document as a plain file, with no preview of its
+own. Focusing it used to leave the preview and the panel describing whichever
+document had one, which is the state the report came in as: three groups, three
+different files.
 """
 
 from mdglance_probe import phase
@@ -102,6 +107,37 @@ def focus_beta_preview(ctx):
     ctx.window.focus_view(_by_role(ctx, "preview")["Preview: toc-beta.md"])
 
 
+def open_gamma(ctx):
+    """A third document, opened as a plain file: no preview of its own."""
+    import os.path
+
+    ctx.window.focus_view(STATE["beta"])
+    STATE["gamma"] = ctx.window.open_file(
+        os.path.join(ctx.fixtures, "toc-gamma.md")
+    )
+
+
+def gamma_followed(ctx, snap):
+    return (
+        not STATE["gamma"].is_loading()
+        and _front(ctx, "preview") == "Preview: toc-gamma.md"
+        and _front(ctx, "panel") == "Contents: toc-gamma.md"
+    )
+
+
+def check_gamma(ctx, snap):
+    checks = _fronts(ctx, "toc-gamma", "outline")
+    checks.update(_focus_held(ctx, STATE["gamma"]))
+    checks.update(
+        {
+            "three previews now": len(_by_role(ctx, "preview")) == 3,
+            "three panels now": len(_by_role(ctx, "panel")) == 3,
+            "still three groups": len(ctx.window.layout()["cells"]) == 3,
+        }
+    )
+    return checks
+
+
 def rendered(ctx, snap):
     return ctx.settled(snap)
 
@@ -162,5 +198,11 @@ PHASES = [
         action=focus_beta_preview,
         done=both_open,
         check=check_beta_from_preview,
+    ),
+    phase(
+        "gamma-opened",
+        action=open_gamma,
+        done=gamma_followed,
+        check=check_gamma,
     ),
 ]

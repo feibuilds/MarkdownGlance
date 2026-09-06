@@ -22,6 +22,21 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **The preview and the contents panel now follow you to a document that has
+  never been previewed.** With several Markdown files open, the preview group
+  and the panel group each hold one tab per document, and the tab in front is
+  the focused document's -- but a file you had never opened a preview for had
+  no tab to bring forward, so both groups went on describing whichever file
+  did. Three groups, three different documents. Focusing a Markdown file in a
+  window that already has a side-by-side preview now gives that file one too,
+  and a panel if the window has one, without taking the focus off what you
+  clicked. A panel you closed by hand stays closed.
+
+- **A file opened from the sidebar or Goto Anything was never noticed.** It is
+  activated while it is still loading, before Sublime has given it a syntax,
+  and no second activation follows; the package now listens for the load as
+  well.
+
 - **Closing a side panel left an empty pane behind** whenever the window had
   changed since the panel was opened -- which, with the contents panel, is any
   time you open the preview after it. The layout owner used to put back the

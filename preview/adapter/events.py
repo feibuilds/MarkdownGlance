@@ -76,34 +76,43 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
             container.usecases.source_closed(self.view)
 
     def on_activated(self):
-        def activated():
-            if not container.loaded or self.view.window() is None:
-                return
-            window = self.view.window()
-            container.reconcile(window)
-            container.panel.source_renamed(self.view)
-            container.panel.refresh_source(self.view)
-            container.usecases.reveal_preview(self.view)
-            container.panel.focus_changed(self.view)
-            session = container.manager.for_source(window.id(), self.view.buffer_id())
-            if session is None:
-                return
-            name = (
-                self.view.name()
-                or os.path.basename(self.view.file_name() or "")
-                or "Untitled"
-            )
-            base = (
-                os.path.dirname(self.view.file_name())
-                if self.view.file_name()
-                else None
-            )
-            if name != session.source_name or base != session.base_path:
-                container.usecases.source_saved(self.view)
-            else:
-                container.usecases.theme_changed(self.view)
+        _ui(self._settled)
 
-        _ui(activated)
+    def on_load_async(self):
+        """A file opened from the sidebar or Goto Anything is activated while
+        it is still loading, before Sublime has given it a syntax, so the
+        activation above sees a view that is not Markdown yet and leaves it
+        alone. No second activation follows -- the view is already active --
+        so the load is the only other chance to notice."""
+        _ui(self._settled)
+
+    def _settled(self):
+        if not container.loaded or self.view.window() is None:
+            return
+        window = self.view.window()
+        container.reconcile(window)
+        container.panel.source_renamed(self.view)
+        container.panel.refresh_source(self.view)
+        container.usecases.follow_focus(self.view)
+        container.usecases.reveal_preview(self.view)
+        container.panel.focus_changed(self.view)
+        session = container.manager.for_source(window.id(), self.view.buffer_id())
+        if session is None:
+            return
+        name = (
+            self.view.name()
+            or os.path.basename(self.view.file_name() or "")
+            or "Untitled"
+        )
+        base = (
+            os.path.dirname(self.view.file_name())
+            if self.view.file_name()
+            else None
+        )
+        if name != session.source_name or base != session.base_path:
+            container.usecases.source_saved(self.view)
+        else:
+            container.usecases.theme_changed(self.view)
 
 
 class MarkdownGlanceEventListener(sublime_plugin.EventListener):

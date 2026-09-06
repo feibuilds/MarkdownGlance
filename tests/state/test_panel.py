@@ -442,6 +442,67 @@ class PanelControllerTest(unittest.TestCase):
         self.assertEqual(self.backend.themes[self.surface().id].scheme, scheme)
 
 
+class FollowFocusTest(PanelControllerTest):
+    """The panel group holds one tab per document, so a document that has
+    never had a panel would otherwise leave another one's in front."""
+
+    def other(self, identifier=2, markdown=True):
+        view = self.window.add(
+            View(identifier, self.window, markdown=markdown, text="# Other\n")
+        )
+        self.window.active = view
+        return view
+
+    def test_focusing_a_document_with_no_panel_opens_one(self):
+        self.controller.toggle(self.window)
+        other = self.other()
+
+        self.controller.focus_changed(other)
+
+        panel = self.controller.for_source(1, other.buffer_id())
+        self.assertIsNotNone(panel)
+        self.assertIn("Other", self.backend.html[panel.surface.id])
+        self.assertIsNot(panel, self.controller.for_source(1, self.source.buffer_id()))
+
+    def test_the_panel_it_opens_does_not_take_the_focus(self):
+        self.controller.toggle(self.window)
+        other = self.other()
+        self.backend.focused = []
+
+        self.controller.focus_changed(other)
+
+        self.assertEqual(self.backend.focused, [])
+        self.assertIs(self.window.active, other)
+
+    def test_a_window_with_no_panel_opens_nothing(self):
+        other = self.other()
+
+        self.controller.focus_changed(other)
+
+        self.assertIsNone(self.controller.for_source(1, other.buffer_id()))
+
+    def test_a_panel_the_user_closed_stays_closed(self):
+        self.controller.toggle(self.window)
+        other = self.other()
+        self.controller.focus_changed(other)
+        panel = self.controller.for_source(1, other.buffer_id())
+        self.controller.surface_closed(panel.surface.id)
+        self.window.active = self.source
+        self.window.active = other
+
+        self.controller.focus_changed(other)
+
+        self.assertIsNone(self.controller.for_source(1, other.buffer_id()))
+
+    def test_a_view_that_is_not_markdown_opens_nothing(self):
+        self.controller.toggle(self.window)
+        other = self.other(3, markdown=False)
+
+        self.controller.focus_changed(other)
+
+        self.assertIsNone(self.controller.for_source(1, other.buffer_id()))
+
+
 class OneRegionTest(PanelControllerTest):
     """The panel is one surface showing two halves, chosen by the focus."""
 

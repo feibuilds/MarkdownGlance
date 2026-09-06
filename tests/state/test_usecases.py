@@ -587,6 +587,89 @@ class PreviewFollowsFocusTest(RenderedSessionTest):
         self.assertEqual(self.backend.revealed, [])
 
 
+class FollowFocusTest(RenderedSessionTest):
+    """A preview group holds one tab per document, so a document that has
+    never been previewed would otherwise leave another one's preview in front
+    -- the source, the preview and the panel each on a different file."""
+
+    def focus(self, view):
+        self.window._active = view.sheet() if hasattr(view, "sheet") else Sheet(0, view)
+        return view
+
+    def other(self, identifier=30, markdown=True):
+        view = View(
+            identifier,
+            filename=os.path.join(BASE, "other.md"),
+            markdown=markdown,
+        )
+        view._window = self.window
+        return view
+
+    def test_focusing_a_document_with_no_preview_opens_one(self):
+        self.open()
+        other = self.other()
+
+        self.usecases.follow_focus(self.focus(other))
+
+        session = self.manager.for_source(1, 30)
+        self.assertIsNotNone(session)
+        self.assertEqual(session.mode, PreviewMode.SIDE_BY_SIDE)
+        self.assertEqual(self.scheduler.requests[-1], (session.id, "open"))
+
+    def test_the_preview_it_opens_does_not_take_the_focus(self):
+        self.open()
+        other = self.other()
+        self.focus(other)
+        self.backend.focused = []
+
+        self.usecases.follow_focus(other)
+
+        self.assertEqual(self.backend.focused, [])
+        self.assertEqual(self.window.focused[-1], other)
+
+    def test_a_document_that_already_has_one_opens_nothing(self):
+        session = self.open()
+        before = len(self.manager.sessions_in(1))
+
+        self.usecases.follow_focus(self.focus(self.source))
+
+        self.assertEqual(len(self.manager.sessions_in(1)), before)
+        self.assertIs(self.manager.for_source(1, 10), session)
+
+    def test_a_window_with_no_preview_opens_nothing(self):
+        other = self.other()
+
+        self.usecases.follow_focus(self.focus(other))
+
+        self.assertEqual(self.manager.sessions_in(1), [])
+
+    def test_full_screen_alone_does_not_count(self):
+        # The preview stands in for the source there; standing in for a file
+        # the user has just moved away from is not something to do unasked.
+        self.usecases.toggle_full_screen(self.window)
+        other = self.other()
+
+        self.usecases.follow_focus(self.focus(other))
+
+        self.assertIsNone(self.manager.for_source(1, 30))
+
+    def test_a_view_that_is_not_markdown_opens_nothing(self):
+        self.open()
+
+        self.usecases.follow_focus(self.focus(self.other(31, markdown=False)))
+
+        self.assertIsNone(self.manager.for_source(1, 31))
+
+    def test_a_view_the_window_has_not_settled_on_opens_nothing(self):
+        self.open()
+        other = self.other()
+        self.focus(self.source)
+
+        self.usecases.follow_focus(other)
+
+        self.assertIsNone(self.manager.for_source(1, 30))
+
+
 class DiagramThemeTest(RenderedSessionTest):
     """A Mermaid diagram is an image the server baked for one background, so a
     change of colour scheme has to fetch it again. Everything else in the

@@ -110,8 +110,13 @@ class UseCases:
             None,
         )
 
-    def _create(self, window, source, mode: PreviewMode) -> PreviewSession:
+    def _create(
+        self, window, source, mode: PreviewMode, focus: bool = True
+    ) -> PreviewSession:
         source_group, _ = window.get_view_index(source)
+        # `new_file` focuses the view it makes, so a preview the user did not
+        # ask for has to put the focus back where it found it.
+        was_focused = None if focus else window.active_view()
         session = self.manager.new_session(
             window.id(),
             source.buffer_id(),
@@ -138,7 +143,10 @@ class UseCases:
         self.backend.set_role(session.preview_surface, "preview")
         self.manager.bind_surfaces(session)
         session.state = SessionState.RENDERING
-        self.backend.focus(session.preview_surface)
+        if focus:
+            self.backend.focus(session.preview_surface)
+        elif was_focused is not None:
+            window.focus_view(was_focused)
         self.scheduler.request_render(session.id, "open")
         return session
 
@@ -358,6 +366,36 @@ class UseCases:
             session.settings = settings
             if render_required or policy_changed:
                 self.scheduler.request_render(session.id, "settings")
+
+    def follow_focus(self, view) -> None:
+        """Give a newly focused document a preview, in a window that has one.
+
+        A preview group holds one tab per document, and the tab in front is
+        the focused document's -- unless that document has never been
+        previewed, in which case the group used to keep showing whichever
+        document was, and the source, the preview and the panel each ended up
+        on a different file. A window with a preview open is a window the user
+        is reading previews in, so the newly focused document gets one too.
+        """
+        window = view.window()
+        if window is None or not self._is_markdown(view):
+            return
+        # The same settled-view rule as `reveal_preview`: `reveal` activates
+        # views on its way past, and those must not open anything.
+        active = window.active_view()
+        if active is None or active.id() != view.id():
+            return
+        if self.manager.for_source(window.id(), view.buffer_id()) is not None:
+            return
+        # Only alongside a preview that is beside its source. In Full Screen
+        # the preview stands in for the source, and standing in for a document
+        # the user has just moved away from is not a thing to do by itself.
+        if not any(
+            session.mode == PreviewMode.SIDE_BY_SIDE
+            for session in self.manager.sessions_in(window.id())
+        ):
+            return
+        self._create(window, view, PreviewMode.SIDE_BY_SIDE, focus=False)
 
     def reveal_preview(self, view) -> None:
         """Bring the focused document's preview to the front.
