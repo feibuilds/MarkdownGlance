@@ -56,16 +56,7 @@ def document(generation):
 
 class SchedulerTest(unittest.TestCase):
     def setUp(self):
-        self.session = PreviewSession(
-            "s",
-            1,
-            2,
-            3,
-            None,
-            None,
-            PreviewMode.FULL_SCREEN,
-            SessionState.OPENING,
-        )
+        self.session = PreviewSession("s", 1, 2, 3, SessionState.OPENING)
         self.clock = FakeClock()
         self.executor = ManualExecutor()
         self.presented = []
@@ -77,7 +68,7 @@ class SchedulerTest(unittest.TestCase):
                 generation,
                 "source-{}".format(generation),
                 None,
-                session.zoom,
+                1.0,
                 session.settings,
                 ThemeSnapshot(),
             ),

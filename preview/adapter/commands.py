@@ -66,15 +66,7 @@ class MdglanceOpenSideBySideCommand(sublime_plugin.WindowCommand):
     def run(self):
         if libraries_missing():
             return
-        container.reconcile(self.window)
-        session = _owned_session(self.window)
-        if session is not None:
-            from ..domain.contracts import PreviewMode
-
-            container.usecases.switch_mode(session, PreviewMode.SIDE_BY_SIDE)
-            container.backend.focus(session.preview_surface)
-        else:
-            container.usecases.open_side_by_side(self.window)
+        container.usecases.open_side_by_side(self.window)
 
     def is_enabled(self):
         if not container.loaded:

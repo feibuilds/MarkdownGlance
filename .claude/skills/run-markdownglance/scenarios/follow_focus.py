@@ -1,17 +1,14 @@
-"""Two documents previewed at once: the panels follow the focus.
+"""Several documents, one preview: the pane follows the focus.
 
-A document has three groups -- source, preview, panel -- and every document in
-the window shares each of them, so the tabs left in front would otherwise
-belong to whichever was previewed last. Each phase focuses one view and reads
-the name of whatever Sublime has at the front of the two shared groups, checks
-that the focus stayed where it was put (`reveal` moves it away and back), and
-checks which half of the panel is on screen: the source outline while a source
-has the focus, the rendered table of contents while a preview has it.
+A window has three groups -- source, preview, panel -- and exactly one preview
+tab however many Markdown files are open in it. Each phase focuses one view and
+checks that the preview is titled for, and painted with, the focused document;
+that the focus stayed where it was put; and which half of the panel is on
+screen: the source outline while a source has the focus, the rendered table of
+contents while a preview has it.
 
-The last phase opens a third document as a plain file, with no preview of its
-own. Focusing it used to leave the preview and the panel describing whichever
-document had one, which is the state the report came in as: three groups, three
-different files.
+The last phase opens a third document as a plain file, with no preview ever
+opened for it, which is the case the report came in as.
 """
 
 from mdglance_probe import phase
@@ -43,6 +40,17 @@ def _front(ctx, role):
     return active.name() if active is not None else None
 
 
+def _preview_body(ctx):
+    """The HTML on the one preview surface, so the *document* can be checked
+    rather than only the tab's name."""
+    from MarkdownGlance.preview.adapter.container import container
+
+    stage = container.manager.stage(ctx.window.id())
+    if stage is None or stage.surface is None:
+        return ""
+    return container.backend._html.get(stage.surface.id, "")
+
+
 def _half(ctx):
     """Which half the panel in front is painted with, read off its HTML.
 
@@ -60,9 +68,12 @@ def _half(ctx):
 
 
 def _fronts(ctx, document, half):
+    title = document.split("-")[-1].capitalize() + " document"
     return {
-        "preview in front is {}".format(document): _front(ctx, "preview")
+        "one preview tab": len(_by_role(ctx, "preview")) == 1,
+        "preview is titled {}".format(document): _front(ctx, "preview")
         == "Preview: {}.md".format(document),
+        "preview is painted with {}".format(document): title in _preview_body(ctx),
         "panel in front is {}".format(document): _front(ctx, "panel")
         == "Contents: {}.md".format(document),
         "panel shows the {}".format(half): _half(ctx) == half,
@@ -103,8 +114,8 @@ def focus_alpha_panel(ctx):
     ctx.window.focus_view(_by_role(ctx, "panel")["Contents: toc-alpha.md"])
 
 
-def focus_beta_preview(ctx):
-    ctx.window.focus_view(_by_role(ctx, "preview")["Preview: toc-beta.md"])
+def focus_the_preview(ctx):
+    ctx.window.focus_view(list(_by_role(ctx, "preview").values())[0])
 
 
 def open_gamma(ctx):
@@ -122,6 +133,7 @@ def gamma_followed(ctx, snap):
         not STATE["gamma"].is_loading()
         and _front(ctx, "preview") == "Preview: toc-gamma.md"
         and _front(ctx, "panel") == "Contents: toc-gamma.md"
+        and "Gamma document" in _preview_body(ctx)
     )
 
 
@@ -130,7 +142,9 @@ def check_gamma(ctx, snap):
     checks.update(_focus_held(ctx, STATE["gamma"]))
     checks.update(
         {
-            "three previews now": len(_by_role(ctx, "preview")) == 3,
+            "three documents, still one preview tab": (
+                len(_by_role(ctx, "preview")) == 1
+            ),
             "three panels now": len(_by_role(ctx, "panel")) == 3,
             "still three groups": len(ctx.window.layout()["cells"]) == 3,
         }
@@ -148,11 +162,10 @@ def both_open(ctx, snap):
 
 def check_beta_front(ctx, snap):
     checks = {
-        "two previews": len(_by_role(ctx, "preview")) == 2,
+        "two documents, one preview tab": len(_by_role(ctx, "preview")) == 1,
         "two panels": len(_by_role(ctx, "panel")) == 2,
-        "one group holds the previews": len(_groups(ctx, "preview")) == 1,
         "one group holds the panels": len(_groups(ctx, "panel")) == 1,
-        "three groups per document, not four": len(ctx.window.layout()["cells"]) == 3,
+        "three groups, not four": len(ctx.window.layout()["cells"]) == 3,
     }
     checks.update(_fronts(ctx, "toc-beta", "contents"))
     return checks
@@ -172,9 +185,16 @@ def check_alpha_from_panel(ctx, snap):
     return checks
 
 
-def check_beta_from_preview(ctx, snap):
-    checks = _fronts(ctx, "toc-beta", "contents")
-    checks.update(_focus_held(ctx, _by_role(ctx, "preview")["Preview: toc-beta.md"]))
+def check_preview_keeps_its_document(ctx, snap):
+    """Focusing the preview does not change what is on it.
+
+    There is one preview and it belongs to the document the window is on, so
+    clicking it is a request to read that document, not to swap it. What does
+    change is the panel: the preview has the focus, so it shows the rendered
+    table of contents rather than the source outline.
+    """
+    checks = _fronts(ctx, "toc-alpha", "contents")
+    checks.update(_focus_held(ctx, list(_by_role(ctx, "preview").values())[0]))
     return checks
 
 
@@ -194,10 +214,10 @@ PHASES = [
         check=check_alpha_from_panel,
     ),
     phase(
-        "beta-preview-focused",
-        action=focus_beta_preview,
+        "preview-focused",
+        action=focus_the_preview,
         done=both_open,
-        check=check_beta_from_preview,
+        check=check_preview_keeps_its_document,
     ),
     phase(
         "gamma-opened",

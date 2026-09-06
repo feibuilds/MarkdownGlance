@@ -1,15 +1,13 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import FrozenSet, Optional, Tuple
+from typing import FrozenSet, Optional
 
 from ..domain.contracts import (
     AssetKey,
     PreviewDocument,
-    PreviewMode,
     RenderSettings,
     ThemeSnapshot,
 )
-from .ports import SurfaceHandle
 
 
 class SessionState(Enum):
@@ -34,13 +32,10 @@ class PreviewSession:
     window_id: int
     source_buffer_id: int
     source_sheet_id: int
-    preview_surface: Optional[SurfaceHandle]
-    mode: PreviewMode
     state: SessionState
     source_group: int = 0
     source_name: str = "Untitled"
     base_path: Optional[str] = None
-    zoom: float = 1.0
     requested_generation: int = 0
     completed_generation: int = 0
     successful_generation: int = 0
@@ -49,7 +44,6 @@ class PreviewSession:
     action_token: str = ""
     settings: RenderSettings = field(default_factory=RenderSettings)
     theme: ThemeSnapshot = field(default_factory=ThemeSnapshot)
-    table_budget: Optional[Tuple[int, int]] = None
     inflight_generation: Optional[int] = None
     inflight_future: object = None
     debounce_handle: object = None

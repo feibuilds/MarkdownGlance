@@ -37,15 +37,12 @@ class FakeBackend:
 class FakeLayout:
     def __init__(self):
         self.releases = []
-        # The owner holds group 1 for the session under test.
-        self.held = {"s": {1}}
 
     def release(self, window, group, session_id, restore=True):
         self.releases.append((group, restore))
 
     def release_all(self, window, session_id, restore=True):
-        for group in sorted(self.held.get(session_id, ()), reverse=True):
-            self.release(window, group, session_id, restore=restore)
+        self.releases.append((session_id, restore))
 
 
 class FakeResolver:
@@ -61,14 +58,12 @@ class FakeWindow:
         return 1
 
 
-def session():
+def session(identifier="s", buffer_id=2):
     return PreviewSession(
-        "s",
+        identifier,
         1,
-        2,
+        buffer_id,
         3,
-        SurfaceHandle("fake", 10, 1),
-        PreviewMode.SIDE_BY_SIDE,
         SessionState.VISIBLE,
         requested_generation=1,
         completed_generation=1,
@@ -77,37 +72,86 @@ def session():
     )
 
 
+def staged(manager, backend, *sessions):
+    """A window whose stage is showing the first of these documents."""
+    stage = manager.open_stage(1, PreviewMode.SIDE_BY_SIDE)
+    stage.surface = SurfaceHandle("fake", 10, 1)
+    backend.alive.add(10)
+    for item in sessions:
+        manager.add(item)
+    stage.showing = sessions[0].id
+    return stage
+
+
 class SessionManagerTest(unittest.TestCase):
+    """One stage per window, holding the documents shown on it."""
+
     def setUp(self):
         self.backend = FakeBackend()
-        self.backend.alive = {10}
         self.layout = FakeLayout()
         self.resolver = FakeResolver()
+        self.shown = []
         self.manager = SessionManager(
-            self.backend, self.layout, self.resolver, lambda window_id: FakeWindow()
+            self.backend,
+            self.layout,
+            self.resolver,
+            lambda window_id: FakeWindow(),
+            on_show=lambda stage, session: self.shown.append(session.id),
         )
         self.session = session()
-        self.manager.add(self.session)
+        self.stage = staged(self.manager, self.backend, self.session)
 
-    def test_source_close_closes_the_preview_never_the_source(self):
+    def test_source_close_closes_the_preview_when_it_was_the_last_document(self):
         self.manager.close(self.session, CloseCause.SOURCE_CLOSED)
         self.assertEqual(self.backend.closed, [10])
         self.assertNotIn(3, self.backend.closed)
-        self.assertEqual(self.layout.releases, [(1, True)])
+        self.assertEqual(self.layout.releases, [(self.stage.id, True)])
         self.assertEqual(self.resolver.forgot, ["s"])
+        self.assertIsNone(self.manager.stage(1))
 
-    def test_preview_user_close_does_not_close_preview_again(self):
-        self.backend.alive.discard(10)
-        self.manager.close(self.session, CloseCause.PREVIEW_CLOSED_BY_USER)
+    def test_closing_the_document_on_screen_shows_another(self):
+        other = session("t", buffer_id=4)
+        self.manager.add(other)
+
+        self.manager.close(self.session, CloseCause.SOURCE_CLOSED)
+
+        self.assertEqual(self.shown, ["t"])
         self.assertEqual(self.backend.closed, [])
+        self.assertIsNotNone(self.manager.stage(1))
+
+    def test_closing_a_document_that_is_not_on_screen_shows_nothing(self):
+        other = session("t", buffer_id=4)
+        self.manager.add(other)
+
+        self.manager.close(other, CloseCause.SOURCE_CLOSED)
+
+        self.assertEqual(self.shown, [])
+        self.assertTrue(self.manager.stage(1).is_showing("s"))
 
     def test_window_close_skips_layout_restore(self):
-        self.manager.close(self.session, CloseCause.WINDOW_CLOSED)
-        self.assertEqual(self.layout.releases, [(1, False)])
+        self.manager.close_window(1)
+        self.assertEqual(self.layout.releases, [(self.stage.id, False)])
 
-    def test_closing_the_preview_ends_the_session(self):
+    def test_closing_the_preview_tab_ends_every_document(self):
+        other = session("t", buffer_id=4)
+        self.manager.add(other)
+        self.backend.alive.discard(10)
+
         self.manager.surface_closed(10)
-        self.assertIsNone(self.manager.get("s"))
+
+        self.assertEqual(self.manager.sessions_in(1), [])
+        self.assertIsNone(self.manager.stage(1))
+        # The view was already gone; closing it again is not this owner's job.
+        self.assertEqual(self.backend.closed, [])
+
+    def test_closing_the_preview_ourselves_closes_the_view(self):
+        self.manager.close_preview(1)
+        self.assertEqual(self.backend.closed, [10])
+        self.assertIsNone(self.manager.stage(1))
+
+    def test_the_surface_answers_with_the_document_on_it(self):
+        self.assertIs(self.manager.for_surface(10), self.session)
+        self.assertIsNone(self.manager.for_surface(99))
 
     def test_every_close_path_reaches_the_hook_the_panel_hangs_on(self):
         closed = []
@@ -119,7 +163,7 @@ class SessionManagerTest(unittest.TestCase):
             closed.append,
         )
         first = session()
-        manager.add(first)
+        staged(manager, self.backend, first)
         manager.close(first, CloseCause.SOURCE_CLOSED)
         self.assertEqual(closed, [first])
 
@@ -128,3 +172,13 @@ class SessionManagerTest(unittest.TestCase):
         self.backend.alive.add(orphan)
         self.manager.reconcile(FakeWindow())
         self.assertIn(orphan, self.backend.closed)
+        # The stage's own surface is not an orphan.
+        self.assertNotIn(10, self.backend.closed)
+
+    def test_reconcile_ends_the_preview_when_its_view_is_gone(self):
+        self.backend.alive.discard(10)
+
+        self.manager.reconcile(FakeWindow())
+
+        self.assertIsNone(self.manager.stage(1))
+        self.assertEqual(self.manager.sessions_in(1), [])

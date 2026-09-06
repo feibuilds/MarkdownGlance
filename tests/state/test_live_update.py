@@ -75,6 +75,7 @@ class LiveUpdateTest(unittest.TestCase):
         self.manager = SessionManager(
             self.backend, self.layout, Resolver(),
             lambda identifier: self.windows.get(identifier),
+            on_show=lambda stage, session: self.usecases.show(stage, session),
         )
         self.scheduler = GenerationScheduler(
             self.manager.get,
@@ -97,7 +98,8 @@ class LiveUpdateTest(unittest.TestCase):
 
     def snapshot(self, session, generation):
         return RenderRequest(
-            session.id, generation, self.text, session.base_path, session.zoom,
+            session.id, generation, self.text, session.base_path,
+            self.manager.stage(session.window_id).zoom,
             session.settings, session.theme, session.action_token,
         )
 

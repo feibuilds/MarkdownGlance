@@ -8,6 +8,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **One preview tab per window, showing the file you are working on.** Every
+  Markdown document used to get a preview tab of its own, so a window with
+  three files open had three of them, and the tab in front was a matter of
+  which document you had touched last. The preview is a view onto the current
+  document now, not a document itself: it is titled for what is on it and
+  follows the focus, and switching to a file that has already rendered is a
+  repaint rather than a render. Where you had scrolled to in each document
+  comes back with it. Closing the preview closes it for the window, and zoom
+  belongs to the pane, so it no longer jumps when you switch files.
+
 - **The outline and the table of contents are now one panel**, showing the half
   that matches the tab you are on: the source outline while you edit, the
   rendered table of contents while you read the preview. They used to be two

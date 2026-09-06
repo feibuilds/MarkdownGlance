@@ -114,7 +114,7 @@ def check_contents_half(ctx, snap):
 def check_closed(ctx, snap):
     from MarkdownGlance.preview.adapter.container import container
 
-    session = container.manager.for_source(ctx.window.id(), STATE["source"].buffer_id())
+    stage = container.manager.stage(ctx.window.id())
     return {
         "the panel is gone": not _panels(ctx),
         "its group went with it": _groups(ctx) == 2,
@@ -125,7 +125,7 @@ def check_closed(ctx, snap):
             ctx.window.get_view_index(STATE["source"])[0] == 0
         ),
         "the preview came with its group": (
-            container.backend.group_of(session.preview_surface) == 1
+            container.backend.group_of(stage.surface) == 1
         ),
     }
 
@@ -133,8 +133,7 @@ def check_closed(ctx, snap):
 def close_preview(ctx):
     from MarkdownGlance.preview.adapter.container import container
 
-    session = container.manager.for_source(ctx.window.id(), STATE["source"].buffer_id())
-    STATE["preview"] = session.preview_surface.id
+    STATE["preview"] = container.manager.stage(ctx.window.id()).surface.id
     ctx.window.run_command("close_by_index", {"group": 1, "index": 0})
 
 

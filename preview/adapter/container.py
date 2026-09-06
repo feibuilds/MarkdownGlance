@@ -86,6 +86,7 @@ class Container:
             self.session_closed,
             lambda surface_id: self.panel is not None
             and self.panel.owns_surface(surface_id),
+            lambda stage, session: self.usecases.show(stage, session),
         )
         self.scheduler = GenerationScheduler(
             self.manager.get,
@@ -165,44 +166,53 @@ class Container:
         )
         session.theme = theme_snapshot(source)
         session.settings = self.settings.get()
-        viewport_width = self._viewport_width(session)
-        session.table_budget = self._table_budget(session, viewport_width)
+        # Zoom and the table budget belong to the pane the document is shown
+        # in, not to the document, so they come off the stage.
+        stage = self.manager.stage(session.window_id)
+        zoom = stage.zoom if stage is not None else 1.0
+        viewport_width = self._viewport_width(stage)
+        if stage is not None:
+            stage.table_budget = self._table_budget(stage, viewport_width)
         return RenderRequest(
             session.id,
             generation,
             source.substr(sublime.Region(0, source.size())),
             session.base_path,
-            session.zoom,
+            zoom,
             session.settings,
             session.theme,
             session.action_token,
             viewport_width,
         )
 
-    def _viewport_width(self, session: PreviewSession) -> float:
-        handle = session.preview_surface
+    def _viewport_width(self, stage) -> float:
+        handle = stage.surface if stage is not None else None
         if handle is None or not self.backend.is_alive(handle):
             return 0.0
         return self.backend.viewport_width(handle)
 
-    def _table_budget(self, session: PreviewSession, viewport_width: float):
+    def _table_budget(self, stage, viewport_width: float):
         return budgets(
             viewport_width,
-            root_font_px(session.zoom),
-            session.settings.table_max_columns,
+            root_font_px(stage.zoom if stage is not None else 1.0),
+            self.settings.get().table_max_columns,
         )
 
     def _watch_viewports(self) -> None:
-        """Re-render a preview whose group has been resized under it."""
+        """Re-render the preview whose pane has been resized under it.
+
+        One pane per window, so this is one measurement per window rather than
+        one per document, and only the document on screen can be affected.
+        """
         if not self.loaded:
             return
-        for session in self.manager.all_sessions():
-            if session.table_budget is None:
+        for stage in self.manager.stages():
+            if stage.table_budget is None or stage.showing is None:
                 continue
-            budget = self._table_budget(session, self._viewport_width(session))
-            if budget != session.table_budget:
-                session.table_budget = budget
-                self.scheduler.request_render(session.id, "resize")
+            budget = self._table_budget(stage, self._viewport_width(stage))
+            if budget != stage.table_budget:
+                stage.table_budget = budget
+                self.scheduler.request_render(stage.showing, "resize")
         sublime.set_timeout(self._watch_viewports, VIEWPORT_POLL_MS)
 
     def present(self, session, document) -> None:

@@ -151,6 +151,41 @@ class PhantomViewBackend:
         view.set_viewport_position((0.0, y), True)
         return True
 
+    def scroll_ratio(self, handle: SurfaceHandle) -> float:
+        """Where the surface is scrolled to, as a fraction of its own height.
+
+        A fraction rather than a pixel because the document that comes back to
+        this surface will have been laid out again at whatever width and zoom
+        the pane has by then; the pixel would put it somewhere else. It is the
+        same reason `navigate` works in ratios.
+        """
+        view = self._view(handle)
+        if view is None:
+            return 0.0
+        height = view.layout_extent()[1]
+        return view.viewport_position()[1] / height if height else 0.0
+
+    def restore_scroll(self, handle: SurfaceHandle, ratio: float) -> None:
+        """Put a document back where it was, once minihtml has laid it out.
+
+        There is no "layout finished" event, and `layout_extent` straight after
+        `PhantomSet.update` can still describe the phantom that was there
+        before, so the read has to happen on a later tick. The document appears
+        at the top for that one frame.
+        """
+        if ratio <= 0.0:
+            return
+
+        def restore() -> None:
+            view = self._view(handle)
+            if view is None:
+                return
+            height = view.layout_extent()[1]
+            if height:
+                view.set_viewport_position((0.0, height * ratio), False)
+
+        sublime.set_timeout(restore, 0)
+
     def move(self, handle: SurfaceHandle, group: int) -> None:
         window, view = self._window_view(handle)
         if view is not None:

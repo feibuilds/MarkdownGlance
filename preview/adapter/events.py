@@ -94,7 +94,6 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
         container.panel.source_renamed(self.view)
         container.panel.refresh_source(self.view)
         container.usecases.follow_focus(self.view)
-        container.usecases.reveal_preview(self.view)
         container.panel.focus_changed(self.view)
         session = container.manager.for_source(window.id(), self.view.buffer_id())
         if session is None:

@@ -110,164 +110,228 @@ class UseCases:
             None,
         )
 
-    def _create(
-        self, window, source, mode: PreviewMode, focus: bool = True
-    ) -> PreviewSession:
+    def _create(self, window, source) -> PreviewSession:
+        """A document the window can show. It has no surface of its own."""
         source_group, _ = window.get_view_index(source)
-        # `new_file` focuses the view it makes, so a preview the user did not
-        # ask for has to put the focus back where it found it.
-        was_focused = None if focus else window.active_view()
         session = self.manager.new_session(
             window.id(),
             source.buffer_id(),
             source.sheet().id(),
             source_group,
             self._source_name(source),
-            mode,
         )
         session.settings = self.settings_provider()
         session.theme = self.theme_provider(source)
         self.theme_observer(source, session.id)
         session.base_path = self._base_path(source, window)
-        group = source_group
-        if mode == PreviewMode.SIDE_BY_SIDE:
-            group = self.layout_owner.acquire(
-                window, source_group, GroupRole.PREVIEW, session.id
-            )
-        session.preview_surface = self.backend.create(
-            window, group, "Preview: {}".format(session.source_name), session.id
-        )
-        # Before anything is painted, so the empty surface never shows in the
-        # global scheme while the first render is still on the pool.
-        self.backend.apply_theme(session.preview_surface, session.theme)
-        self.backend.set_role(session.preview_surface, "preview")
-        self.manager.bind_surfaces(session)
         session.state = SessionState.RENDERING
-        if focus:
-            self.backend.focus(session.preview_surface)
-        elif was_focused is not None:
-            window.focus_view(was_focused)
         self.scheduler.request_render(session.id, "open")
         return session
 
+    def _open_surface(self, window, stage, source_group: int, focus: bool) -> None:
+        """Make the window's one preview surface, in the group its mode wants."""
+        group = source_group
+        if stage.mode == PreviewMode.SIDE_BY_SIDE:
+            group = self.layout_owner.acquire(
+                window, source_group, GroupRole.PREVIEW, stage.id
+            )
+        # `new_file` focuses the view it makes, so a surface the user did not
+        # ask for has to put the focus back where it found it.
+        was_focused = None if focus else window.active_view()
+        stage.surface = self.backend.create(window, group, "Preview", stage.id)
+        self.backend.set_role(stage.surface, "preview")
+        if focus:
+            self.backend.focus(stage.surface)
+        elif was_focused is not None:
+            window.focus_view(was_focused)
+
+    def show(self, stage, session: PreviewSession) -> None:
+        """Put a document on the stage.
+
+        The manager decides which document; this paints it. Everything the
+        surface carries belongs to the document going on it -- the title, the
+        heading ratios navigation uses, the colour scheme -- so all of it is
+        reasserted here rather than at creation.
+        """
+        outgoing = self.manager.get(stage.showing) if stage.showing else None
+        if outgoing is not None and stage.surface is not None:
+            stage.scroll[outgoing.id] = self.backend.scroll_ratio(stage.surface)
+        stage.showing = session.id
+        if stage.surface is None or not self.backend.is_alive(stage.surface):
+            return
+        self.backend.set_title(
+            stage.surface, "Preview: {}".format(session.source_name)
+        )
+        document = session.last_document
+        self.backend.set_heading_ratios(
+            stage.surface,
+            {head.slug: head.position_ratio for head in document.headings}
+            if document is not None
+            else {},
+        )
+        self._paint(stage, session, document.body_html if document else "")
+        self.backend.restore_scroll(stage.surface, stage.scroll.get(session.id, 0.0))
+
+    def _stage_focused(self, window, stage) -> bool:
+        """True when the active view is the stage's own surface."""
+        if stage is None or stage.surface is None:
+            return False
+        return self._active_view_id(window.active_sheet()) == stage.surface.id
+
     def open_side_by_side(self, window, source=None) -> None:
         self.reconcile(window)
+        stage = self.manager.stage(window.id())
+        if source is None and self._stage_focused(window, stage):
+            # Asked for from inside the preview, and with no document named:
+            # the one on it is the one that was meant.
+            if stage.mode != PreviewMode.SIDE_BY_SIDE:
+                self.switch_mode(stage, PreviewMode.SIDE_BY_SIDE)
+            else:
+                self.backend.focus(stage.surface)
+            return
         source = source or window.active_view()
         if not self._is_markdown(source):
             return
-        existing = self.manager.for_source(window.id(), source.buffer_id())
-        if existing is not None:
-            if existing.mode != PreviewMode.SIDE_BY_SIDE:
-                self.switch_mode(existing, PreviewMode.SIDE_BY_SIDE)
-            elif existing.preview_surface is not None:
-                self.backend.focus(existing.preview_surface)
+        session = self.manager.for_source(
+            window.id(), source.buffer_id()
+        ) or self._create(window, source)
+        if stage is None:
+            stage = self.manager.open_stage(window.id(), PreviewMode.SIDE_BY_SIDE)
+            source_group, _ = window.get_view_index(source)
+            self._open_surface(window, stage, source_group, focus=True)
+            self.show(stage, session)
             return
-        self._create(window, source, PreviewMode.SIDE_BY_SIDE)
+        if stage.mode != PreviewMode.SIDE_BY_SIDE:
+            self.switch_mode(stage, PreviewMode.SIDE_BY_SIDE)
+        self.show(stage, session)
+        self.backend.focus(stage.surface)
 
     def toggle_full_screen(self, window) -> None:
         self.reconcile(window)
-        session = self._session_for_active(window)
-        if session is None:
-            source = window.active_view()
-            if self._is_markdown(source):
-                self._create(window, source, PreviewMode.FULL_SCREEN)
+        stage = self.manager.stage(window.id())
+        source = window.active_view()
+        if stage is None:
+            if not self._is_markdown(source):
+                return
+            stage = self.manager.open_stage(window.id(), PreviewMode.FULL_SCREEN)
+            session = self.manager.for_source(
+                window.id(), source.buffer_id()
+            ) or self._create(window, source)
+            source_group, _ = window.get_view_index(source)
+            self._open_surface(window, stage, source_group, focus=True)
+            self.show(stage, session)
             return
-        active = window.active_sheet()
-        if session.mode == PreviewMode.SIDE_BY_SIDE:
-            self.switch_mode(session, PreviewMode.FULL_SCREEN)
-        elif (
-            session.preview_surface is not None
-            and self._active_view_id(active) == session.preview_surface.id
-        ):
-            source = self._find_source(session)
-            self.backend.close(session.preview_surface)
-            self.manager.close(session, CloseCause.PREVIEW_CLOSED_BY_USER)
-            if source is not None:
-                window.focus_view(source)
-        elif session.preview_surface is not None:
-            self.backend.focus(session.preview_surface)
+        if stage.mode == PreviewMode.SIDE_BY_SIDE:
+            self.switch_mode(stage, PreviewMode.FULL_SCREEN)
+            return
+        if self._stage_focused(window, stage):
+            # The preview stands in for the source in this mode, so the second
+            # press from inside it is how the user gets their file back.
+            session = self.manager.get(stage.showing) if stage.showing else None
+            back_to = self._find_source(session) if session else None
+            self.manager.close_preview(window.id())
+            if back_to is not None:
+                window.focus_view(back_to)
+        elif stage.surface is not None:
+            self.backend.focus(stage.surface)
 
-    def switch_mode(self, session: PreviewSession, mode: PreviewMode) -> None:
-        if session.mode == mode or session.preview_surface is None:
+    def switch_mode(self, stage, mode: PreviewMode) -> None:
+        if stage.mode == mode or stage.surface is None:
             return
-        window = self.manager.window_for_id(session.window_id)
+        window = self.manager.window_for_id(stage.window_id)
         if window is None:
             return
-        session.state = SessionState.MOVING
-        self.backend.move(session.preview_surface, session.source_group)
-        self.layout_owner.release_all(window, session.id, restore=True)
-
+        session = self.manager.get(stage.showing) if stage.showing else None
+        source_group = self._source_group(window, session, stage)
+        self.backend.move(stage.surface, source_group)
+        self.layout_owner.release_all(window, stage.id, restore=True)
         if mode == PreviewMode.SIDE_BY_SIDE:
-            preview_group = self.layout_owner.acquire(
-                window, session.source_group, GroupRole.PREVIEW, session.id
+            group = self.layout_owner.acquire(
+                window, source_group, GroupRole.PREVIEW, stage.id
             )
-            self.backend.move(session.preview_surface, preview_group)
-        session.mode = mode
-        self.backend.focus(session.preview_surface)
-        session.state = (
-            SessionState.VISIBLE if session.last_document else SessionState.RENDERING
-        )
-        self.represent(session)
+            self.backend.move(stage.surface, group)
+        stage.mode = mode
+        self.backend.focus(stage.surface)
+        if session is not None:
+            self.represent(session)
 
-    def _paint(self, session: PreviewSession, surface, html: str) -> None:
-        """Repaint a surface, reasserting the source's colour scheme first.
+    def _source_group(self, window, session, stage) -> int:
+        """Where the showing document's own view is, read live.
+
+        The number recorded when the session opened goes stale the moment the
+        user drags the source tab to another group.
+        """
+        source = self._find_source(session) if session is not None else None
+        if source is not None:
+            group, _ = window.get_view_index(source)
+            return group
+        return session.source_group if session is not None else 0
+
+    def _paint(self, stage, session: PreviewSession, body_html: str) -> None:
+        """Repaint the stage, reasserting the source's colour scheme first.
 
         The scheme has to travel with every paint rather than being set once at
         creation: `markdownediting: select color scheme` moves it under a
         preview that is already open.
         """
-        self.backend.apply_theme(surface, session.theme)
-        self.backend.update(surface, html)
+        if stage.surface is None:
+            return
+        self.backend.apply_theme(stage.surface, session.theme)
+        self.backend.update(
+            stage.surface,
+            represent(body_html, session.theme, stage.zoom, self.base_css),
+        )
+
+    def _showing_stage(self, session: PreviewSession):
+        """The stage this document is on, or None while it is not on one.
+
+        Everything that paints goes through here. A hidden document still
+        renders -- an edit from Find in Files, a reload from disk, a settings
+        change -- and its result must not land on a surface showing something
+        else.
+        """
+        stage = self.manager.stage(session.window_id)
+        return stage if stage is not None and stage.is_showing(session.id) else None
 
     def present(self, session: PreviewSession, document: PreviewDocument) -> None:
-        if session.preview_surface is None or not self.backend.is_alive(
-            session.preview_surface
-        ):
-            return
-        ratios = {heading.slug: heading.position_ratio for heading in document.headings}
-        self.backend.set_heading_ratios(session.preview_surface, ratios)
-        self._paint(
-            session,
-            session.preview_surface,
-            represent(document.body_html, session.theme, session.zoom, self.base_css),
-        )
+        stage = self._showing_stage(session)
+        if stage is not None and self.backend.is_alive(stage.surface):
+            self.backend.set_heading_ratios(
+                stage.surface,
+                {head.slug: head.position_ratio for head in document.headings},
+            )
+            self._paint(stage, session, document.body_html)
         if self.panel is not None:
             self.panel.document_rendered(
                 session.window_id, session.source_buffer_id, document
             )
 
     def present_error(
-        self, session: PreviewSession, stage: DiagnosticStage, message: str
+        self, session: PreviewSession, diagnostic: DiagnosticStage, message: str
     ) -> None:
-        if session.preview_surface is None:
+        stage = self._showing_stage(session)
+        if stage is None:
             return
         previous = session.last_document.body_html if session.last_document else ""
-        body = "{}{}".format(error_card(stage, message), previous)
-        self._paint(
-            session,
-            session.preview_surface,
-            represent(body, session.theme, session.zoom, self.base_css),
-        )
+        self._paint(stage, session, "{}{}".format(
+            error_card(diagnostic, message), previous
+        ))
 
     def represent(self, session: PreviewSession) -> None:
-        if session.last_document is not None:
-            self._paint(
-                session,
-                session.preview_surface,
-                represent(
-                    session.last_document.body_html,
-                    session.theme,
-                    session.zoom,
-                    self.base_css,
-                ),
-            )
+        stage = self._showing_stage(session)
+        if stage is not None and session.last_document is not None:
+            self._paint(stage, session, session.last_document.body_html)
 
     def adjust_zoom(self, window, delta: float = 0.0, reset: bool = False) -> None:
-        session = self._session_for_active(window)
-        if session is None:
+        stage = self.manager.stage(window.id())
+        if stage is None or self._session_for_active(window) is None:
             return
-        session.zoom = 1.0 if reset else max(0.5, min(3.0, session.zoom + delta))
-        self.represent(session)
+        # Zoom belongs to the pane, not to the document. With a surface each it
+        # was per document and jumped every time you switched files.
+        stage.zoom = 1.0 if reset else max(0.5, min(3.0, stage.zoom + delta))
+        session = self.manager.get(stage.showing) if stage.showing else None
+        if session is not None:
+            self.represent(session)
 
     def scroll_preview(self, window_id: int, buffer_id: int, slug: str) -> bool:
         """Scroll a document's preview to one heading. The panel's click path."""
@@ -282,16 +346,14 @@ class UseCases:
             )
 
     def _scroll(self, session: Optional[PreviewSession], slug: str) -> bool:
-        if (
-            session is None
-            or session.preview_surface is None
-            or session.last_document is None
-            or not any(
-                heading.slug == slug for heading in session.last_document.headings
-            )
+        if session is None or session.last_document is None:
+            return False
+        stage = self._showing_stage(session)
+        if stage is None or not any(
+            heading.slug == slug for heading in session.last_document.headings
         ):
             return False
-        return self.backend.navigate(session.preview_surface, slug)
+        return self.backend.navigate(stage.surface, slug)
 
     def open_relative(self, window, token: str, path: int) -> None:
         session = self._session_for_action_token(window, token)
@@ -324,9 +386,10 @@ class UseCases:
         if session is not None:
             session.base_path = self._base_path(view, window)
             session.source_name = self._source_name(view)
-            if session.preview_surface:
+            stage = self._showing_stage(session)
+            if stage is not None:
                 self.backend.set_title(
-                    session.preview_surface, "Preview: {}".format(session.source_name)
+                    stage.surface, "Preview: {}".format(session.source_name)
                 )
             self.scheduler.request_render(session.id, "save")
 
@@ -368,70 +431,28 @@ class UseCases:
                 self.scheduler.request_render(session.id, "settings")
 
     def follow_focus(self, view) -> None:
-        """Give a newly focused document a preview, in a window that has one.
+        """Put the focused document on the window's preview.
 
-        A preview group holds one tab per document, and the tab in front is
-        the focused document's -- unless that document has never been
-        previewed, in which case the group used to keep showing whichever
-        document was, and the source, the preview and the panel each ended up
-        on a different file. A window with a preview open is a window the user
-        is reading previews in, so the newly focused document gets one too.
+        One surface, so this is the whole of "which document am I previewing".
+        A document the window has never rendered gets a session here; one it
+        has is simply shown again, which costs a repaint and no render.
         """
         window = view.window()
         if window is None or not self._is_markdown(view):
             return
-        # The same settled-view rule as `reveal_preview`: `reveal` activates
-        # views on its way past, and those must not open anything.
+        stage = self.manager.stage(window.id())
+        if stage is None:
+            return
+        # `restore_scroll` and `focus` both move the focus about, and Sublime
+        # activates views on the way past. Only the view the window has come
+        # to rest on decides what the preview shows.
         active = window.active_view()
         if active is None or active.id() != view.id():
             return
-        if self.manager.for_source(window.id(), view.buffer_id()) is not None:
-            return
-        # Only alongside a preview that is beside its source. In Full Screen
-        # the preview stands in for the source, and standing in for a document
-        # the user has just moved away from is not a thing to do by itself.
-        if not any(
-            session.mode == PreviewMode.SIDE_BY_SIDE
-            for session in self.manager.sessions_in(window.id())
-        ):
-            return
-        self._create(window, view, PreviewMode.SIDE_BY_SIDE, focus=False)
-
-    def reveal_preview(self, view) -> None:
-        """Bring the focused document's preview to the front.
-
-        Every document previewed in a window stacks its preview in one group,
-        so without this the tab left in front is whichever was opened last, and
-        it stays there while the user reads a different file. The panel beside
-        it follows the focus on its own; see `PanelController.focus_changed`.
-        """
-        window = view.window()
-        if window is None:
-            return
-        # `reveal` focuses a group, a view, and the previous group back, and
-        # each of those makes Sublime activate a view the user never chose --
-        # starting with whatever was already at the front of the group being
-        # focused. Those activations arrive here a tick later, and each would
-        # reveal a *different* document's preview, which reveals more: the two
-        # documents take turns pulling their tabs forward and the window never
-        # settles. Only the view the window has come to rest on moves a tab.
-        active = window.active_view()
-        if active is None or active.id() != view.id():
-            return
-        session = self.manager.for_surface(view.id()) or self.manager.for_source(
-            window.id(), view.buffer_id()
-        )
-        if session is None or session.preview_surface is None:
-            return
-        if session.preview_surface.id == view.id():
-            return
-        # In Full Screen the preview is a tab in the source's own group.
-        # Bringing it forward there would hide the file the user has just
-        # clicked, and the two would take turns hiding each other.
-        group, _ = window.get_view_index(view)
-        if self.backend.group_of(session.preview_surface) == group:
-            return
-        self.backend.reveal(session.preview_surface)
+        session = self.manager.for_source(window.id(), view.buffer_id())
+        if session is None:
+            session = self._create(window, view)
+        self.manager.show(session)
 
     def theme_changed(self, view) -> None:
         window = view.window()

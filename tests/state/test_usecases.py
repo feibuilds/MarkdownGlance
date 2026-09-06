@@ -8,6 +8,7 @@ from MarkdownGlance.preview.application.session_manager import SessionManager
 from MarkdownGlance.preview.application.usecases import UseCases
 from MarkdownGlance.preview.domain.contracts import (
     AssetKey,
+    DiagnosticStage,
     AssetKind,
     Heading,
     PreviewDocument,
@@ -135,6 +136,8 @@ class Backend:
         self.navigations = []
         self.updates = []
         self.revealed = []
+        self.scrolled_to = {}
+        self.titles = []
         self.themes = {}
 
     def create(self, window, group, title, session_id):
@@ -172,8 +175,20 @@ class Backend:
     def move(self, handle, group):
         self.groups[handle.id] = group
 
+    def scroll_ratio(self, handle):
+        return self.scrolled_to.get(handle.id, 0.0)
+
+    def restore_scroll(self, handle, ratio):
+        self.scrolled_to[handle.id] = ratio
+
     def reveal(self, handle):
         self.revealed.append(handle.id)
+
+    def scroll_ratio(self, handle):
+        return self.scrolled_to.get(handle.id, 0.0)
+
+    def restore_scroll(self, handle, ratio):
+        self.scrolled_to[handle.id] = ratio
 
     def update(self, handle, html):
         self.updates.append((handle.id, html))
@@ -185,7 +200,7 @@ class Backend:
         pass
 
     def set_title(self, handle, title):
-        pass
+        self.titles.append((handle.id, title))
 
     def navigate(self, handle, slug):
         self.navigations.append((handle.id, slug))
@@ -295,6 +310,7 @@ class Fixture(unittest.TestCase):
             lambda session: self.panel.document_closed(
                 session.window_id, session.source_buffer_id
             ),
+            on_show=lambda stage, session: self.usecases.show(stage, session),
         )
         self.usecases = UseCases(
             self.manager,
@@ -309,27 +325,43 @@ class Fixture(unittest.TestCase):
             self.panel,
         )
 
+    def stage(self, window_id=1):
+        return self.manager.stage(window_id)
+
+    def surface(self, window_id=1):
+        stage = self.stage(window_id)
+        return stage.surface if stage is not None else None
+
+    def focus_surface(self, window=None, window_id=1):
+        """Put the window's focus on the one preview surface."""
+        window = window or self.windows[window_id]
+        window._active = self.backend.sheet_for(self.surface(window_id))
+        return window._active
+
 
 class UseCasesTest(Fixture):
     def test_open_repeat_open_and_switch_modes_keep_one_session(self):
         self.usecases.open_side_by_side(self.window)
         session = self.manager.for_source(1, 10)
-        self.assertEqual(session.mode, PreviewMode.SIDE_BY_SIDE)
+        self.assertEqual(self.stage().mode, PreviewMode.SIDE_BY_SIDE)
         self.assertEqual(len(self.manager.sessions_in(1)), 1)
         self.window._active = self.source.sheet()
         self.usecases.open_side_by_side(self.window)
         self.assertEqual(len(self.manager.sessions_in(1)), 1)
-        self.window._active = self.backend.sheet_for(session.preview_surface)
+        self.focus_surface()
         self.usecases.toggle_full_screen(self.window)
-        self.assertEqual(session.mode, PreviewMode.FULL_SCREEN)
+        self.assertEqual(self.stage().mode, PreviewMode.FULL_SCREEN)
+        self.assertIs(self.manager.get(session.id), session)
         self.assertNotIn(self.source.sheet().id(), self.backend.closed)
 
     def test_fullscreen_preview_toggle_closes_only_owned_surface(self):
         self.usecases.toggle_full_screen(self.window)
         session = self.manager.for_source(1, 10)
-        preview_id = session.preview_surface.id
+        preview_id = self.surface().id
+        self.focus_surface()
         self.usecases.toggle_full_screen(self.window)
         self.assertIsNone(self.manager.get(session.id))
+        self.assertIsNone(self.stage())
         self.assertIn(preview_id, self.backend.closed)
         self.assertNotIn(self.source.sheet().id(), self.backend.closed)
 
@@ -348,29 +380,30 @@ class UseCasesTest(Fixture):
             reason for sid, reason in self.scheduler.requests if sid == session.id
         ]
         self.assertEqual(reasons, ["open", "edit", "save"])
-        second._active = self.backend.sheet_for(session.preview_surface)
+        self.focus_surface(second, 2)
         self.usecases.adjust_zoom(second, 9.0)
-        self.assertEqual(session.zoom, 3.0)
+        self.assertEqual(self.stage(2).zoom, 3.0)
         self.assertEqual(reasons, ["open", "edit", "save"])
 
     def test_preview_commands_survive_a_sheet_id_that_is_not_the_view_id(self):
         self.usecases.open_side_by_side(self.window)
         session = self.manager.for_source(1, 10)
-        sheet = self.backend.sheet_for(session.preview_surface)
-        self.assertNotEqual(sheet.id(), session.preview_surface.id)
+        sheet = self.backend.sheet_for(self.surface())
+        self.assertNotEqual(sheet.id(), self.surface().id)
         self.window._active = sheet
 
         self.usecases.adjust_zoom(self.window, 0.5)
-        self.assertEqual(session.zoom, 1.5)
+        self.assertEqual(self.stage().zoom, 1.5)
         self.usecases.adjust_zoom(self.window, reset=True)
-        self.assertEqual(session.zoom, 1.0)
+        self.assertEqual(self.stage().zoom, 1.0)
 
+        surface_id = self.surface().id
         self.usecases.toggle_full_screen(self.window)
-        self.assertEqual(session.mode, PreviewMode.FULL_SCREEN)
-        self.window._active = self.backend.sheet_for(session.preview_surface)
+        self.assertEqual(self.stage().mode, PreviewMode.FULL_SCREEN)
+        self.focus_surface()
         self.usecases.toggle_full_screen(self.window)
         self.assertIsNone(self.manager.get(session.id))
-        self.assertIn(session.preview_surface.id, self.backend.closed)
+        self.assertIn(surface_id, self.backend.closed)
 
     def test_absolute_editor_link_is_rejected(self):
         self.usecases.open_side_by_side(self.window)
@@ -378,33 +411,41 @@ class UseCasesTest(Fixture):
         session.last_document = PreviewDocument(
             1, "", (), (), (), (OUTSIDE, "~/secret")
         )
-        self.window._active = self.backend.sheet_for(session.preview_surface)
+        self.focus_surface()
         with mock.patch.dict(os.environ, {"HOME": HOME, "USERPROFILE": HOME}):
             for index in (0, 1):
                 self.usecases.open_relative(self.window, session.action_token, index)
         self.assertEqual(self.window.opened, [])
 
-    def test_the_panel_scrolls_the_preview_of_the_document_it_names(self):
+    def test_the_panel_scrolls_the_document_on_the_stage(self):
         self.usecases.open_side_by_side(self.window)
         first = self.manager.for_source(1, 10)
         first.last_document = PreviewDocument(
             1, "", (Heading(2, "First", "first", 0, 0.5),), (), (), ()
-        )
-        second_source = View(20, filename=os.path.join(BASE, "second.md"))
-        second_source._window = self.window
-        self.usecases.open_side_by_side(self.window, second_source)
-        second = self.manager.for_source(1, 20)
-        second.last_document = PreviewDocument(
-            1, "", (Heading(2, "Second", "second", 0, 0.5),), (), (), ()
         )
         # The focus is somewhere else entirely; the panel names the document.
         self.window._active = Sheet(9999, SurfaceView(9999))
 
         self.assertTrue(self.usecases.scroll_preview(1, 10, "first"))
 
-        self.assertEqual(
-            self.backend.navigations, [(first.preview_surface.id, "first")]
+        self.assertEqual(self.backend.navigations, [(self.surface().id, "first")])
+
+    def test_a_document_that_is_not_on_the_stage_scrolls_nowhere(self):
+        # One surface: a document that is not on it has nothing to scroll, and
+        # scrolling the surface would move whatever is.
+        self.usecases.open_side_by_side(self.window)
+        second_source = View(20, filename=os.path.join(BASE, "second.md"))
+        second_source._window = self.window
+        self.usecases.open_side_by_side(self.window, second_source)
+        first = self.manager.for_source(1, 10)
+        first.last_document = PreviewDocument(
+            1, "", (Heading(2, "First", "first", 0, 0.5),), (), (), ()
         )
+        self.backend.navigations = []
+
+        self.assertFalse(self.usecases.scroll_preview(1, 10, "first"))
+
+        self.assertEqual(self.backend.navigations, [])
 
     def test_a_slug_outside_the_document_scrolls_nowhere(self):
         self.usecases.open_side_by_side(self.window)
@@ -418,14 +459,13 @@ class UseCasesTest(Fixture):
         self.assertEqual(self.backend.navigations, [])
 
     def test_a_link_clicked_in_the_preview_body_tells_the_panel(self):
-        session = self.usecases._create(
-            self.window, self.source, PreviewMode.SIDE_BY_SIDE
-        )
+        self.usecases.open_side_by_side(self.window)
+        session = self.manager.for_source(1, 10)
         session.last_document = PreviewDocument(
             1, "", (Heading(2, "First", "first", 0, 0.5),), (), (), ()
         )
 
-        self.usecases.navigate_for_surface(session.preview_surface.id, "first")
+        self.usecases.navigate_for_surface(self.surface().id, "first")
 
         self.assertEqual(self.panel.shown, [(1, 10, "first")])
 
@@ -520,77 +560,129 @@ class RepaintCostTest(RenderedSessionTest):
         self.assertEqual(session.theme.background, "#101010")
 
 
-class PreviewFollowsFocusTest(RenderedSessionTest):
-    """Every document previewed in a window stacks its preview in one group,
-    so the tab in front has to be the focused document's. The panel beside it
-    follows on its own; see `test_panel.py`."""
+class StageTest(RenderedSessionTest):
+    """One surface per window, showing the focused document."""
 
-    def surface_view(self, handle):
-        view = self.backend.sheet_for(handle).view()
+    def source_view(self, identifier=20, name="second.md"):
+        view = View(identifier, name=name, filename=os.path.join(BASE, name))
         view._window = self.window
+        self.window._active = view.sheet()
         return view
 
-    def focus(self, view):
-        """Put the window's focus where a click would, then hand back the view."""
-        self.window._active = view.sheet() if hasattr(view, "sheet") else Sheet(0, view)
-        return view
+    def test_two_documents_share_one_surface(self):
+        first = self.open()
+        surface = self.surface()
+        second_source = self.source_view()
 
-    def test_focusing_the_source_brings_its_preview_forward(self):
-        session = self.open()
-        self.backend.revealed = []
+        self.usecases.open_side_by_side(self.window, second_source)
 
-        self.usecases.reveal_preview(self.focus(self.source))
+        second = self.manager.for_source(1, 20)
+        self.assertIs(self.surface(), surface)
+        self.assertEqual(len(self.manager.sessions_in(1)), 2)
+        self.assertTrue(self.stage().is_showing(second.id))
+        self.assertFalse(self.stage().is_showing(first.id))
 
-        self.assertEqual(self.backend.revealed, [session.preview_surface.id])
-
-    def test_focusing_the_preview_does_not_reveal_it_again(self):
-        session = self.open()
-        self.backend.revealed = []
-        view = self.focus(self.surface_view(session.preview_surface))
-
-        self.usecases.reveal_preview(view)
-
-        self.assertEqual(self.backend.revealed, [])
-
-    def test_a_view_the_window_has_not_settled_on_moves_nothing(self):
-        session = self.open()
-        # `reveal` activates whatever was at the front of the group it focuses
-        # on the way past. That activation arrives a tick later, by which time
-        # the window has settled somewhere else; acting on it is what makes two
-        # documents take turns pulling their tabs forward.
-        self.focus(self.surface_view(session.preview_surface))
-        self.backend.revealed = []
-
-        self.usecases.reveal_preview(self.source)
-
-        self.assertEqual(self.backend.revealed, [])
-
-    def test_a_full_screen_preview_never_hides_the_source_it_shares_a_group_with(self):
-        session = self.open()
-        self.usecases.switch_mode(session, PreviewMode.FULL_SCREEN)
-        self.backend.revealed = []
-
-        self.usecases.reveal_preview(self.focus(self.source))
-
-        # The preview sits in the source's own group; revealing it would put
-        # the file the user just clicked behind it.
-        self.assertEqual(self.backend.revealed, [])
-
-    def test_a_document_with_no_session_leaves_the_front_tab_alone(self):
+    def test_the_surface_is_titled_for_the_document_on_it(self):
         self.open()
-        other = View(30, filename=os.path.join(BASE, "other.md"))
-        other._window = self.window
-        self.backend.revealed = []
+        self.usecases.open_side_by_side(self.window, self.source_view())
+        self.assertEqual(self.backend.titles[-1][1], "Preview: second.md")
 
-        self.usecases.reveal_preview(self.focus(other))
+    def test_only_one_group_is_ever_acquired(self):
+        self.open()
+        acquired = len(self.layout.acquired)
 
-        self.assertEqual(self.backend.revealed, [])
+        self.usecases.open_side_by_side(self.window, self.source_view())
+
+        self.assertEqual(len(self.layout.acquired), acquired)
+
+    def test_a_hidden_document_does_not_paint_over_the_one_on_screen(self):
+        """Find in Files, a reload from disk, Auto Save: all render a document
+        nobody is looking at, and the result must not land on the surface."""
+        first = self.open()
+        self.usecases.open_side_by_side(self.window, self.source_view())
+        painted = len(self.backend.updates)
+
+        self.usecases.present(first, first.last_document)
+
+        self.assertEqual(len(self.backend.updates), painted)
+        self.assertEqual(self.panel.rendered[-1][1], 10)
+
+    def test_a_hidden_document_still_reaches_the_panel(self):
+        first = self.open()
+        self.usecases.open_side_by_side(self.window, self.source_view())
+        self.panel.rendered = []
+
+        self.usecases.present(first, first.last_document)
+
+        self.assertEqual(self.panel.rendered, [(1, 10, first.last_document)])
+
+    def test_an_error_for_a_hidden_document_is_not_painted(self):
+        first = self.open()
+        self.usecases.open_side_by_side(self.window, self.source_view())
+        painted = len(self.backend.updates)
+
+        self.usecases.present_error(first, DiagnosticStage.PARSE, "boom")
+
+        self.assertEqual(len(self.backend.updates), painted)
+
+    def test_where_each_document_was_scrolled_to_comes_back_with_it(self):
+        first = self.open()
+        surface = self.surface()
+        self.backend.scrolled_to[surface.id] = 0.4
+        second_source = self.source_view()
+
+        self.usecases.open_side_by_side(self.window, second_source)
+        self.assertEqual(self.stage().scroll[first.id], 0.4)
+        # The second document starts at the top, not at the first's position.
+        self.assertEqual(self.backend.scrolled_to[surface.id], 0.0)
+
+        self.usecases.open_side_by_side(self.window, self.source)
+        self.assertEqual(self.backend.scrolled_to[surface.id], 0.4)
+
+    def test_zoom_belongs_to_the_pane_not_the_document(self):
+        self.open()
+        self.focus_surface()
+        self.usecases.adjust_zoom(self.window, 0.5)
+
+        self.usecases.open_side_by_side(self.window, self.source_view())
+
+        self.assertEqual(self.stage().zoom, 1.5)
+
+    def test_closing_the_document_on_screen_shows_another(self):
+        first = self.open()
+        second_source = self.source_view()
+        self.usecases.open_side_by_side(self.window, second_source)
+        second = self.manager.for_source(1, 20)
+
+        self.usecases.source_closed(second_source)
+
+        self.assertIsNone(self.manager.get(second.id))
+        self.assertTrue(self.stage().is_showing(first.id))
+        self.assertNotIn(self.surface().id, self.backend.closed)
+
+    def test_closing_the_last_document_closes_the_preview(self):
+        self.open()
+        surface = self.surface()
+
+        self.usecases.source_closed(self.source)
+
+        self.assertIsNone(self.stage())
+        self.assertIn(surface.id, self.backend.closed)
+
+    def test_closing_the_preview_tab_ends_every_document_in_the_window(self):
+        self.open()
+        self.usecases.open_side_by_side(self.window, self.source_view())
+        surface = self.surface()
+        self.backend.close(surface)
+
+        self.manager.surface_closed(surface.id)
+
+        self.assertEqual(self.manager.sessions_in(1), [])
+        self.assertIsNone(self.stage())
 
 
 class FollowFocusTest(RenderedSessionTest):
-    """A preview group holds one tab per document, so a document that has
-    never been previewed would otherwise leave another one's preview in front
-    -- the source, the preview and the panel each on a different file."""
+    """The preview shows the focused document, whatever it is."""
 
     def focus(self, view):
         self.window._active = view.sheet() if hasattr(view, "sheet") else Sheet(0, view)
@@ -605,7 +697,7 @@ class FollowFocusTest(RenderedSessionTest):
         view._window = self.window
         return view
 
-    def test_focusing_a_document_with_no_preview_opens_one(self):
+    def test_focusing_a_document_with_no_preview_renders_it_onto_the_stage(self):
         self.open()
         other = self.other()
 
@@ -613,10 +705,21 @@ class FollowFocusTest(RenderedSessionTest):
 
         session = self.manager.for_source(1, 30)
         self.assertIsNotNone(session)
-        self.assertEqual(session.mode, PreviewMode.SIDE_BY_SIDE)
+        self.assertTrue(self.stage().is_showing(session.id))
         self.assertEqual(self.scheduler.requests[-1], (session.id, "open"))
 
-    def test_the_preview_it_opens_does_not_take_the_focus(self):
+    def test_focusing_a_document_that_has_one_shows_it_without_rendering(self):
+        first = self.open()
+        other = self.other()
+        self.usecases.follow_focus(self.focus(other))
+        requests = len(self.scheduler.requests)
+
+        self.usecases.follow_focus(self.focus(self.source))
+
+        self.assertTrue(self.stage().is_showing(first.id))
+        self.assertEqual(len(self.scheduler.requests), requests)
+
+    def test_following_never_takes_the_focus(self):
         self.open()
         other = self.other()
         self.focus(other)
@@ -625,16 +728,6 @@ class FollowFocusTest(RenderedSessionTest):
         self.usecases.follow_focus(other)
 
         self.assertEqual(self.backend.focused, [])
-        self.assertEqual(self.window.focused[-1], other)
-
-    def test_a_document_that_already_has_one_opens_nothing(self):
-        session = self.open()
-        before = len(self.manager.sessions_in(1))
-
-        self.usecases.follow_focus(self.focus(self.source))
-
-        self.assertEqual(len(self.manager.sessions_in(1)), before)
-        self.assertIs(self.manager.for_source(1, 10), session)
 
     def test_a_window_with_no_preview_opens_nothing(self):
         other = self.other()
@@ -643,31 +736,35 @@ class FollowFocusTest(RenderedSessionTest):
 
         self.assertEqual(self.manager.sessions_in(1), [])
 
-    def test_full_screen_alone_does_not_count(self):
-        # The preview stands in for the source there; standing in for a file
-        # the user has just moved away from is not something to do unasked.
+    def test_full_screen_follows_too(self):
+        # The preview stands in for the source there, sharing its tab strip.
+        # Leaving it on another file is the inconsistency, not the fix.
         self.usecases.toggle_full_screen(self.window)
         other = self.other()
 
         self.usecases.follow_focus(self.focus(other))
 
-        self.assertIsNone(self.manager.for_source(1, 30))
+        session = self.manager.for_source(1, 30)
+        self.assertIsNotNone(session)
+        self.assertTrue(self.stage().is_showing(session.id))
 
-    def test_a_view_that_is_not_markdown_opens_nothing(self):
-        self.open()
+    def test_a_view_that_is_not_markdown_shows_nothing_new(self):
+        first = self.open()
 
         self.usecases.follow_focus(self.focus(self.other(31, markdown=False)))
 
         self.assertIsNone(self.manager.for_source(1, 31))
+        self.assertTrue(self.stage().is_showing(first.id))
 
-    def test_a_view_the_window_has_not_settled_on_opens_nothing(self):
-        self.open()
+    def test_a_view_the_window_has_not_settled_on_shows_nothing(self):
+        first = self.open()
         other = self.other()
         self.focus(self.source)
 
         self.usecases.follow_focus(other)
 
         self.assertIsNone(self.manager.for_source(1, 30))
+        self.assertTrue(self.stage().is_showing(first.id))
 
 
 class DiagramThemeTest(RenderedSessionTest):
@@ -777,7 +874,7 @@ class SurfaceColourSchemeTest(RenderedSessionTest):
         session = self.open()
 
         self.assertEqual(
-            self.backend.themes[session.preview_surface.id].scheme, self.SCHEME
+            self.backend.themes[self.surface().id].scheme, self.SCHEME
         )
 
     def test_a_scheme_chosen_while_the_preview_is_open_still_reaches_it(self):
@@ -787,7 +884,7 @@ class SurfaceColourSchemeTest(RenderedSessionTest):
 
         self.usecases.theme_changed(self.source)
 
-        self.assertEqual(self.backend.themes[session.preview_surface.id].scheme, moved)
+        self.assertEqual(self.backend.themes[self.surface().id].scheme, moved)
 
 
 if __name__ == "__main__":
