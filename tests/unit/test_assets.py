@@ -65,6 +65,16 @@ class AssetTest(unittest.TestCase):
         now[0] = 31
         self.assertIsNone(cache.get(key))
 
+    def test_policy_blocks_baked_assets_until_they_are_enabled(self):
+        diagram = AssetKey(AssetKind.MERMAID, "https://mermaid.test/img/abc")
+        formula = AssetKey(AssetKind.MATH, "https://math.test/png.image?x")
+        strict = NetworkPolicy(RenderSettings(), 1)
+        self.assertEqual(strict.evaluate_key(diagram), AssetStatus.BLOCKED)
+        self.assertEqual(strict.evaluate_key(formula), AssetStatus.BLOCKED)
+        math_only = NetworkPolicy(RenderSettings(enable_math=True), 2)
+        self.assertEqual(math_only.evaluate_key(diagram), AssetStatus.BLOCKED)
+        self.assertIsNone(math_only.evaluate_key(formula))
+
     def test_policy_rechecks_cached_redirect_scheme_and_limits(self):
         key = AssetKey(AssetKind.REMOTE_IMAGE, "https://example.test/a")
         asset = FetchedAsset("data:x", 5000, 10, 50, 6, "http", 0)

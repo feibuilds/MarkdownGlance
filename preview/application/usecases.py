@@ -1,6 +1,7 @@
 import os.path
 from typing import Callable, Optional
 
+from ..assets.math import formula_appearance
 from ..assets.mermaid import diagram_appearance
 from ..domain.contracts import (
     AssetKind,
@@ -19,9 +20,27 @@ from .ports import GroupRole
 from .session import CloseCause, PreviewSession, SessionState
 
 
-def _has_diagram(document: Optional[PreviewDocument]) -> bool:
+def _has_asset(document: Optional[PreviewDocument], kind: AssetKind) -> bool:
     return document is not None and any(
-        key.kind == AssetKind.MERMAID for key in document.asset_dependencies
+        key.kind == kind for key in document.asset_dependencies
+    )
+
+
+def _baked_assets_stale(
+    document: Optional[PreviewDocument], old: ThemeSnapshot, new: ThemeSnapshot
+) -> bool:
+    """Whether a theme change reaches an image the server coloured.
+
+    A Mermaid diagram is baked for one background and a formula in one
+    foreground; each is stale only when the part of the theme it can see has
+    moved, and only when the document has one.
+    """
+    return (
+        diagram_appearance(new) != diagram_appearance(old)
+        and _has_asset(document, AssetKind.MERMAID)
+    ) or (
+        formula_appearance(new) != formula_appearance(old)
+        and _has_asset(document, AssetKind.MATH)
     )
 
 
@@ -474,15 +493,15 @@ class UseCases:
                 # almost always the same one. Repainting anyway costs a full
                 # minihtml layout of the whole document.
                 return
-            stale_diagrams = diagram_appearance(theme) != diagram_appearance(
-                session.theme
-            ) and _has_diagram(session.last_document)
+            stale_images = _baked_assets_stale(
+                session.last_document, session.theme, theme
+            )
             session.theme = theme
             self.represent(session)
-            if stale_diagrams:
-                # A repaint recolours the document, but not a Mermaid diagram:
-                # that is an image the server baked for one background, and its
-                # URL is fixed when the Markdown is parsed. Without a render the
-                # document would come back in the new palette carrying diagrams
-                # in the old one.
+            if stale_images:
+                # A repaint recolours the document, but not a Mermaid diagram
+                # or a formula: those are images the server baked for one
+                # palette, and their URLs are fixed when the Markdown is
+                # parsed. Without a render the document would come back in the
+                # new palette carrying images in the old one.
                 self.scheduler.request_render(session.id, "theme")

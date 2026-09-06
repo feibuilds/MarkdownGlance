@@ -600,6 +600,35 @@ class DiagramThemeTest(TocLifecycleTest):
         self.assertEqual(self.renders(session), before)
 
 
+class FormulaThemeTest(DiagramThemeTest):
+    """A formula is baked in one foreground colour on a transparent background,
+    so it is the foreground, not the background, that makes it stale.
+    """
+
+    DIAGRAM = AssetKey(AssetKind.MATH, "https://math.test/png.image?abc")
+
+    def test_a_new_background_fetches_the_diagram_again(self):
+        # Overrides the diagram case: the formula cannot see the background.
+        session = self.with_diagram()
+        before = self.renders(session)
+        self.usecases.theme_provider = lambda view: ThemeSnapshot(
+            background="#101010", is_dark=True
+        )
+
+        self.usecases.theme_changed(self.source)
+
+        self.assertEqual(self.renders(session), before)
+
+    def test_a_new_foreground_fetches_the_formula_again(self):
+        session = self.with_diagram()
+        before = self.renders(session)
+        self.usecases.theme_provider = lambda view: ThemeSnapshot(foreground="#cdd6f4")
+
+        self.usecases.theme_changed(self.source)
+
+        self.assertEqual(self.renders(session), before + ["theme"])
+
+
 class SurfaceColourSchemeTest(TocLifecycleTest):
     """A Markdown file can carry a colour scheme of its own -- MarkdownEditing
     writes one into `Markdown.sublime-settings`, and it beats the global one.

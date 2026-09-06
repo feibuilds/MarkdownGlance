@@ -18,6 +18,8 @@ class NetworkPolicy:
     def evaluate_key(self, key: AssetKey):
         if key.kind == AssetKind.MERMAID and not self.settings.enable_mermaid:
             return AssetStatus.BLOCKED
+        if key.kind == AssetKind.MATH and not self.settings.enable_math:
+            return AssetStatus.BLOCKED
         if key.kind == AssetKind.LOCAL_IMAGE:
             return None
         scheme = urlsplit(key.locator).scheme.lower()

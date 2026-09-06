@@ -6,6 +6,25 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **LaTeX math, off by default.** `$...$` and `$$...$$` (and `\(...\)`,
+  `\[...\]`) are recognised by `pymdownx.arithmatex`, which is already
+  installed with `pymdown-extensions`. With `"enable_math": true` each formula
+  is fetched from `math_server` (`https://latex.codecogs.com`) as a PNG typeset
+  in the colour scheme's foreground, the way a Mermaid diagram is, under the
+  same HTTPS, timeout, size, cache and one-time privacy caption rules. Off, a
+  formula is shown as its source in a code span or block. Asked for in
+  [#2](https://github.com/pandadolphin/MarkdownGlance/issues/2); see
+  [ADR 0013](docs/adr/0013-latex-math-as-a-baked-image.md).
+
+### Changed
+
+- **`Open in Browser` writes `\(...\)` and `\[...\]` for a formula**, which
+  is what MathJax and KaTeX auto-render expect, where it used to pass `$...$`
+  through as text. The page loads neither yet, so a browser shows the
+  delimiters.
+
 ## [0.4.1] - 2026-09-06
 
 Fixes from a review of 0.4.0 before it was verified in Sublime Text; none of

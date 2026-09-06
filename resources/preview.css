@@ -240,6 +240,24 @@ p.mermaid-diagram img {
     margin: 0;
 }
 
+/* A formula is an image the server typeset (ADR 0013). Display math sits on
+   a line of its own like a diagram; inline math is part of the sentence. */
+p.math-display {
+    display: block;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+p.math-display img,
+span.math-inline img {
+    margin: 0;
+}
+
+.mdglance-asset-placeholder-inline {
+    border: 0.12rem solid var(--preview-border);
+    padding: 0 0.3rem;
+}
+
 /* The source outline: raw heading markers, indented by level, the way an
    outline panel shows them beside the file rather than inside the preview. */
 .source-outline {

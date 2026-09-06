@@ -32,6 +32,12 @@ forward-compatibility testing.
    Render a `sequenceDiagram` under a dark and a light colour scheme: message
    and note labels must stay legible, and the image background must match the
    preview's, in both.
+   Math: with `enable_math` off, `$a^2$` and a `$$` block read as code and
+   `$5 and $6` stays a sentence. Turn it on: the inline formula and the block
+   render as images, the first placeholder names the server once, an invalid
+   formula shows `Unavailable` inline without breaking its line, and a scheme
+   with a different foreground re-renders the formulas in the new colour.
+   Confirm diagnostics contain no formula.
 8. Close TOC, preview, source, group and window; reload the plugin. Change the
    layout after preview creation and confirm it is not overwritten on close.
 9. Outline: open with `Ctrl+Shift+B` on a file with no preview, and again with

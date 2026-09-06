@@ -162,6 +162,7 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
             "settings": {
                 "update_delay_ms": settings.update_delay_ms,
                 "enable_mermaid": settings.enable_mermaid,
+                "enable_math": settings.enable_math,
                 "allow_insecure_remote_images": settings.allow_insecure_remote_images,
                 "remote_timeout_seconds": settings.remote_timeout_seconds,
                 "remote_max_bytes": settings.remote_max_bytes,

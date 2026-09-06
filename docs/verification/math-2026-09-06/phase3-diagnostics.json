@@ -1,0 +1,10 @@
+{
+  "clipboard": "{\n  \"architecture\": \"x64\",\n  \"package\": \"MarkdownGlance\",\n  \"platform\": \"linux\",\n  \"python\": \"3.8.12\",\n  \"recent_paints\": [\n    {\n      \"html_bytes\": 7456,\n      \"ms\": 0.1,\n      \"role\": \"preview\",\n      \"skipped\": false\n    },\n    {\n      \"html_bytes\": 12252,\n      \"ms\": 0.1,\n      \"role\": \"preview\",\n      \"skipped\": false\n    },\n    {\n      \"html_bytes\": 12252,\n      \"ms\": 0.1,\n      \"role\": \"preview\",\n      \"skipped\": false\n    },\n    {\n      \"html_bytes\": 7456,\n      \"ms\": 0.1,\n      \"role\": \"preview\",\n      \"skipped\": false\n    },\n    {\n      \"html_bytes\": 12252,\n      \"ms\": 0.1,\n      \"role\": \"preview\",\n      \"skipped\": false\n    }\n  ],\n  \"recent_renders\": [\n    {\n      \"html_bytes\": 782,\n      \"ms\": 49.0,\n      \"source_bytes\": 301\n    },\n    {\n      \"html_bytes\": 5578,\n      \"ms\": 1.7,\n      \"source_bytes\": 301\n    },\n    {\n      \"html_bytes\": 782,\n      \"ms\": 2.3,\n      \"source_bytes\": 301\n    },\n    {\n      \"html_bytes\": 5578,\n      \"ms\": 2.0,\n      \"source_bytes\": 301\n    }\n  ],\n  \"recent_stages\": [\n    \"snapshot\",\n    \"present\",\n    \"snapshot\",\n    \"present\",\n    \"snapshot\",\n    \"present\",\n    \"snapshot\",\n    \"present\"\n  ],\n  \"settings\": {\n    \"allow_insecure_remote_images\": false,\n    \"debug_logging\": false,\n    \"enable_math\": true,\n    \"enable_mermaid\": false,\n    \"remote_max_bytes\": 10485760,\n    \"remote_max_dimension\": 4096,\n    \"remote_timeout_seconds\": 15.0,\n    \"toc_minimum_headings\": 3,\n    \"toc_minimum_length\": 1200,\n    \"update_delay_ms\": 100\n  },\n  \"sublime_build\": \"4200\",\n  \"version\": \"0.4.1\"\n}",
+  "leaks": [],
+  "log": [
+    "2.5s preview opened",
+    "4.0s wrote phase1-math-on",
+    "0.0s switched to Breakers.sublime-color-scheme",
+    "1.5s wrote phase2-light-scheme"
+  ]
+}

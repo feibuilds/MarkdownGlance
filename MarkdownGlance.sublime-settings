@@ -6,6 +6,12 @@
     "enable_mermaid": false,
     "mermaid_server": "https://mermaid.ink",
 
+    // LaTeX math ($...$ and $$...$$) is opt-in for the same reason: formula
+    // source is sent to math_server, which typesets it as an image. Off, a
+    // formula is shown as its source.
+    "enable_math": false,
+    "math_server": "https://latex.codecogs.com",
+
     // HTTP images and HTTPS-to-HTTP redirects are blocked by default.
     "allow_insecure_remote_images": false,
     "remote_timeout_seconds": 15.0,

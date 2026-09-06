@@ -1,0 +1,28 @@
+{
+  "assets": [],
+  "body_html": "<h1 id=\"math-check\">Math check</h1>\n<p>Inline <code class=\"math\">$a^2 + b^2 = c^2$</code> in a sentence, and <code class=\"math\">$\\alpha \\to \\beta$</code> too.</p>\n<p>It costs $5 and $6, which is not math.</p>\n<pre><code class=\"math\">\\int_0^1 x\\,dx = \\frac{1}{2}</code></pre>\n<p>A broken one <code class=\"math\">$\\frac{a$</code> stays inline, and the line keeps its shape.</p>\n<p><code>$x$</code> in code and a fence:</p>\n<pre><code>$y$</code></pre>\n\n<p>Last paragraph, after the fence.</p>",
+  "code_math": 4,
+  "generation": 11,
+  "images": 0,
+  "inline_placeholders": 0,
+  "loading": 0,
+  "log": [
+    "2.5s preview opened",
+    "4.0s wrote phase1-math-on",
+    "0.0s switched to Breakers.sublime-color-scheme",
+    "1.5s wrote phase2-light-scheme",
+    "2.0s diagnostics copied, leaks=[]",
+    "0.0s enable_math off"
+  ],
+  "pending": [],
+  "privacy_captions": 0,
+  "settings": {
+    "enable_math": false
+  },
+  "theme": {
+    "background": "#fcfdfd",
+    "foreground": "#333333",
+    "is_dark": false
+  },
+  "unavailable": 0
+}

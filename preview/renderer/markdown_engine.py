@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Protocol
 MARKDOWN_EXTENSIONS = (
     "pymdownx.superfences",
     "pymdownx.highlight",
+    "pymdownx.arithmatex",
     "tables",
 )
 
@@ -20,8 +21,14 @@ MARKDOWN_EXTENSIONS = (
 # packages install. Highlighted, a block is `<div class="highlight"><pre>`
 # with no `code` element and no language class, which is not a fenced block
 # to the structural pass and not a Mermaid diagram at all. Off, always.
+#
+# arithmatex finds `$...$`, `$$...$$`, `\(...\)` and `\[...\]` and, in
+# generic mode, wraps each in `<span class="arithmatex">` or a `div` for
+# something else to typeset -- MathJax on a web page, the structural pass
+# here. Its default `smart_dollar` leaves `$5 and $6` alone.
 EXTENSION_CONFIGS: Dict[str, Dict[str, object]] = {
     "pymdownx.highlight": {"use_pygments": False},
+    "pymdownx.arithmatex": {"generic": True},
 }
 
 LIBRARIES = (("markdown", "Markdown"), ("pymdownx", "pymdown-extensions"))

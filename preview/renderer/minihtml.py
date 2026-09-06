@@ -15,6 +15,7 @@ from ..domain.contracts import (
     Ready,
     RenderRequest,
 )
+from ..assets.math import SCALE as MATH_SCALE
 from .errors import asset_placeholder
 from .model import ElementNode, Node, StructuredDoc, TextNode
 
@@ -110,22 +111,34 @@ def _href(
     return ' class="blocked-link"'
 
 
+# Assets whose locator carries document text, and what the placeholder says
+# about it the first time each appears in a render (ADR 0005).
+PRIVACY_CAPTIONS = {
+    AssetKind.MERMAID: "Diagram source is sent to {}",
+    AssetKind.MATH: "Formula source is sent to {}",
+}
+
+
 def _serialise_image(
     node: ElementNode,
     results: Dict[AssetKey, AssetResult],
-    privacy_seen: List[bool],
+    privacy_seen: Set[AssetKind],
 ) -> str:
     key = node.asset_key
     result = results.get(key) if key is not None else None
     if isinstance(result, Ready):
         asset = result.asset
+        # A formula is fetched at twice its size and shown at one, so that it
+        # is as crisp as the text beside it on a high-DPI display.
+        scale = MATH_SCALE if key is not None and key.kind == AssetKind.MATH else 1
+        width, height = asset.width / scale, asset.height / scale
         attrs = [
             'src="{}"'.format(_attr(asset.data_uri)),
             'alt="{}"'.format(_attr(node.attrs.get("alt", ""))),
-            'width="{}"'.format(asset.width),
-            'height="{}"'.format(asset.height),
+            'width="{}"'.format(int(width)),
+            'height="{}"'.format(int(height)),
             'style="width: {:.4f}rem; height: {:.4f}rem"'.format(
-                asset.width / 16.0, asset.height / 16.0
+                width / 16.0, height / 16.0
             ),
         ]
         return "<img {}>".format(" ".join(attrs))
@@ -135,12 +148,15 @@ def _serialise_image(
     if isinstance(result, Failed):
         status = result.status
     privacy = None
-    if key is not None and key.kind == AssetKind.MERMAID and not privacy_seen[0]:
-        privacy_seen[0] = True
-        privacy = "Diagram source is sent to {}".format(
+    disclose = key is not None and key.kind in PRIVACY_CAPTIONS
+    if disclose and key.kind not in privacy_seen:
+        privacy_seen.add(key.kind)
+        privacy = PRIVACY_CAPTIONS[key.kind].format(
             urlsplit(key.locator).hostname or "the configured server"
         )
-    return asset_placeholder(status, privacy)
+    return asset_placeholder(
+        status, privacy, inline=node.generated and bool(node.attrs.get("data-inline"))
+    )
 
 
 def _serialise_node(
@@ -149,7 +165,7 @@ def _serialise_node(
     heading_slugs: Set[str],
     links: Sequence[str],
     request: RenderRequest,
-    privacy_seen: List[bool],
+    privacy_seen: Set[AssetKind],
     in_pre: bool = False,
 ) -> str:
     if isinstance(node, TextNode):
@@ -195,7 +211,7 @@ def serialise(
     request: RenderRequest,
 ) -> PreviewDocument:
     heading_slugs = {heading.slug for heading in structured.headings}
-    privacy_seen = [False]
+    privacy_seen: Set[AssetKind] = set()
     body = "".join(
         _serialise_node(
             node,

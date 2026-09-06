@@ -4,11 +4,19 @@ import os.path
 import unittest
 
 from MarkdownGlance.preview.application.render_pipeline import render
+from MarkdownGlance.preview.assets.math import (
+    SCALE,
+    foreground_rgb,
+    math_image_url,
+    normalise_formula,
+)
 from MarkdownGlance.preview.assets.mermaid import background_hex, mermaid_image_url
 from MarkdownGlance.preview.domain.contracts import (
+    AssetKind,
     AssetStatus,
     Failed,
     FetchedAsset,
+    Pending,
     Ready,
     RenderRequest,
     RenderSettings,
@@ -193,6 +201,129 @@ Unicode: 中文 café 😀
     def test_malformed_markdown_does_not_raise(self):
         document = render(request("# [broken\n\n<div><b>still text"), FakeResolver())
         self.assertTrue(document.body_html)
+
+
+class MathTest(unittest.TestCase):
+    """LaTeX math is an image the server typeset, the way a diagram is.
+
+    minihtml runs no JavaScript and draws no MathML, so a formula reaches the
+    preview as a PNG, and only with `enable_math` on: the URL carries the
+    formula (ADR 0013).
+    """
+
+    INLINE = "Inline $a^2 + b^2 = c^2$ here.\n"
+    DISPLAY = "$$\n\\int_0^1 x\\,dx\n= \\frac{1}{2}\n$$\n"
+    ENABLED = RenderSettings(enable_math=True)
+
+    def parsed(self, markdown, settings=ENABLED, theme=None):
+        return parse(
+            request(markdown, settings=settings, theme=theme),
+            math_url_builder=math_image_url,
+        )
+
+    def test_math_off_shows_the_formula_as_its_source(self):
+        html = render(request(self.INLINE + "\n" + self.DISPLAY), FakeResolver())
+        self.assertIn('<code class="math">$a^2 + b^2 = c^2$</code>', html.body_html)
+        self.assertIn(
+            '<pre><code class="math">\\int_0^1 x\\,dx<br />= \\frac{1}{2}</code></pre>',
+            html.body_html,
+        )
+        self.assertEqual(html.asset_dependencies, ())
+        # arithmatex's own delimiters never reach the preview.
+        self.assertNotIn("\\(", html.body_html)
+        self.assertNotIn("\\[", html.body_html)
+
+    def test_math_on_is_an_image_asset_whose_url_carries_the_formula(self):
+        document = self.parsed(self.INLINE)
+        key = document.asset_keys[0]
+        self.assertEqual(key.kind, AssetKind.MATH)
+        self.assertTrue(key.locator.startswith("https://latex.codecogs.com/png.image?"))
+        self.assertIn("a%5E2%20%2B%20b%5E2%20%3D%20c%5E2", key.locator)
+        self.assertNotIn("a^2", key.safe_label)
+        self.assertIn("latex.codecogs.com", key.safe_label)
+
+    def test_inline_and_display_math_differ_in_wrapper_and_style(self):
+        inline = self.parsed(self.INLINE)
+        display = self.parsed(self.DISPLAY)
+        self.assertNotIn("displaystyle", inline.asset_keys[0].locator)
+        self.assertIn("%5Cdisplaystyle", display.asset_keys[0].locator)
+        # A display block spans lines; the URL carries it as one.
+        self.assertIn("dx%20%3D%20%5Cfrac", display.asset_keys[0].locator)
+        pending = {key: Pending() for key in inline.asset_keys}
+        inline_html = serialise(inline, pending, request("x")).body_html
+        self.assertIn('<p>Inline <span class="math-inline">', inline_html)
+        self.assertIn('<span class="mdglance-asset-placeholder-inline">', inline_html)
+        self.assertNotIn("<div", inline_html)
+        pending = {key: Pending() for key in display.asset_keys}
+        display_html = serialise(display, pending, request("x")).body_html
+        self.assertIn('<p class="math-display">', display_html)
+        self.assertIn('<div class="mdglance-asset-placeholder">', display_html)
+
+    def test_formula_colour_follows_the_foreground_and_nothing_else(self):
+        def locator(theme):
+            return self.parsed(self.INLINE, theme=theme).asset_keys[0].locator
+
+        light = locator(ThemeSnapshot("#ffffff", "#222222", False))
+        dark = locator(ThemeSnapshot("#1e1e2eff", "#cdd6f4", True))
+        self.assertIn("%5Ccolor%5BRGB%5D%7B34%2C34%2C34%7D", light)
+        self.assertIn("%5Ccolor%5BRGB%5D%7B205%2C214%2C244%7D", dark)
+        self.assertNotEqual(light, dark)
+        # The image has a transparent background, so the background colour
+        # is not part of the URL and changing it does not refetch.
+        same_foreground = locator(ThemeSnapshot("#000000", "#222222", True))
+        self.assertEqual(light, same_foreground)
+
+    def test_foreground_falls_back_when_the_colour_is_unusable(self):
+        self.assertEqual(
+            foreground_rgb(ThemeSnapshot(foreground="#abc")), (170, 187, 204)
+        )
+        self.assertEqual(
+            foreground_rgb(ThemeSnapshot(foreground="rgb(1,2,3)")), (34, 34, 34)
+        )
+        self.assertEqual(
+            foreground_rgb(ThemeSnapshot(foreground="rgb(1,2,3)", is_dark=True)),
+            (238, 238, 238),
+        )
+
+    def test_display_formula_is_sent_as_one_line(self):
+        self.assertEqual(normalise_formula("  a\n  + b\t= c \n"), "a + b = c")
+
+    def test_ready_formula_is_shown_at_a_fraction_of_its_fetched_size(self):
+        parsed = self.parsed(self.INLINE)
+        asset = FetchedAsset("data:image/png;base64,AA==", 190, 36, 1, 30, "https", 0)
+        html = serialise(parsed, {parsed.asset_keys[0]: Ready(asset)}, request("x"))
+        self.assertEqual(SCALE, 2)
+        self.assertIn('width="95" height="18"', html.body_html)
+        self.assertIn("width: 5.9375rem; height: 1.1250rem", html.body_html)
+        self.assertIn('alt="a^2 + b^2 = c^2"', html.body_html)
+
+    def test_privacy_caption_appears_once_per_kind_per_render(self):
+        markdown = (
+            "```mermaid\nflowchart LR\nA --" + "> B\n```\n\n"
+            + self.INLINE
+            + "\nAnd $x$ again.\n"
+        )
+        settings = RenderSettings(enable_math=True, enable_mermaid=True)
+        parsed = parse(
+            request(markdown, settings=settings),
+            mermaid_url_builder=mermaid_image_url,
+            math_url_builder=math_image_url,
+        )
+        pending = {key: Pending() for key in parsed.asset_keys}
+        html = serialise(parsed, pending, request("x")).body_html
+        self.assertEqual(html.count("Diagram source is sent to mermaid.ink"), 1)
+        self.assertEqual(html.count("ormula source is sent to latex.codecogs.com"), 1)
+
+    def test_math_in_code_is_not_math(self):
+        html = render(request("`$x$` and\n\n```\n$y$\n```\n"), FakeResolver())
+        self.assertIn("<code>$x$</code>", html.body_html)
+        self.assertIn("<pre><code>$y$</code></pre>", html.body_html)
+        self.assertNotIn('class="math"', html.body_html)
+
+    def test_prices_are_not_math(self):
+        html = render(request("It costs $5 and $6.\n"), FakeResolver())
+        self.assertIn("costs $5 and $6.", html.body_html)
+        self.assertNotIn("math", html.body_html)
 
 
 class PreWhitespaceTest(unittest.TestCase):

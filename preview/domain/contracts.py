@@ -15,6 +15,7 @@ class AssetKind(Enum):
     LOCAL_IMAGE = "local_image"
     REMOTE_IMAGE = "remote_image"
     MERMAID = "mermaid"
+    MATH = "math"
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,8 @@ class RenderSettings:
     update_delay_ms: int = 100
     enable_mermaid: bool = False
     mermaid_server: str = "https://mermaid.ink"
+    enable_math: bool = False
+    math_server: str = "https://latex.codecogs.com"
     allow_insecure_remote_images: bool = False
     remote_timeout_seconds: float = 15.0
     remote_max_bytes: int = 10 * 1024 * 1024

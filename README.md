@@ -31,6 +31,7 @@ above follows your own theme here, for the same reason.
 - Local images, and remote images fetched asynchronously under strict limits.
 - GFM tables, typeset to the measured width of the preview.
 - Optional Mermaid diagrams, disabled by default.
+- Optional LaTeX math, `$...$` and `$$...$$`, disabled by default.
 - `Open in Browser`, for the moment a page has to be seen at browser width or
   handed to someone.
 
@@ -179,8 +180,9 @@ where you put it. `"auto_width": false` gives them the fixed share instead. See
 ## Settings
 
 Run **MarkdownGlance: Open Settings** to see every setting with its default and
-a comment. The defaults are conservative: Mermaid off, insecure remote images
-blocked, and remote fetches bounded by timeout, payload size and dimension.
+a comment. The defaults are conservative: Mermaid and math off, insecure
+remote images blocked, and remote fetches bounded by timeout, payload size and
+dimension.
 
 ## Tables
 
@@ -190,13 +192,23 @@ the group and re-fit when the window is resized. `table_max_columns` (200) only
 caps that on a very wide screen. See
 [ADR 0007](docs/adr/0007-table-rendering-under-minihtml.md).
 
+## Math
+
+minihtml runs no JavaScript and draws no MathML, so a formula cannot be
+typeset in the preview itself. With `"enable_math": true` each `$...$` and
+`$$...$$` is fetched as an image from `math_server`, typeset in the colour
+scheme's foreground on a transparent background, the way a Mermaid diagram
+is. Off, a formula is shown as its source. An inline formula sits on the
+line as an image, a little above the baseline. See
+[ADR 0013](docs/adr/0013-latex-math-as-a-baked-image.md).
+
 ## Network and privacy
 
 Remote images are fetched off the UI thread with scheme, redirect, timeout,
-payload and dimension limits, and are cached only in memory. Mermaid is
-disabled by default; enabling it sends diagram source, and the preview's
-background colour, to the configured Mermaid server. Diagnostics redact source
-text, paths, URLs and Mermaid payloads.
+payload and dimension limits, and are cached only in memory. Mermaid and math
+are disabled by default; enabling either sends diagram or formula source, and
+a colour from the scheme, to the configured server. Diagnostics redact source
+text, paths, URLs, and Mermaid and math payloads.
 
 ## Documentation
 

@@ -21,6 +21,8 @@ process. Two features leave the machine, and both are bounded:
   Insecure schemes are blocked by default.
 - **Mermaid rendering** is disabled by default. Enabling it sends diagram
   source to the configured Mermaid server.
+- **LaTeX math rendering** is disabled by default. Enabling it sends formula
+  source to the configured math server.
 
 `MarkdownGlance: Open in Browser` is the one command that starts a process:
 it writes the document as a standalone page under the temporary directory and

@@ -11,6 +11,8 @@ RENDER_KEYS = frozenset(
     (
         "enable_mermaid",
         "mermaid_server",
+        "enable_math",
+        "math_server",
         "table_max_columns",
         "enable_toc",
         "toc_minimum_length",

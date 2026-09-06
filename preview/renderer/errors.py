@@ -12,9 +12,22 @@ STATUS_LABELS = {
 }
 
 
-def asset_placeholder(status: AssetStatus, privacy: Optional[str] = None) -> str:
+def asset_placeholder(
+    status: AssetStatus, privacy: Optional[str] = None, inline: bool = False
+) -> str:
+    """A stand-in for an image that is not here yet, or not coming.
+
+    Block by default. Inline, for a formula in the middle of a sentence, it is
+    a `span` so that the line around it keeps its shape.
+    """
     caption = STATUS_LABELS[status]
     detail = "<strong>{}</strong>".format(escape(caption))
+    if inline:
+        if privacy:
+            detail += " ({})".format(escape(privacy[0].lower() + privacy[1:]))
+        return '<span class="mdglance-asset-placeholder-inline">{}</span>'.format(
+            detail
+        )
     if privacy:
         detail += "<br /><span>{}</span>".format(escape(privacy))
     return '<div class="mdglance-asset-placeholder">{}</div>'.format(detail)

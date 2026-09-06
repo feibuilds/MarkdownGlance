@@ -17,9 +17,15 @@ from .model import ElementNode, Node, StructuredDoc, TextNode
 from .stylesheet import root_font_px
 from .tables import budgets, replace_tables
 
-# The theme reaches the builder because a mermaid.ink diagram is baked at
+# The theme reaches the builders because a mermaid.ink diagram is baked at
 # request time: it cannot adapt to the preview background the way CSS does.
+# A formula is baked the same way, in the foreground colour.
 MermaidUrlBuilder = Callable[[str, str, ThemeSnapshot], str]
+MathUrlBuilder = Callable[[str, bool, str, ThemeSnapshot], str]
+
+# arithmatex wraps a formula in the delimiters MathJax expects.
+INLINE_MATH = ("\\(", "\\)")
+DISPLAY_MATH = ("\\[", "\\]")
 
 VOID_TAGS = frozenset(("br", "hr", "img"))
 HEADING_TAGS = frozenset(("h1", "h2", "h3", "h4", "h5", "h6"))
@@ -200,15 +206,82 @@ def _replace_mermaid(
         _replace_mermaid(node.children, request, mermaid_url_builder)
 
 
+def _formula(node: ElementNode) -> Tuple[str, bool]:
+    """The formula inside an arithmatex element, and whether it is display."""
+    text = _raw_text(node).strip()
+    display = node.tag == "div"
+    opening, closing = DISPLAY_MATH if display else INLINE_MATH
+    if text.startswith(opening) and text.endswith(closing):
+        text = text[len(opening) : -len(closing)]
+    return text.strip(), display
+
+
+def _math_source(formula: str, display: bool) -> ElementNode:
+    """What a formula reads as when rendering is off: its source, as code."""
+    if display:
+        return ElementNode(
+            "pre",
+            {},
+            [ElementNode("code", {"class": "math"}, [TextNode(formula)])],
+            generated=True,
+        )
+    return ElementNode(
+        "code", {"class": "math"}, [TextNode("${}$".format(formula))], generated=True
+    )
+
+
+def _math_image(
+    formula: str, display: bool, request: RenderRequest, builder: MathUrlBuilder
+) -> ElementNode:
+    url = builder(formula, display, request.settings.math_server, request.theme)
+    image = ElementNode(
+        "img",
+        # The serialiser reads `data-inline`: a formula inside a sentence gets
+        # an inline placeholder while it loads, not a block.
+        {"alt": formula, "data-inline": "" if display else "yes"},
+        [],
+        asset_key=AssetKey(AssetKind.MATH, url),
+        generated=True,
+    )
+    return ElementNode(
+        "p" if display else "span",
+        {"class": "math-display" if display else "math-inline"},
+        [image],
+        generated=True,
+    )
+
+
+def _replace_math(
+    nodes: List[Node],
+    request: RenderRequest,
+    math_url_builder: Optional[MathUrlBuilder],
+) -> None:
+    for index, node in enumerate(list(nodes)):
+        if not isinstance(node, ElementNode):
+            continue
+        if node.tag in ("span", "div") and "arithmatex" in node.attrs.get(
+            "class", ""
+        ).split():
+            formula, display = _formula(node)
+            if request.settings.enable_math and math_url_builder is not None:
+                nodes[index] = _math_image(formula, display, request, math_url_builder)
+            else:
+                nodes[index] = _math_source(formula, display)
+            continue
+        _replace_math(node.children, request, math_url_builder)
+
+
 def parse(
     request: RenderRequest,
     engine: Optional[MarkdownEngine] = None,
     mermaid_url_builder: Optional[MermaidUrlBuilder] = None,
+    math_url_builder: Optional[MathUrlBuilder] = None,
 ) -> StructuredDoc:
     parser = _TreeParser()
     parser.feed((engine or default_engine()).convert(request.markdown))
     parser.close()
     _replace_mermaid(parser.roots, request, mermaid_url_builder)
+    _replace_math(parser.roots, request, math_url_builder)
 
     elements = list(_walk(parser.roots))
     total_text = max(sum(len(_text(element)) for element in elements), 1)

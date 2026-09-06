@@ -140,6 +140,15 @@ class PackageIdentityTest(unittest.TestCase):
         self.assertNotIn('"enable_mermaid": true', shipped)
         self.assertFalse(RenderSettings().enable_mermaid)
 
+    def test_shipped_settings_keep_math_opt_in(self):
+        # Same reason: a "true" here sends formula source to math_server.
+        path = os.path.join(ROOT, "MarkdownGlance.sublime-settings")
+        with open(path, encoding="utf-8") as source:
+            shipped = source.read()
+        self.assertIn('"enable_math": false', shipped)
+        self.assertNotIn('"enable_math": true', shipped)
+        self.assertFalse(RenderSettings().enable_math)
+
     def test_diagnostics_report_the_released_version(self):
         # A diagnostics paste is worthless if its version is a stale literal,
         # so it is pinned to the newest entry in the changelog.

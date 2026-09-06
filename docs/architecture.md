@@ -39,7 +39,8 @@ only to a live session at its current generation.
 Asset fetching uses a separate four-worker executor, a 64 MiB in-memory LRU,
 30-second negative caching, HTTPS by default, at most five redirects, a 15-second
 timeout, 10 MiB response limit, and 4096 px dimension limit. Only
-`AssetKey.safe_label` is diagnostic-safe; Mermaid locators are never logged.
+`AssetKey.safe_label` is diagnostic-safe; Mermaid and math locators are never
+logged, since each carries document text.
 
 Decision details and experiment evidence are in the repository-level
 `docs/adr/` directory.
