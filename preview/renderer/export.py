@@ -8,10 +8,18 @@ other) and every relative image and link resolved beside the source file.
 
 There is deliberately no `<base>`: a document base URL also captures `#id`
 links, which would then leave the page for the source directory.
+
+A browser can typeset what minihtml cannot, so the page renders Mermaid
+fences with Mermaid and formulas with KaTeX, both loaded from jsDelivr at a
+pinned version with a subresource integrity hash, and only when the document
+has something for them. Both render in the browser; nothing of the document
+is sent anywhere. Offline, a diagram stays readable source and a formula
+keeps its delimiters.
 """
 
 import html
 import pathlib
+import re
 from typing import Dict, Optional
 from urllib.parse import urljoin, urlsplit
 
@@ -32,14 +40,77 @@ blockquote { margin: 0; padding: 0 1rem; border-left: 0.25rem solid rgba(127,127
 table { border-collapse: collapse; }
 th, td { border: 1px solid rgba(127,127,127,0.4); padding: 0.3rem 0.6rem; }
 img { max-width: 100%; }
+pre.mermaid[data-processed] { background: none; text-align: center; }
 """
 
 HEADINGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
+# Pinned releases with their subresource integrity hashes; bump both together.
+KATEX = "https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/"
+MERMAID = "https://cdn.jsdelivr.net/npm/mermaid@11.12.0/dist/mermaid.min.js"
+INTEGRITY = {
+    "katex.min.css": "sha384-5TcZemv2l/9On385z///+d7MSYlvIEw9FuZTIdZ14vJLqWphw7e7ZPuOiCHJcFCP",
+    "katex.min.js": "sha384-cMkvdD8LoxVzGF/RPUKAcvmm49FQ0oxwDF3BGKtDXcEc+T1b2N+teh/OJfpU0jr6",
+    "auto-render.min.js": "sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh",
+    "mermaid.min.js": "sha384-o+g/BxPwhi0C3RK7oQBxQuNimeafQ3GE/ST4iT2BxVI4Wzt60SH4pq9iXVYujjaS",
+}
+
+KATEX_HEAD = (
+    '<link rel="stylesheet" href="{base}katex.min.css" integrity="{css}" crossorigin="anonymous">\n'
+    '<script defer src="{base}katex.min.js" integrity="{js}" crossorigin="anonymous"></script>\n'
+    '<script defer src="{base}contrib/auto-render.min.js" integrity="{auto}" crossorigin="anonymous"></script>\n'
+).format(
+    base=KATEX,
+    css=INTEGRITY["katex.min.css"],
+    js=INTEGRITY["katex.min.js"],
+    auto=INTEGRITY["auto-render.min.js"],
+)
+MERMAID_HEAD = (
+    '<script defer src="{}" integrity="{}" crossorigin="anonymous"></script>\n'
+).format(MERMAID, INTEGRITY["mermaid.min.js"])
+
+# Runs after the deferred scripts. arithmatex wrote `\(...\)` and `\[...\]`,
+# so those are the only delimiters KaTeX is given; `$` in prose stays prose.
+RENDER_SCRIPT = r"""<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.renderMathInElement) {
+    renderMathInElement(document.body, {
+      delimiters: [
+        {left: "\\(", right: "\\)", display: false},
+        {left: "\\[", right: "\\]", display: true}
+      ],
+      throwOnError: false
+    });
+  }
+  if (window.mermaid) {
+    var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    mermaid.initialize({startOnLoad: false, theme: dark ? "dark" : "default"});
+    mermaid.run();
+  }
+});
+</script>"""
 
 
 def _is_relative(url: str) -> bool:
     parsed = urlsplit(url)
     return bool(url) and not parsed.scheme and not url.startswith(("#", "//"))
+
+
+# superfences stashes a fence as raw HTML and puts it back after the tree
+# processors have run, so the fence is only reachable in the final HTML.
+MERMAID_FENCE = re.compile(
+    r'<pre class="highlight"><code class="language-mermaid">(.*?)</code></pre>',
+    re.S,
+)
+
+
+def _mermaid_fences(body: str) -> str:
+    """`<pre class="highlight"><code class="language-mermaid">` to `<pre class="mermaid">`.
+
+    Mermaid takes the text of every `.mermaid` element; the entities inside
+    (`--&gt;`) decode to the arrows the diagram wrote.
+    """
+    return MERMAID_FENCE.sub(r'<pre class="mermaid">\1</pre>', body)
 
 
 def _make_extension(base_uri: Optional[str]):
@@ -71,10 +142,16 @@ def _make_extension(base_uri: Optional[str]):
 
 def standalone_html(source: str, title: str, base_dir: str) -> str:
     base_uri = pathlib.Path(base_dir).resolve().as_uri() + "/" if base_dir else None
-    body = build_markdown([_make_extension(base_uri)]).convert(source)
+    body = _mermaid_fences(build_markdown([_make_extension(base_uri)]).convert(source))
+    has_math = 'class="arithmatex"' in body
+    has_mermaid = 'class="mermaid"' in body
+    head = (KATEX_HEAD if has_math else "") + (MERMAID_HEAD if has_mermaid else "")
+    script = "\n" + RENDER_SCRIPT if has_math or has_mermaid else ""
     return (
         "<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"utf-8\">\n"
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        "<title>{title}</title>\n<style>{style}</style>\n</head>\n"
-        "<body>\n{body}\n</body>\n</html>\n"
-    ).format(title=html.escape(title), style=STYLE, body=body)
+        "<title>{title}</title>\n<style>{style}</style>\n{head}</head>\n"
+        "<body>\n{body}{script}\n</body>\n</html>\n"
+    ).format(
+        title=html.escape(title), style=STYLE, head=head, body=body, script=script
+    )

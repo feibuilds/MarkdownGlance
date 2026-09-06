@@ -41,6 +41,34 @@ class StandaloneHtmlTest(unittest.TestCase):
         # The preview's slug, not Python-Markdown's toc one (`same_1`).
         self.assertNotIn("same_1", page)
 
+    def test_mermaid_fence_becomes_a_mermaid_element(self):
+        page = standalone_html("```mermaid\nflowchart LR\nA --" + "> B\n```\n", "t", "")
+        self.assertIn('<pre class="mermaid">flowchart LR\nA --&gt; B</pre>', page)
+        self.assertNotIn("language-mermaid", page)
+        self.assertIn("mermaid@11.12.0/dist/mermaid.min.js", page)
+        self.assertIn("mermaid.run()", page)
+        self.assertNotIn("katex", page)
+
+    def test_formulas_get_katex_with_pinned_integrity(self):
+        page = standalone_html("Inline $x$\n\n$$\ny\n$$\n", "t", "")
+        self.assertIn('<span class="arithmatex">\\(x\\)</span>', page)
+        self.assertIn('<div class="arithmatex">\\[\ny\n\\]</div>', page)
+        self.assertIn("katex@0.16.22/dist/katex.min.js", page)
+        self.assertIn("contrib/auto-render.min.js", page)
+        self.assertIn("renderMathInElement", page)
+        self.assertNotIn("mermaid.min.js", page)
+        for tag in page.split("<script")[1:]:
+            head = tag.split(">", 1)[0]
+            if "src=" in head:
+                self.assertIn('integrity="sha384-', head)
+                self.assertIn('crossorigin="anonymous"', head)
+
+    def test_other_fences_and_plain_pages_load_nothing(self):
+        page = standalone_html("```python\nx = 1\n```\n\nCosts $5 and $6.\n", "t", "")
+        self.assertNotIn("<script", page)
+        self.assertNotIn("<link", page)
+        self.assertIn('<code class="language-python">', page)
+
     def test_dialect_matches_the_preview(self):
         page = standalone_html("Text\n- a\n  - b\n\n| x |\n|---|\n| 1 |\n", "t", "")
         self.assertIn("<ul>\n<li>a<ul>\n<li>b</li>", page)

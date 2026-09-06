@@ -108,7 +108,11 @@ temporary directory and opens it in your default browser, for the moment a
 page has to be seen at browser width or handed to someone. It is the parser's
 own output, not the sanitised body the preview shows: raw HTML and scripts in
 the file run in the browser, as they would with any other Markdown-to-browser
-tool. The live preview itself still renders inside Sublime Text.
+tool. A page with a Mermaid fence or a formula loads Mermaid and KaTeX from
+jsDelivr and renders them in the browser, whatever `enable_mermaid` and
+`enable_math` say: the browser typesets locally, so nothing of the document
+leaves the machine. The live preview itself still renders inside Sublime
+Text.
 
 On macOS, `Cmd` replaces `Ctrl`. The zoom keys apply only while the preview
 itself is focused, and every command is in the command palette with or without

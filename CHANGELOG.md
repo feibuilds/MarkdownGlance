@@ -18,12 +18,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   [#2](https://github.com/pandadolphin/MarkdownGlance/issues/2); see
   [ADR 0013](docs/adr/0013-latex-math-as-a-baked-image.md).
 
-### Changed
-
-- **`Open in Browser` writes `\(...\)` and `\[...\]` for a formula**, which
-  is what MathJax and KaTeX auto-render expect, where it used to pass `$...$`
-  through as text. The page loads neither yet, so a browser shows the
-  delimiters.
+- **`Open in Browser` renders Mermaid diagrams and LaTeX math.** A Mermaid
+  fence used to reach the browser as a code block, and a formula as text.
+  The page now loads Mermaid and KaTeX from jsDelivr, at a pinned release
+  with a subresource integrity hash, and only when the document has a
+  diagram or a formula; both render in the browser, so nothing of the
+  document is sent anywhere, and the setting for the preview does not
+  apply. Offline, a diagram stays readable source and a formula keeps its
+  `\(...\)` delimiters.
 
 ## [0.4.1] - 2026-09-06
 

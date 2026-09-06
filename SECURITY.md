@@ -29,7 +29,10 @@ it writes the document as a standalone page under the temporary directory and
 hands it to the default browser. The page is the parser's own output, not the
 sanitised body the preview shows, since it is the user's own file opened
 locally. Raw HTML and scripts in that file run in the browser, as they would in
-any other Markdown-to-browser tool.
+any other Markdown-to-browser tool. When the document has a Mermaid fence or
+a formula, the page also loads Mermaid and KaTeX from `cdn.jsdelivr.net`, at
+a pinned release with a subresource integrity hash, and renders them in the
+browser; the document itself is not sent to the CDN or anywhere else.
 
 `MarkdownGlance: Copy Diagnostics` redacts source text, paths, URLs and Mermaid
 payloads before anything reaches the clipboard.

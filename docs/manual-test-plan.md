@@ -59,7 +59,10 @@ forward-compatibility testing.
    list, a fenced block inside a list item and two headings with the same
    text linked as `#same` and `#same-2`, run the command and confirm the page
    opens, the image resolves, both heading links stay on the page and the list
-   shapes match the preview. Put the file in a directory whose name has a
+   shapes match the preview. Add a Mermaid fence and an inline and a display
+   formula: online, the diagram and the formulas render in the browser under
+   both a light and a dark system theme, and a page with neither loads no
+   script. Put the file in a directory whose name has a
    space and a `#`. Repeat on an unsaved buffer. Confirm the command is absent
    from the palette on a non-Markdown view. On Linux, `ls -l` the page under
    `$TMPDIR/MarkdownGlance` and confirm mode 600.

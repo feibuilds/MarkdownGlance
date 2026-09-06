@@ -72,10 +72,12 @@ Package Control libraries it declares
   its source.
 - Invalid LaTeX is a server error, which the preview shows as `Unavailable`.
   The server does not say what was wrong.
-- `Open in Browser` now writes arithmatex's generic output, `\(...\)` and
-  `\[...\]`, which is what MathJax and KaTeX auto-render expect. The page
-  loads neither, so a browser shows the delimiters as text; adding a renderer
-  to the export page is a separate change.
+- `Open in Browser` writes arithmatex's generic output, `\(...\)` and
+  `\[...\]`, and the page renders it with KaTeX, loaded from jsDelivr at a
+  pinned release with an integrity hash; a Mermaid fence is rendered by
+  Mermaid the same way. Both run in the browser, so the export needs no
+  server and ignores `enable_math` and `enable_mermaid`. Offline, the page
+  shows the delimiters and the diagram source.
 - The scope statement in CONTRIBUTING.md still holds: no browser, no WebView,
   no process, no new dependency. Like Mermaid, this is a network fetch of an
   image, under the same limits.
