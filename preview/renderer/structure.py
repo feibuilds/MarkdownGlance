@@ -109,6 +109,16 @@ def _slug(text: str) -> str:
 
 
 def _asset_key(source: str, request: RenderRequest) -> Optional[AssetKey]:
+    # A Windows drive letter parses as a URL scheme -- `urlsplit("C:/x.png")`
+    # answers `scheme='c'` -- so the source that Explorer's "Copy as path"
+    # produces would otherwise be dropped by the scheme guard below. The host
+    # flavour is asked first; one without drives answers no and nothing else
+    # here changes.
+    # Percent-encoding first: `C:%5Cdocs%5Ca.png` is drive-relative until the
+    # separator is decoded, and that is how a path with a space is written.
+    decoded = unquote(source)
+    if HOST.is_drive_absolute(decoded):
+        return AssetKey(AssetKind.LOCAL_IMAGE, HOST.normalise(decoded))
     parsed = urlsplit(source)
     if parsed.scheme in ("http", "https"):
         hostname = (parsed.hostname or "").lower()
@@ -130,7 +140,10 @@ def _asset_key(source: str, request: RenderRequest) -> Optional[AssetKey]:
     if parsed.scheme == "file":
         if parsed.netloc not in ("", "localhost"):
             return None
-        return AssetKey(AssetKind.LOCAL_IMAGE, HOST.normalise(unquote(parsed.path)))
+        return AssetKey(
+            AssetKind.LOCAL_IMAGE,
+            HOST.normalise(HOST.from_url_path(unquote(parsed.path))),
+        )
     if parsed.scheme or source.startswith("data:"):
         return None
     if parsed.netloc:

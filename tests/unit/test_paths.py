@@ -73,6 +73,27 @@ class PathFlavourTest(unittest.TestCase):
     # Single-separator paths such as "\\a.png" are deliberately absent: ntpath
     # stopped calling them absolute in Python 3.13, so they answer differently
     # on the 3.8 and 3.14 legs of the matrix.
+    def test_only_the_matching_flavour_finds_a_drive(self):
+        self.assertEqual(WINDOWS.drive("C:\\docs\\a.png"), "C:")
+        self.assertEqual(WINDOWS.drive("C:/docs/a.png"), "C:")
+        self.assertEqual(POSIX.drive("C:/docs/a.png"), "")
+        self.assertTrue(WINDOWS.is_drive_absolute("C:/docs/a.png"))
+        self.assertFalse(POSIX.is_drive_absolute("C:/docs/a.png"))
+        # Drive-relative, so not something to open beside the document.
+        self.assertFalse(WINDOWS.is_drive_absolute("C:a.png"))
+        self.assertFalse(WINDOWS.is_drive_absolute("images/a.png"))
+
+    def test_a_unc_root_is_not_a_drive(self):
+        # `splitdrive` hands back the whole share for one; reading it as a
+        # local path would turn an image source into a network fetch.
+        self.assertEqual(WINDOWS.drive("//host/share/a.png"), "")
+        self.assertFalse(WINDOWS.is_drive_absolute("//host/share/a.png"))
+
+    def test_a_file_url_path_drops_the_separator_before_a_drive(self):
+        self.assertEqual(WINDOWS.from_url_path("/C:/docs/a.png"), "C:/docs/a.png")
+        self.assertEqual(POSIX.from_url_path("/mdglance/docs/a.png"), "/mdglance/docs/a.png")
+        self.assertEqual(WINDOWS.from_url_path("/docs/a.png"), "/docs/a.png")
+
     def test_only_the_matching_flavour_calls_a_locator_absolute(self):
         self.assertTrue(WINDOWS.is_absolute("C:\\docs\\a.png"))
         self.assertFalse(POSIX.is_absolute("C:\\docs\\a.png"))
@@ -82,7 +103,7 @@ class PathFlavourTest(unittest.TestCase):
 
 
 class RendererPathTest(unittest.TestCase):
-    def locator(self, flavour, base_path, source="images/a%20b.png"):
+    def keys(self, flavour, base_path, source="images/a%20b.png"):
         request = RenderRequest(
             "session",
             7,
@@ -94,7 +115,10 @@ class RendererPathTest(unittest.TestCase):
             "opaque-token",
         )
         with mock.patch.object(structure, "HOST", flavour):
-            return parse(request).asset_keys[0].locator
+            return list(parse(request).asset_keys)
+
+    def locator(self, flavour, base_path, source="images/a%20b.png"):
+        return self.keys(flavour, base_path, source)[0].locator
 
     def test_local_image_locators_follow_the_host_flavour(self):
         self.assertEqual(self.locator(WINDOWS, "C:\\docs"), "C:\\docs\\images\\a b.png")
@@ -114,6 +138,25 @@ class RendererPathTest(unittest.TestCase):
                 "/mdglance/home/phil/a.png",
             )
 
+    def test_windows_absolute_sources_resolve_however_they_are_spelled(self):
+        # `urlsplit` reads the drive letter as a scheme, and a `file:` URL
+        # carries a separator in front of it; both used to end up unresolvable.
+        for source in (
+            "C:/docs/images/a b.png",
+            "C:%5Cdocs%5Cimages%5Ca%20b.png",
+            "file:///C:/docs/images/a%20b.png",
+        ):
+            self.assertEqual(
+                self.locator(WINDOWS, "C:\\elsewhere", source),
+                "C:\\docs\\images\\a b.png",
+                source,
+            )
+
+    def test_a_posix_host_still_drops_a_drive_source(self):
+        # Nothing changes off Windows: `C:/x.png` is not a path there, and the
+        # scheme guard drops it as it always did.
+        self.assertEqual(self.keys(POSIX, "/mdglance/docs", "C:/x.png"), [])
+
     def test_tilde_expands_even_without_a_base_path(self):
         with mock.patch.dict(os.environ, POSIX_HOME):
             self.assertEqual(
@@ -122,7 +165,7 @@ class RendererPathTest(unittest.TestCase):
 
 
 class PathSeamTest(unittest.TestCase):
-    GUARDED = frozenset(("expanduser", "isabs", "realpath"))
+    GUARDED = frozenset(("expanduser", "isabs", "realpath", "splitdrive"))
 
     def test_platform_sensitive_calls_stay_inside_the_paths_module(self):
         for path in ROOT.rglob("*.py"):

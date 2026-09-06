@@ -21,8 +21,9 @@ import html
 import pathlib
 import re
 from typing import Dict, Optional
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import quote, urljoin, urlsplit
 
+from ..domain.paths import HOST
 from .markdown_engine import build_markdown
 from .structure import _slug
 
@@ -91,6 +92,21 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>"""
 
 
+def _drive_uri(url: str) -> Optional[str]:
+    """`C:/x.png` as the `file:` URL a browser can actually open.
+
+    `urlsplit` reads the drive letter as a scheme, so such a source is neither
+    relative nor a URL, and the page would otherwise carry it through as
+    `C:/x.png`, which no browser resolves.
+    """
+    if not HOST.is_drive_absolute(url):
+        return None
+    # Built from the flavour rather than from `pathlib`, whose concrete class
+    # follows the interpreter's own platform and cannot express this path off
+    # Windows at all.
+    return "file:///" + quote(url.replace("\\", "/"), safe="/:")
+
+
 def _is_relative(url: str) -> bool:
     parsed = urlsplit(url)
     return bool(url) and not parsed.scheme and not url.startswith(("#", "//"))
@@ -126,10 +142,13 @@ def _make_extension(base_uri: Optional[str]):
                     counts[base] = counts.get(base, 0) + 1
                     count = counts[base]
                     element.set("id", base if count == 1 else "{}-{}".format(base, count))
-                elif base_uri and element.tag in ("img", "a"):
+                elif element.tag in ("img", "a"):
                     name = "src" if element.tag == "img" else "href"
                     value = element.get(name, "")
-                    if _is_relative(value):
+                    drive = _drive_uri(value)
+                    if drive is not None:
+                        element.set(name, drive)
+                    elif base_uri and _is_relative(value):
                         element.set(name, urljoin(base_uri, value))
 
     class PageExtension(Extension):

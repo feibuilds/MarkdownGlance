@@ -1,6 +1,12 @@
+import ntpath
 import os.path
 import pathlib
+import posixpath
 import unittest
+from unittest import mock
+
+from MarkdownGlance.preview.domain.paths import PathFlavour
+from MarkdownGlance.preview.renderer import export
 
 from MarkdownGlance.preview.renderer.export import standalone_html
 
@@ -27,6 +33,21 @@ class StandaloneHtmlTest(unittest.TestCase):
         self.assertIn('href="{}#top"'.format(BASE_URI.rsplit("/", 1)[0] + "/next.md"), page)
         self.assertIn('href="https://x.test/p"', page)
         self.assertIn('href="#title"', page)
+
+    def test_a_windows_drive_source_becomes_a_file_url(self):
+        """`urlsplit` reads `C:` as a scheme, so this is neither URL nor relative.
+
+        Left alone the page carries `C:/docs/a.png` through, which no browser
+        opens. Only a Windows host has drives, so the check runs there.
+        """
+        with mock.patch.object(export, "HOST", PathFlavour(ntpath)):
+            page = standalone_html("![i](C:/docs/a.png)", "t", "C:\\elsewhere")
+        self.assertIn('src="file:///C:/docs/a.png"', page)
+
+    def test_a_posix_host_leaves_a_drive_source_where_it_is(self):
+        with mock.patch.object(export, "HOST", PathFlavour(posixpath)):
+            page = standalone_html("![i](C:/docs/a.png)", "t", "/mdglance/docs")
+        self.assertIn('src="C:/docs/a.png"', page)
 
     def test_unsaved_source_leaves_relative_urls_alone(self):
         page = standalone_html("![i](img.png) [h](#x)", "untitled", "")
