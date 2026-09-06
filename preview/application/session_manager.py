@@ -21,7 +21,7 @@ class SessionManager:
         self.resolver = resolver
         self.window_for_id = window_for_id
         self.on_session_close = on_session_close
-        # Outline surfaces carry the same owner marker but belong to another
+        # Panel surfaces carry the same owner marker but belong to another
         # controller, so they must survive this manager's orphan sweep.
         self.foreign_surface = foreign_surface
         self._by_id: Dict[str, PreviewSession] = {}
@@ -43,7 +43,6 @@ class SessionManager:
             source_buffer_id,
             source_sheet_id,
             None,
-            None,
             mode,
             SessionState.OPENING,
             source_group=source_group,
@@ -62,9 +61,8 @@ class SessionManager:
         self.bind_surfaces(session)
 
     def bind_surfaces(self, session: PreviewSession) -> None:
-        for handle in (session.preview_surface, session.toc_surface):
-            if handle is not None:
-                self._by_surface[handle.id] = session.id
+        if session.preview_surface is not None:
+            self._by_surface[session.preview_surface.id] = session.id
 
     def get(self, session_id: str) -> Optional[PreviewSession]:
         return self._by_id.get(session_id)
@@ -96,10 +94,6 @@ class SessionManager:
         window = self.window_for_id(session.window_id)
         restore = cause not in (CloseCause.WINDOW_CLOSED, CloseCause.UNLOAD)
 
-        if session.toc_surface is not None and self.backend.is_alive(
-            session.toc_surface
-        ):
-            self.backend.close(session.toc_surface)
         if (
             cause != CloseCause.PREVIEW_CLOSED_BY_USER
             and session.preview_surface is not None
@@ -112,48 +106,15 @@ class SessionManager:
                 self.layout_owner.release(window, group, session.id, restore=restore)
         self._remove(session)
 
-    def drop_toc(self, session: PreviewSession, dismissed: bool = False) -> None:
-        """Forget the table of contents and give its group back.
-
-        `dismissed` says the user closed it, rather than the document having
-        shrunk below the threshold that asks for one; a dismissed table of
-        contents stays gone for the life of the session.
-        """
-        handle = session.toc_surface
-        if handle is None:
-            return
-        self._by_surface.pop(handle.id, None)
-        # The view is usually already gone by the time this runs — the user
-        # clicked the tab's close button, or `present` closed it — and a dead
-        # handle has no group. Fall back to the one the surface was placed in,
-        # or the group it left behind is never released and the empty pane
-        # stays on screen.
-        group = self.backend.group_of(handle)
-        if group is None:
-            group = session.toc_group
-        session.toc_surface = None
-        session.toc_group = None
-        session.toc_dismissed = session.toc_dismissed or dismissed
-        if group is not None:
-            session.layout_groups.discard(group)
-            window = self.window_for_id(session.window_id)
-            if window is not None:
-                self.layout_owner.release(window, group, session.id, restore=True)
-
     def _remove(self, session: PreviewSession) -> None:
         self._by_id.pop(session.id, None)
         self._by_source.pop((session.window_id, session.source_buffer_id), None)
-        for handle in (session.preview_surface, session.toc_surface):
-            if handle is not None:
-                self._by_surface.pop(handle.id, None)
+        if session.preview_surface is not None:
+            self._by_surface.pop(session.preview_surface.id, None)
 
     def surface_closed(self, surface_id: int) -> None:
         session = self.for_surface(surface_id)
-        if session is None:
-            return
-        if session.toc_surface is not None and session.toc_surface.id == surface_id:
-            self.drop_toc(session, dismissed=True)
-        else:
+        if session is not None:
             self.close(session, CloseCause.PREVIEW_CLOSED_BY_USER)
 
     def close_window(self, window_id: int) -> None:
@@ -173,8 +134,6 @@ class SessionManager:
                 and session.preview_surface.id not in live
             ):
                 self.close(session, CloseCause.PREVIEW_CLOSED_BY_USER)
-            elif session.toc_surface is not None and session.toc_surface.id not in live:
-                self.drop_toc(session, dismissed=True)
         registered = set(self._by_surface)
         for handle in live_handles:
             if handle.id not in registered and not self.foreign_surface(handle.id):

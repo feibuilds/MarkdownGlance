@@ -1,12 +1,12 @@
-"""Two documents previewed at once: the front tabs follow the focus.
+"""Two documents previewed at once: the panels follow the focus.
 
-Every session stacks its preview in one group and its table of contents in
-another, so without `UseCases.reveal_surfaces` the tabs left in front are
-whichever document was previewed last, and they stay there while the user
-reads the other file. Each phase focuses one of the six views and reads the
-name of whatever Sublime has at the front of the two shared groups -- and
-checks that the focus stayed where it was put, since `reveal` moves it away
-and back again.
+A document has three groups -- source, preview, panel -- and every document in
+the window shares each of them, so the tabs left in front would otherwise
+belong to whichever was previewed last. Each phase focuses one view and reads
+the name of whatever Sublime has at the front of the two shared groups, checks
+that the focus stayed where it was put (`reveal` moves it away and back), and
+checks which half of the panel is on screen: the source outline while a source
+has the focus, the rendered table of contents while a preview has it.
 """
 
 from mdglance_probe import phase
@@ -38,12 +38,29 @@ def _front(ctx, role):
     return active.name() if active is not None else None
 
 
-def _fronts(ctx, document):
+def _half(ctx):
+    """Which half the panel in front is painted with, read off its HTML.
+
+    Matched on the opening tag, not the bare class name: the panel stylesheet
+    carries rules for both halves whichever one is drawn.
+    """
+    from MarkdownGlance.preview.adapter.container import container
+
+    view = _by_role(ctx, "panel").get(_front(ctx, "panel"))
+    panel = container.panel.for_surface(view.id()) if view is not None else None
+    html = container.backend._html.get(panel.surface.id, "") if panel else ""
+    if '<div class="table-of-contents' in html:
+        return "contents"
+    return "outline" if '<div class="source-outline' in html else None
+
+
+def _fronts(ctx, document, half):
     return {
         "preview in front is {}".format(document): _front(ctx, "preview")
         == "Preview: {}.md".format(document),
-        "contents in front is {}".format(document): _front(ctx, "toc")
-        == "TOC: {}.md".format(document),
+        "panel in front is {}".format(document): _front(ctx, "panel")
+        == "Contents: {}.md".format(document),
+        "panel shows the {}".format(half): _half(ctx) == half,
     }
 
 
@@ -77,8 +94,8 @@ def focus_alpha_source(ctx):
     ctx.window.focus_view(STATE["alpha"])
 
 
-def focus_alpha_contents(ctx):
-    ctx.window.focus_view(_by_role(ctx, "toc")["TOC: toc-alpha.md"])
+def focus_alpha_panel(ctx):
+    ctx.window.focus_view(_by_role(ctx, "panel")["Contents: toc-alpha.md"])
 
 
 def focus_beta_preview(ctx):
@@ -90,34 +107,37 @@ def rendered(ctx, snap):
 
 
 def both_open(ctx, snap):
-    return ctx.settled(snap) and len(_by_role(ctx, "toc")) == 2
+    return ctx.settled(snap) and len(_by_role(ctx, "panel")) == 2
 
 
 def check_beta_front(ctx, snap):
     checks = {
         "two previews": len(_by_role(ctx, "preview")) == 2,
-        "two tables of contents": len(_by_role(ctx, "toc")) == 2,
+        "two panels": len(_by_role(ctx, "panel")) == 2,
         "one group holds the previews": len(_groups(ctx, "preview")) == 1,
-        "one group holds the tables of contents": len(_groups(ctx, "toc")) == 1,
+        "one group holds the panels": len(_groups(ctx, "panel")) == 1,
+        "three groups per document, not four": len(ctx.window.layout()["cells"]) == 3,
     }
-    checks.update(_fronts(ctx, "toc-beta"))
+    checks.update(_fronts(ctx, "toc-beta", "contents"))
     return checks
 
 
 def check_alpha_front(ctx, snap):
-    checks = _fronts(ctx, "toc-alpha")
+    checks = _fronts(ctx, "toc-alpha", "outline")
     checks.update(_focus_held(ctx, STATE["alpha"]))
     return checks
 
 
-def check_alpha_from_contents(ctx, snap):
-    checks = _fronts(ctx, "toc-alpha")
-    checks.update(_focus_held(ctx, _by_role(ctx, "toc")["TOC: toc-alpha.md"]))
+def check_alpha_from_panel(ctx, snap):
+    checks = _fronts(ctx, "toc-alpha", "outline")
+    checks.update(
+        _focus_held(ctx, _by_role(ctx, "panel")["Contents: toc-alpha.md"])
+    )
     return checks
 
 
 def check_beta_from_preview(ctx, snap):
-    checks = _fronts(ctx, "toc-beta")
+    checks = _fronts(ctx, "toc-beta", "contents")
     checks.update(_focus_held(ctx, _by_role(ctx, "preview")["Preview: toc-beta.md"]))
     return checks
 
@@ -132,10 +152,10 @@ PHASES = [
         check=check_alpha_front,
     ),
     phase(
-        "alpha-contents-focused",
-        action=focus_alpha_contents,
+        "alpha-panel-focused",
+        action=focus_alpha_panel,
         done=both_open,
-        check=check_alpha_from_contents,
+        check=check_alpha_from_panel,
     ),
     phase(
         "beta-preview-focused",

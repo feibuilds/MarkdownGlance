@@ -13,9 +13,7 @@ from ..domain.contracts import (
 )
 from ..domain.paths import HOST
 from ..renderer.errors import error_card
-from ..renderer.measure import toc_width_px
-from ..renderer.stylesheet import represent, root_font_px
-from ..renderer.toc import build_toc, toc_required
+from ..renderer.stylesheet import represent
 from .ports import GroupRole
 from .session import CloseCause, PreviewSession, SessionState
 
@@ -56,6 +54,7 @@ class UseCases:
         theme_provider: Callable[[object], ThemeSnapshot],
         theme_observer: Callable[[object, str], None],
         base_css: str,
+        panel=None,
     ) -> None:
         self.manager = manager
         self.scheduler = scheduler
@@ -66,6 +65,9 @@ class UseCases:
         self.theme_provider = theme_provider
         self.theme_observer = theme_observer
         self.base_css = base_css
+        # The panel beside the preview. It owns its own surface and its own
+        # lifetime; a render only hands it the headings it produced.
+        self.panel = panel
 
     def _is_markdown(self, view) -> bool:
         return bool(view and view.match_selector(0, "text.html.markdown"))
@@ -186,13 +188,7 @@ class UseCases:
         if window is None:
             return
         session.state = SessionState.MOVING
-        handles = [
-            handle
-            for handle in (session.preview_surface, session.toc_surface)
-            if handle
-        ]
-        for handle in handles:
-            self.backend.move(handle, session.source_group)
+        self.backend.move(session.preview_surface, session.source_group)
         for group in sorted(session.layout_groups, reverse=True):
             self.layout_owner.release(window, group, session.id, restore=True)
         session.layout_groups.clear()
@@ -204,77 +200,12 @@ class UseCases:
             if self.layout_owner.is_owned(window, preview_group):
                 session.layout_groups.add(preview_group)
             self.backend.move(session.preview_surface, preview_group)
-            anchor = preview_group
-        else:
-            self.backend.move(session.preview_surface, session.source_group)
-            anchor = session.source_group
-
-        if session.toc_surface is not None:
-            toc_group = self.layout_owner.acquire(
-                window, anchor, GroupRole.TOC, session.id, self._toc_width(session)
-            )
-            if self.layout_owner.is_owned(window, toc_group):
-                session.layout_groups.add(toc_group)
-            session.toc_group = toc_group
-            self.backend.move(session.toc_surface, toc_group)
-            self.backend.reveal(session.toc_surface)
         session.mode = mode
         self.backend.focus(session.preview_surface)
         session.state = (
             SessionState.VISIBLE if session.last_document else SessionState.RENDERING
         )
         self.represent(session)
-
-    def _ensure_toc(self, session: PreviewSession) -> None:
-        if session.toc_surface is not None or session.preview_surface is None:
-            return
-        window = self.manager.window_for_id(session.window_id)
-        if window is None:
-            return
-        preview_group = self.backend.group_of(session.preview_surface)
-        if preview_group is None:
-            return
-        toc_group = self.layout_owner.acquire(
-            window,
-            preview_group,
-            GroupRole.TOC,
-            session.id,
-            self._toc_width(session),
-        )
-        if self.layout_owner.is_owned(window, toc_group):
-            session.layout_groups.add(toc_group)
-        session.toc_group = toc_group
-        session.toc_surface = self.backend.create(
-            window, toc_group, "TOC: {}".format(session.source_name), session.id
-        )
-        self.backend.apply_theme(session.toc_surface, session.theme)
-        self.backend.set_role(session.toc_surface, "toc")
-        self.manager.bind_surfaces(session)
-        self.backend.reveal(session.toc_surface)
-        self.backend.focus(session.preview_surface)
-
-    def _toc_width(self, session: PreviewSession) -> float:
-        """Pixels the table of contents wants, or 0.0 for the default share."""
-        if not session.settings.auto_width or session.last_document is None:
-            return 0.0
-        return toc_width_px(session.last_document.headings, root_font_px(session.zoom))
-
-    def _fit_toc(self, session: PreviewSession) -> None:
-        """Give the table of contents' group the width its entries need.
-
-        This runs on every repaint rather than at creation alone, so editing a
-        heading, zooming and resizing the window all keep the group in step.
-        `LayoutOwner.fit` decides whether the move is allowed: a group the user
-        has resized by hand stays where they put it.
-        """
-        window = self.manager.window_for_id(session.window_id)
-        if window is None or session.toc_surface is None:
-            return
-        group = self.backend.group_of(session.toc_surface)
-        if group is not None:
-            self.layout_owner.fit(
-                window, group, GroupRole.TOC, self._toc_width(session)
-            )
 
     def _paint(self, session: PreviewSession, surface, html: str) -> None:
         """Repaint a surface, reasserting the source's colour scheme first.
@@ -298,55 +229,10 @@ class UseCases:
             session.preview_surface,
             represent(document.body_html, session.theme, session.zoom, self.base_css),
         )
-        if not session.settings.enable_toc:
-            # The setting is the stronger switch: while it is off a session's
-            # own dismissal means nothing, so turning the setting back on
-            # shows the table of contents rather than honouring an old close.
-            session.toc_dismissed = False
-        # Every render reaches here, so a table of contents the user closed
-        # has to stay closed: otherwise the next render -- a keystroke, or the
-        # viewport poll noticing the preview grew into the group just given
-        # back -- opens it again a moment later.
-        if (
-            session.settings.enable_toc
-            and not session.toc_dismissed
-            and toc_required(
-                len(self.source_snapshot(session, document.generation).markdown),
-                document.headings,
-                session.settings.toc_minimum_length,
-                session.settings.toc_minimum_headings,
+        if self.panel is not None:
+            self.panel.document_rendered(
+                session.window_id, session.source_buffer_id, document
             )
-        ):
-            self._ensure_toc(session)
-            self._present_toc(session)
-        elif session.toc_surface is not None:
-            handle = session.toc_surface
-            self.backend.close(handle)
-            self.manager.drop_toc(session)
-
-    def _present_toc(
-        self, session: PreviewSession, active_slug: Optional[str] = None
-    ) -> None:
-        """Repaint the table of contents. Deliberately does not reveal it.
-
-        `reveal` focuses the group, focuses the view and focuses the previous
-        group back, and each of those makes Sublime fire `on_activated`, which
-        re-reads the theme and repaints -- which lands here again. Every render
-        therefore span the window's focus around a loop of its own. The two
-        moments the tab genuinely has to be brought to the front, creation and
-        a mode switch, reveal it themselves.
-        """
-        if session.toc_surface is None or session.last_document is None:
-            return
-        html = build_toc(
-            session.last_document.headings, session.action_token, active_slug
-        )
-        self._paint(
-            session,
-            session.toc_surface,
-            represent(html, session.theme, session.zoom, self.base_css, panel=True),
-        )
-        self._fit_toc(session)
 
     def present_error(
         self, session: PreviewSession, stage: DiagnosticStage, message: str
@@ -373,7 +259,6 @@ class UseCases:
                     self.base_css,
                 ),
             )
-            self._present_toc(session)
 
     def adjust_zoom(self, window, delta: float = 0.0, reset: bool = False) -> None:
         session = self._session_for_active(window)
@@ -382,8 +267,19 @@ class UseCases:
         session.zoom = 1.0 if reset else max(0.5, min(3.0, session.zoom + delta))
         self.represent(session)
 
-    def navigate(self, window, token: str, slug: str) -> None:
-        session = self._session_for_action_token(window, token)
+    def scroll_preview(self, window_id: int, buffer_id: int, slug: str) -> bool:
+        """Scroll a document's preview to one heading. The panel's click path."""
+        return self._scroll(self.manager.for_source(window_id, buffer_id), slug)
+
+    def navigate_for_surface(self, surface_id: int, slug: str) -> None:
+        """A `#slug` link clicked inside the preview body."""
+        session = self.manager.for_surface(surface_id)
+        if self._scroll(session, slug) and self.panel is not None:
+            self.panel.heading_shown(
+                session.window_id, session.source_buffer_id, slug
+            )
+
+    def _scroll(self, session: Optional[PreviewSession], slug: str) -> bool:
         if (
             session is None
             or session.preview_surface is None
@@ -392,20 +288,8 @@ class UseCases:
                 heading.slug == slug for heading in session.last_document.headings
             )
         ):
-            return
-        if self.backend.navigate(session.preview_surface, slug):
-            self._present_toc(session, slug)
-
-    def navigate_for_surface(self, surface_id: int, slug: str) -> None:
-        session = self.manager.for_surface(surface_id)
-        if (
-            session is not None
-            and session.preview_surface is not None
-            and session.last_document is not None
-            and any(heading.slug == slug for heading in session.last_document.headings)
-            and self.backend.navigate(session.preview_surface, slug)
-        ):
-            self._present_toc(session, slug)
+            return False
+        return self.backend.navigate(session.preview_surface, slug)
 
     def open_relative(self, window, token: str, path: int) -> None:
         session = self._session_for_action_token(window, token)
@@ -481,15 +365,13 @@ class UseCases:
             if render_required or policy_changed:
                 self.scheduler.request_render(session.id, "settings")
 
-    def reveal_surfaces(self, view) -> None:
-        """Bring the focused document's preview and contents to the front.
+    def reveal_preview(self, view) -> None:
+        """Bring the focused document's preview to the front.
 
-        Every session in a window stacks its preview in one group and its table
-        of contents in another, so without this the tabs left in front are
-        whichever document was previewed last, and they stay there while the
-        user reads a different file. Called for the source, the preview and the
-        table of contents alike: each of them means "this is the document I am
-        looking at".
+        Every document previewed in a window stacks its preview in one group,
+        so without this the tab left in front is whichever was opened last, and
+        it stays there while the user reads a different file. The panel beside
+        it follows the focus on its own; see `PanelController.focus_changed`.
         """
         window = view.window()
         if window is None:
@@ -498,28 +380,26 @@ class UseCases:
         # each of those makes Sublime activate a view the user never chose --
         # starting with whatever was already at the front of the group being
         # focused. Those activations arrive here a tick later, and each would
-        # reveal the surfaces of a *different* document, which reveals more:
-        # the two documents take turns pulling their tabs forward and the
-        # window never settles. Only the view the window has come to rest on
-        # gets to move a tab.
+        # reveal a *different* document's preview, which reveals more: the two
+        # documents take turns pulling their tabs forward and the window never
+        # settles. Only the view the window has come to rest on moves a tab.
         active = window.active_view()
         if active is None or active.id() != view.id():
             return
         session = self.manager.for_surface(view.id()) or self.manager.for_source(
             window.id(), view.buffer_id()
         )
-        if session is None:
+        if session is None or session.preview_surface is None:
             return
+        if session.preview_surface.id == view.id():
+            return
+        # In Full Screen the preview is a tab in the source's own group.
+        # Bringing it forward there would hide the file the user has just
+        # clicked, and the two would take turns hiding each other.
         group, _ = window.get_view_index(view)
-        for handle in (session.preview_surface, session.toc_surface):
-            if handle is None or handle.id == view.id():
-                continue
-            # In Full Screen the preview is a tab in the source's own group.
-            # Bringing it forward there would hide the file the user has just
-            # clicked, and the two would take turns hiding each other.
-            if self.backend.group_of(handle) == group:
-                continue
-            self.backend.reveal(handle)
+        if self.backend.group_of(session.preview_surface) == group:
+            return
+        self.backend.reveal(session.preview_surface)
 
     def theme_changed(self, view) -> None:
         window = view.window()

@@ -1,6 +1,6 @@
-"""The three things the outline needs from a source view.
+"""The three things the panel needs from a source view.
 
-They are injected into `OutlineController` rather than reached for, so the
+They are injected into `PanelController` rather than reached for, so the
 application layer never imports the Sublime API.
 """
 

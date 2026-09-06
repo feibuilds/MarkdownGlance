@@ -6,7 +6,32 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **The outline and the table of contents are now one panel**, showing the half
+  that matches the tab you are on: the source outline while you edit, the
+  rendered table of contents while you read the preview. They used to be two
+  surfaces in two groups, so a document with both open took four editor groups
+  and left whichever list you were not using in front of you; it takes three
+  now, and switching is a repaint rather than a tab moving. `Ctrl+Shift+B` and
+  the `mdglance_toggle_outline` command are unchanged, the palette entry is now
+  **Toggle Contents Panel**, and the tab is named `Contents: <file>`.
+  `enable_toc` governs only whether a panel opens by itself; one you open
+  yourself shows both halves whichever way it is set. See
+  [ADR 0014](docs/adr/0014-one-contents-panel-for-both-halves.md).
+
 ### Fixed
+
+- **A preview opened after the panel landed inside the panel's group**, where
+  it took the panel's place instead of appearing beside it -- the command
+  looked as though it had done nothing at all. `LayoutOwner` reused any group
+  of its own to the right of the source; it now reuses one only for its own
+  role. This is as old as the outline: the same sequence with `Ctrl+Shift+B`
+  and then a preview did the same thing.
+
+- **A table of contents that opened by itself took the caret with it**, because
+  Sublime focuses the view `new_file` makes. The focus is now read before the
+  surface exists and given back afterwards.
 
 - The preview and the table of contents now follow the focus. Two documents
   previewed at once share one preview group and one table-of-contents group, so

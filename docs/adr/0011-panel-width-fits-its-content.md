@@ -6,6 +6,14 @@ Accepted. Extends ADR 0001 (presentation backend) and ADR 0010 (the source
 outline), and reuses the measuring technique of ADR 0007 (tables under
 minihtml).
 
+Everything about the measuring holds after
+[ADR 0014](0014-one-contents-panel-for-both-halves.md) merged the two surfaces
+into one panel, and both measurements are still needed: the panel is measured
+against whichever half is on screen, because the outline is monospace and
+carries its `#` markers while the table of contents is not. What changed is the
+count -- one `ROLE_SHARE` entry for one panel group, in place of 0.35 and 0.3
+for two.
+
 ## Context
 
 Both side surfaces took a fixed share of the group they were split from:

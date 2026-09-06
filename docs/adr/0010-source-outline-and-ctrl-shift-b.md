@@ -2,8 +2,15 @@
 
 ## Status
 
-Accepted. Extends ADR 0001 (presentation backend) and ADR 0009 (the one key
-this package takes outside its own views).
+Accepted, and superseded in part by
+[ADR 0014](0014-one-contents-panel-for-both-halves.md) on 2026-09-07: the
+outline is now one half of a single contents panel rather than a surface and a
+group of its own. The key, the toggle behaviour and everything below about
+*why* a source outline exists at all still hold; the second group and
+`acquire_beside` do not.
+
+Extends ADR 0001 (presentation backend) and ADR 0009 (the one key this package
+takes outside its own views).
 
 ## Context
 

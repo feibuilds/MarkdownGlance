@@ -7,7 +7,7 @@ from ..presentation.phantom_view import OWNER_KEY
 from ..presentation.contexts import (
     context_result,
     markdown_source,
-    outline_focused,
+    panel_focused,
     preview_focused,
 )
 from .container import container
@@ -42,19 +42,19 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
             if not container.loaded:
                 return
             container.usecases.source_modified(self.view)
-            container.outline.refresh_for_source(self.view)
+            container.panel.refresh_for_source(self.view)
 
         _ui(modified)
 
     def on_selection_modified_async(self):
-        _ui(lambda: container.loaded and container.outline.sync_caret(self.view))
+        _ui(lambda: container.loaded and container.panel.sync_caret(self.view))
 
     def on_post_save_async(self):
         def saved():
             if not container.loaded:
                 return
             container.usecases.source_saved(self.view)
-            container.outline.source_renamed(self.view)
+            container.panel.source_renamed(self.view)
 
         _ui(saved)
 
@@ -67,12 +67,12 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
             def closed():
                 if not container.loaded:
                     return
-                if not container.outline.surface_closed(surface_id):
+                if not container.panel.surface_closed(surface_id):
                     container.manager.surface_closed(surface_id)
 
             _ui(closed)
         else:
-            container.outline.source_closed(self.view)
+            container.panel.source_closed(self.view)
             container.usecases.source_closed(self.view)
 
     def on_activated(self):
@@ -81,9 +81,10 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
                 return
             window = self.view.window()
             container.reconcile(window)
-            container.outline.source_renamed(self.view)
-            container.outline.refresh_source(self.view)
-            container.usecases.reveal_surfaces(self.view)
+            container.panel.source_renamed(self.view)
+            container.panel.refresh_source(self.view)
+            container.usecases.reveal_preview(self.view)
+            container.panel.focus_changed(self.view)
             session = container.manager.for_source(window.id(), self.view.buffer_id())
             if session is None:
                 return
@@ -114,9 +115,9 @@ class MarkdownGlanceEventListener(sublime_plugin.EventListener):
             return context_result(
                 preview_focused(window, container.backend), operator, operand
             )
-        if key == "mdglance.outline_focused":
+        if key == "mdglance.panel_focused":
             return context_result(
-                outline_focused(window, container.outline.owns_surface),
+                panel_focused(window, container.panel.owns_surface),
                 operator,
                 operand,
             )
@@ -136,5 +137,5 @@ class MarkdownGlanceEventListener(sublime_plugin.EventListener):
 
     def on_pre_close_window(self, window):
         if container.loaded:
-            container.outline.close_window(window.id())
+            container.panel.close_window(window.id())
             container.usecases.window_closed(window)

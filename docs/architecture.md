@@ -19,15 +19,23 @@ longest entry needs from per-character advances, and `LayoutOwner.acquire` and
 was split from — never wider than the role's share, never past the point where
 the fingerprint says the user has moved the divider by hand.
 
-A second, independent surface is the source outline: `renderer/outline.py`
-scans raw Markdown for ATX and setext headings by line, and
-`application/outline.py` owns one outline per source buffer, keyed on
-`(window, buffer)`, reaching the host only through injected read-text,
-read-caret and reveal-line callables. It shares the backend, the layout owner
-and the stylesheet with the preview, and nothing else: no render, no assets, no
-generations. `SessionManager.reconcile` asks `foreign_surface` before closing an
-owned surface it does not recognise, which is how outline surfaces survive a
-sweep run for previews.
+A second, independent surface is the contents panel: `application/panel.py`
+owns one per source buffer, keyed on `(window, buffer)`, reaching the host only
+through injected read-text, read-caret and reveal-line callables. It shares the
+backend, the layout owner and the stylesheet with the preview, and nothing
+else: no render, no assets, no generations. `SessionManager.reconcile` asks
+`foreign_surface` before closing an owned surface it does not recognise, which
+is how panel surfaces survive a sweep run for previews.
+
+The panel draws one of two halves, chosen by which tab the window has settled
+on. With the source focused it draws the outline `renderer/outline.py` scans
+out of the raw Markdown -- ATX and setext headings by line, so every entry maps
+to a row the caret can move to -- and with the preview focused it draws
+`renderer/toc.py`'s table of contents over the headings the last render
+produced. `UseCases.present` pushes each rendered document in through
+`document_rendered`; the panel never reaches back for one, and a preview that
+closes takes only the half that belonged to it. Both halves are one surface in
+one group, so switching is a repaint and nothing moves on screen.
 
 ## Reliability and safety
 

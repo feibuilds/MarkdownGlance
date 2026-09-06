@@ -85,52 +85,105 @@ class LayoutTest(unittest.TestCase):
         result, _ = split_cell(layout, 0, 0.5)
         self.assertEqual(result["cols"], layout["cols"])
 
-    def test_acquire_beside_never_shares_an_existing_group(self):
+    def test_the_panel_never_lands_in_the_preview_group(self):
         window = FakeWindow(ONE)
         owner = LayoutOwner()
-        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "preview")
-        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline")
-        self.assertNotEqual(outline, preview)
-        self.assertTrue(owner.is_owned(window, outline))
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+        panel = owner.acquire_panel(window, 0, "session")
+        self.assertNotEqual(panel, preview)
+        self.assertTrue(owner.is_owned(window, panel))
         self.assertEqual(len(window.layout()["cells"]), 3)
 
-    def test_a_panel_is_never_split_out_of_another_panel(self):
+    def test_the_panel_is_split_out_of_the_preview_not_the_source(self):
         """Issue #4: the outline used to be carved out of the table of contents.
 
-        Walking right to the last group in the row landed on the table of
-        contents whenever one was open, so both panels ended up measured
-        against each other and neither could reach the width its entries
-        needed. Every panel must border a group that is not itself a panel.
+        There were two panels then, and walking right to the last group in the
+        row landed on the table of contents whenever one was open, so each was
+        measured against the other and neither could reach the width its
+        entries needed -- 161 px wanted and 95 given, 186 wanted and 30 given,
+        measured on a 1920 px window. There is one panel now, and the walk
+        stops at the first group this owner did not make.
         """
         window = FakeWindow(ONE)
         owner = LayoutOwner()
         preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
-        toc = owner.acquire(window, preview, GroupRole.TOC, "session", 160.0)
-        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline", 190.0)
+        panel = owner.acquire_panel(window, 0, "session", 160.0)
 
         layout = window.layout()
-        self.assertEqual(len({preview, toc, outline}), 3)
-        # The outline borders the source, which no session owns.
-        self.assertEqual(left_neighbour(layout, outline), 0)
+        self.assertEqual(left_neighbour(layout, panel), preview)
         self.assertFalse(owner.is_owned(window, 0))
-        # And the table of contents keeps the width it was given.
-        self.assertAlmostEqual(width_of(window, toc), 160.0, places=6)
+        self.assertAlmostEqual(width_of(window, panel), 160.0, places=6)
 
-    def test_two_panels_both_reach_the_width_their_entries_need(self):
-        """Each panel gets what it asks for, up to its own role share.
+    def test_a_second_document_joins_the_one_panel_group(self):
+        """One panel group per window, however many documents are open in it."""
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        owner.acquire(window, 0, GroupRole.PREVIEW, "first")
+        first = owner.acquire_panel(window, 0, "first", 140.0)
+        cells = len(window.layout()["cells"])
 
-        Measured before the fix, on a 1920 px window: a table of contents that
-        wanted 161 px got 95, and an outline that wanted 186 px got 30, because
-        the second panel was carved out of the first. The widths here are the
-        same shape against this fake window's 1000 px.
+        second = owner.acquire_panel(window, 0, "second", 140.0)
+
+        self.assertEqual(second, first)
+        self.assertEqual(len(window.layout()["cells"]), cells)
+        # Held by both, so one closing does not take the group away.
+        owner.release(window, first, "first")
+        self.assertTrue(owner.is_owned(window, first))
+
+    def test_the_panel_never_lands_in_a_pane_the_user_opened(self):
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        # A second cell this owner did not make: the user's own split.
+        theirs, _ = split_cell(window.layout(), 0, 0.5)
+        window.set_layout(theirs)
+
+        panel = owner.acquire_panel(window, 0, "session")
+
+        self.assertNotEqual(panel, 1)
+        self.assertEqual(len(window.layout()["cells"]), 3)
+
+    def test_a_preview_is_never_opened_inside_the_panel_group(self):
+        """The panel opens beside the source before any preview exists.
+
+        Reusing the group to the right of the source would then put the
+        preview into the panel's own group, where it takes the panel's place
+        rather than appearing beside it -- and the command looks like it did
+        nothing at all.
         """
         window = FakeWindow(ONE)
         owner = LayoutOwner()
+        panel = owner.acquire_panel(window, 0, "session")
+
         preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
-        toc = owner.acquire(window, preview, GroupRole.TOC, "session", 140.0)
-        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline", 120.0)
-        self.assertAlmostEqual(width_of(window, toc), 140.0, places=6)
-        self.assertAlmostEqual(width_of(window, outline), 120.0, places=6)
+
+        self.assertNotEqual(preview, panel)
+        self.assertEqual(len(window.layout()["cells"]), 3)
+        # Source, preview, panel, in that order.
+        layout = window.layout()
+        self.assertEqual(left_neighbour(layout, preview), 0)
+        self.assertEqual(left_neighbour(layout, panel), preview)
+
+    def test_a_second_preview_still_joins_the_first_ones_group(self):
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        first = owner.acquire(window, 0, GroupRole.PREVIEW, "first")
+
+        second = owner.acquire(window, 0, GroupRole.PREVIEW, "second")
+
+        self.assertEqual(second, first)
+        owner.release(window, first, "first")
+        self.assertTrue(owner.is_owned(window, first))
+
+    def test_a_pane_the_user_opened_is_still_reused(self):
+        window = FakeWindow(ONE)
+        owner = LayoutOwner()
+        theirs, _ = split_cell(window.layout(), 0, 0.5)
+        window.set_layout(theirs)
+
+        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "session")
+
+        self.assertEqual(preview, 1)
+        self.assertEqual(len(window.layout()["cells"]), 2)
 
     def test_a_panel_wider_than_its_role_share_is_still_capped(self):
         """The ceiling is deliberate: one long heading may not take the window.
@@ -142,19 +195,10 @@ class LayoutTest(unittest.TestCase):
         window = FakeWindow(ONE)
         owner = LayoutOwner()
         owner.acquire(window, 0, GroupRole.PREVIEW, "session")
-        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline", 900.0)
+        panel = owner.acquire_panel(window, 0, "session", 900.0)
         self.assertAlmostEqual(
-            width_of(window, outline), 500.0 * ROLE_SHARE[GroupRole.OUTLINE], places=6
+            width_of(window, panel), 500.0 * ROLE_SHARE[GroupRole.PANEL], places=6
         )
-
-    def test_the_outline_still_never_lands_in_the_preview_group(self):
-        window = FakeWindow(ONE)
-        owner = LayoutOwner()
-        preview = owner.acquire(window, 0, GroupRole.PREVIEW, "preview")
-        outline = owner.acquire_beside(window, 0, GroupRole.OUTLINE, "outline")
-        self.assertNotEqual(outline, preview)
-        self.assertTrue(owner.is_owned(window, outline))
-        self.assertEqual(len(window.layout()["cells"]), 3)
 
     def test_owner_restores_only_exact_empty_layout(self):
         window = FakeWindow(ONE)
@@ -173,20 +217,20 @@ class LayoutTest(unittest.TestCase):
 
 class ShareTest(unittest.TestCase):
     def test_a_measurement_narrows_but_never_widens(self):
-        self.assertEqual(share_for(GroupRole.TOC, 200.0, 1000.0), 0.2)
+        self.assertEqual(share_for(GroupRole.PANEL, 200.0, 1000.0), 0.2)
         self.assertEqual(
-            share_for(GroupRole.TOC, 900.0, 1000.0), ROLE_SHARE[GroupRole.TOC]
+            share_for(GroupRole.PANEL, 900.0, 1000.0), ROLE_SHARE[GroupRole.PANEL]
         )
 
     def test_a_short_list_still_leaves_a_usable_group(self):
         self.assertEqual(
-            share_for(GroupRole.OUTLINE, 10.0, 1000.0), ROLE_MINIMUM[GroupRole.OUTLINE]
+            share_for(GroupRole.PANEL, 10.0, 1000.0), ROLE_MINIMUM[GroupRole.PANEL]
         )
 
     def test_nothing_measured_falls_back_to_the_role_share(self):
         for width, pair in ((0.0, 1000.0), (200.0, 0.0)):
             self.assertEqual(
-                share_for(GroupRole.TOC, width, pair), ROLE_SHARE[GroupRole.TOC]
+                share_for(GroupRole.PANEL, width, pair), ROLE_SHARE[GroupRole.PANEL]
             )
 
 
@@ -225,20 +269,20 @@ class FitTest(unittest.TestCase):
     def owner_with_toc(self):
         window = FakeWindow(ONE)
         owner = LayoutOwner()
-        group = owner.acquire(window, 0, GroupRole.TOC, "session")
+        group = owner.acquire(window, 0, GroupRole.PANEL, "session")
         # 0.35 of a 1000 px window, before anything has been measured.
         self.assertAlmostEqual(window.layout()["cols"][1], 0.65)
         return window, owner, group
 
     def test_fitting_narrows_the_group_to_the_width_asked_for(self):
         window, owner, group = self.owner_with_toc()
-        owner.fit(window, group, GroupRole.TOC, 200.0)
+        owner.fit(window, group, GroupRole.PANEL, 200.0)
         self.assertAlmostEqual(window.layout()["cols"][1], 0.8)
 
     def test_a_later_fit_can_widen_again_up_to_the_role_share(self):
         window, owner, group = self.owner_with_toc()
-        owner.fit(window, group, GroupRole.TOC, 200.0)
-        owner.fit(window, group, GroupRole.TOC, 900.0)
+        owner.fit(window, group, GroupRole.PANEL, 200.0)
+        owner.fit(window, group, GroupRole.PANEL, 900.0)
         self.assertAlmostEqual(window.layout()["cols"][1], 0.65)
 
     def test_a_group_the_user_has_dragged_is_never_moved_again(self):
@@ -246,22 +290,22 @@ class FitTest(unittest.TestCase):
         dragged = window.layout()
         dragged["cols"][1] = 0.5
         window.set_layout(dragged)
-        owner.fit(window, group, GroupRole.TOC, 200.0)
+        owner.fit(window, group, GroupRole.PANEL, 200.0)
         self.assertEqual(window.layout(), dragged)
 
     def test_fitting_a_group_this_owner_did_not_make_does_nothing(self):
         window, owner, _ = self.owner_with_toc()
-        owner.fit(window, 0, GroupRole.TOC, 200.0)
+        owner.fit(window, 0, GroupRole.PANEL, 200.0)
         self.assertAlmostEqual(window.layout()["cols"][1], 0.65)
 
     def test_an_empty_group_cannot_be_measured_so_is_left_alone(self):
         window, owner, group = self.owner_with_toc()
         window.empty_groups.add(group)
-        owner.fit(window, group, GroupRole.TOC, 200.0)
+        owner.fit(window, group, GroupRole.PANEL, 200.0)
         self.assertAlmostEqual(window.layout()["cols"][1], 0.65)
 
     def test_a_fitted_group_is_still_restored_when_it_is_released(self):
         window, owner, group = self.owner_with_toc()
-        owner.fit(window, group, GroupRole.TOC, 200.0)
+        owner.fit(window, group, GroupRole.PANEL, 200.0)
         owner.release(window, group, "session", restore=True)
         self.assertEqual(window.layout(), ONE)

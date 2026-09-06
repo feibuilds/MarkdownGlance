@@ -40,23 +40,31 @@ forward-compatibility testing.
    Confirm diagnostics contain no formula.
 8. Close TOC, preview, source, group and window; reload the plugin. Change the
    layout after preview creation and confirm it is not overwritten on close.
-9. Outline: open with `Ctrl+Shift+B` on a file with no preview, and again with
-   a preview open — it must take a group of its own, never a tab in the
-   preview's. Check ATX, setext, fenced-code and front-matter documents and one
-   with no headings; move the caret across headings; type a new heading and
-   watch it appear; click entries top, middle and bottom; toggle focus and
-   close; zoom; close the outline, the source, the group and the window; open
-   outlines for two files at once and switch between them.
-10. Two documents: preview two Markdown files long enough for a table of
-   contents each. The previews share one group and the tables of contents
-   share another, and the tab in front of each must belong to the focused
-   document — click the first source, its preview, its table of contents, then
-   the second document's three, and confirm both front tabs follow every time,
-   that the focus stays where you put it, and that the window settles at once
-   rather than flickering between the two documents. Repeat in Full Screen,
-   where the preview shares the source's group: clicking the source must leave
-   the source in front. Automated as `run-markdownglance`'s `follow_focus`
-   scenario, Side-by-Side only.
+9. Contents panel: open with `Ctrl+Shift+B` on a file with no preview, and
+   again with a preview open — one panel, one group, never a tab in the
+   preview's. With the source focused it shows the outline: check ATX, setext,
+   fenced-code and front-matter documents and one with no headings; move the
+   caret across headings; type a new heading and watch it appear; click entries
+   top, middle and bottom and confirm the caret moves. Focus the preview and
+   confirm the same panel switches to the rendered table of contents and that
+   clicking scrolls the preview, then focus the source again — with
+   `enable_toc` off as well as on, since that setting governs only whether a
+   panel opens by itself. Open a preview *after* the panel and confirm the
+   preview gets a group of its own rather than replacing the panel, and that
+   the caret stays where it was when a panel opens by itself. Then toggle focus
+   and close; zoom; close the panel, the source, the group and the window; open
+   panels for two files at once and switch between them.
+   Automated as `run-markdownglance`'s `panel_toggle` scenario.
+10. Two documents: preview two Markdown files long enough for a panel each.
+   The previews share one group and the panels share another, and the tab in
+   front of each must belong to the focused document — click the first source,
+   its preview, its panel, then the second document's three, and confirm both
+   front tabs follow every time, that the panel shows the half matching what
+   you clicked, that the focus stays where you put it, and that the window
+   settles at once rather than flickering between the two documents. Repeat in
+   Full Screen, where the preview shares the source's group: clicking the
+   source must leave the source in front. Automated as `run-markdownglance`'s
+   `follow_focus` scenario, Side-by-Side only.
 11. Widths: with `auto_width` on, open a table of contents and an outline over
    documents with short headings and with one very long heading — no entry may
    wrap, and neither group may be wider than it was with the setting off. Drag

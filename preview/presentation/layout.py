@@ -13,15 +13,13 @@ EPSILON = 1e-6
 # content may make the group narrower than this, never wider.
 ROLE_SHARE = {
     GroupRole.PREVIEW: 0.5,
-    GroupRole.TOC: 0.35,
-    GroupRole.OUTLINE: 0.3,
+    GroupRole.PANEL: 0.35,
 }
 # A floor, so that a document whose headings are all one word still leaves a
 # group wide enough to read and to grab with the mouse.
 ROLE_MINIMUM = {
     GroupRole.PREVIEW: 0.5,
-    GroupRole.TOC: 0.12,
-    GroupRole.OUTLINE: 0.1,
+    GroupRole.PANEL: 0.12,
 }
 # A refit moves the boundary only when it would move it visibly: the width is
 # an estimate, and a group that creeps by a pixel on every keystroke is worse
@@ -37,6 +35,7 @@ class OwnedGroup:
     previous_layout: dict
     fingerprint: str
     holders: Set[str]
+    role: GroupRole = GroupRole.PREVIEW
 
 
 def fingerprint(layout: dict) -> str:
@@ -158,43 +157,62 @@ class LayoutOwner:
         right_group = right_neighbour(layout, anchor_group)
         owned = self._owned.setdefault(window.id(), {})
         if right_group is not None:
-            if right_group in owned:
-                owned[right_group].holders.add(session_id)
-            return right_group
+            held = owned.get(right_group)
+            # A pane the user opened is reused rather than split again, and so
+            # is a group this owner made for the same role -- that is how a
+            # second document's preview joins the first one's group. A group
+            # made for a *different* role is not: the panel sits beside the
+            # source until a preview exists, and a preview put inside it would
+            # take the panel's place instead of appearing at all.
+            if held is None or held.role == role:
+                if held is not None:
+                    held.holders.add(session_id)
+                return right_group
         previous = layout
         share = share_for(role, width_px, group_width_px(window, anchor_group))
         updated, new_group = split_cell(layout, anchor_group, share)
         window.set_layout(updated)
         owned[new_group] = OwnedGroup(
-            new_group, previous, fingerprint(updated), {session_id}
+            new_group, previous, fingerprint(updated), {session_id}, role
         )
         return new_group
 
-    def acquire_beside(
-        self,
-        window,
-        anchor_group: int,
-        role: GroupRole,
-        session_id: str,
-        width_px: float = 0.0,
+    def acquire_panel(
+        self, window, anchor_group: int, session_id: str, width_px: float = 0.0
     ) -> int:
-        """Split the anchor for a group of this surface's own.
+        """The one group every panel in the window shares.
 
-        Never an existing neighbour, so the outline cannot land as a second
-        tab in the preview's group, and never a group this owner already made:
-        this used to walk right to the last group in the row, which is the
-        table of contents whenever one is open. The outline was then carved
-        out of the narrowest group in the window, and `fit` went on measuring
-        each panel against the other, so a pair of headings that wanted 186
-        and 161 pixels ended up with 30 and 95. Splitting the anchor keeps
-        every panel bounded by a group that is not itself a panel.
+        Walks right from the document's own group, past groups this owner made
+        for previews, and stops at the first group it did not make: a panel
+        must never land as a tab in a pane the user opened. If the group it
+        stops before is the panel group, the caller joins it as another tab;
+        otherwise the walk's last group is split.
+
+        The walk is what an earlier version got wrong, expensively. The outline
+        used to walk right to the last group in the row -- the table of
+        contents, whenever one was open -- and carve itself out of the
+        narrowest group in the window; `fit` then measured each panel against
+        the other, and a pair of headings that wanted 186 and 161 pixels ended
+        up with 30 and 95. One panel group, bounded by a group that is not
+        itself a panel, is what stops that happening.
         """
         layout = window.layout()
-        share = share_for(role, width_px, group_width_px(window, anchor_group))
-        updated, new_group = split_cell(layout, anchor_group, share)
+        owned = self._owned.setdefault(window.id(), {})
+        group = anchor_group
+        while True:
+            right = right_neighbour(layout, group)
+            held = owned.get(right) if right is not None else None
+            if held is None:
+                break
+            if held.role == GroupRole.PANEL:
+                held.holders.add(session_id)
+                return right
+            group = right
+        share = share_for(GroupRole.PANEL, width_px, group_width_px(window, group))
+        updated, new_group = split_cell(layout, group, share)
         window.set_layout(updated)
-        self._owned.setdefault(window.id(), {})[new_group] = OwnedGroup(
-            new_group, layout, fingerprint(updated), {session_id}
+        owned[new_group] = OwnedGroup(
+            new_group, layout, fingerprint(updated), {session_id}, GroupRole.PANEL
         )
         return new_group
 

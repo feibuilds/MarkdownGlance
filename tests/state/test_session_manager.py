@@ -62,22 +62,20 @@ def session():
         2,
         3,
         SurfaceHandle("fake", 10, 1),
-        SurfaceHandle("fake", 11, 1),
         PreviewMode.SIDE_BY_SIDE,
         SessionState.VISIBLE,
         requested_generation=1,
         completed_generation=1,
         successful_generation=1,
         last_document=object(),
-        layout_groups={1, 2},
-        toc_group=2,
+        layout_groups={1},
     )
 
 
 class SessionManagerTest(unittest.TestCase):
     def setUp(self):
         self.backend = FakeBackend()
-        self.backend.alive = {10, 11}
+        self.backend.alive = {10}
         self.layout = FakeLayout()
         self.resolver = FakeResolver()
         self.manager = SessionManager(
@@ -86,42 +84,39 @@ class SessionManagerTest(unittest.TestCase):
         self.session = session()
         self.manager.add(self.session)
 
-    def test_source_close_closes_owned_surfaces_never_source(self):
+    def test_source_close_closes_the_preview_never_the_source(self):
         self.manager.close(self.session, CloseCause.SOURCE_CLOSED)
-        self.assertEqual(self.backend.closed, [11, 10])
+        self.assertEqual(self.backend.closed, [10])
         self.assertNotIn(3, self.backend.closed)
-        self.assertEqual(self.layout.releases, [(2, True), (1, True)])
+        self.assertEqual(self.layout.releases, [(1, True)])
         self.assertEqual(self.resolver.forgot, ["s"])
 
     def test_preview_user_close_does_not_close_preview_again(self):
         self.backend.alive.discard(10)
         self.manager.close(self.session, CloseCause.PREVIEW_CLOSED_BY_USER)
-        self.assertEqual(self.backend.closed, [11])
+        self.assertEqual(self.backend.closed, [])
 
     def test_window_close_skips_layout_restore(self):
         self.manager.close(self.session, CloseCause.WINDOW_CLOSED)
-        self.assertEqual(self.layout.releases, [(2, False), (1, False)])
+        self.assertEqual(self.layout.releases, [(1, False)])
 
-    def test_toc_close_keeps_session(self):
-        self.manager.surface_closed(11)
-        self.assertIs(self.manager.get("s"), self.session)
-        self.assertIsNone(self.session.toc_surface)
+    def test_closing_the_preview_ends_the_session(self):
+        self.manager.surface_closed(10)
+        self.assertIsNone(self.manager.get("s"))
 
-    def test_toc_closed_by_user_releases_its_group(self):
-        # The view is gone before the close is dispatched, so the group has to
-        # come from the session; otherwise the empty pane stays on screen.
-        self.backend.alive.discard(11)
-        self.manager.surface_closed(11)
-        self.assertEqual(self.layout.releases, [(2, True)])
-        self.assertEqual(self.session.layout_groups, {1})
-        self.assertIsNone(self.session.toc_group)
-        self.assertTrue(self.session.toc_dismissed)
-
-    def test_toc_dropped_because_it_is_no_longer_wanted_is_not_a_dismissal(self):
-        # The document shrank below the thresholds; it should come back when
-        # it grows again, unlike one the user closed.
-        self.manager.drop_toc(self.session)
-        self.assertFalse(self.session.toc_dismissed)
+    def test_every_close_path_reaches_the_hook_the_panel_hangs_on(self):
+        closed = []
+        manager = SessionManager(
+            self.backend,
+            self.layout,
+            FakeResolver(),
+            lambda window_id: FakeWindow(),
+            closed.append,
+        )
+        first = session()
+        manager.add(first)
+        manager.close(first, CloseCause.SOURCE_CLOSED)
+        self.assertEqual(closed, [first])
 
     def test_reconcile_closes_only_proven_owned_orphan(self):
         orphan = 99

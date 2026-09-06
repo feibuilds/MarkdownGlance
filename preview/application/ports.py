@@ -13,8 +13,10 @@ class NavigationCapability(Enum):
 
 class GroupRole(Enum):
     PREVIEW = "preview"
-    TOC = "toc"
-    OUTLINE = "outline"
+    # One role for the panel beside the preview: it shows the source outline or
+    # the rendered table of contents depending on which tab has the focus, and
+    # a window holds one such group however many documents are open in it.
+    PANEL = "panel"
 
 
 @dataclass(frozen=True)

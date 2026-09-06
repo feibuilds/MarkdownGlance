@@ -5,7 +5,7 @@ from typing import Optional
 
 import sublime
 
-from ..application.outline import OutlineController
+from ..application.panel import PanelController
 from ..application.render_pipeline import render
 from ..application.scheduler import GenerationScheduler
 from ..application.session import CloseCause, PreviewSession
@@ -44,7 +44,7 @@ class Container:
         self.backend = None
         self.layout = None
         self.manager = None
-        self.outline = None
+        self.panel = None
         self.scheduler = None
         self.usecases = None
         self.settings = None
@@ -83,9 +83,9 @@ class Container:
             self.layout,
             self.resolver,
             _window,
-            self.detach_theme,
-            lambda surface_id: self.outline is not None
-            and self.outline.owns_surface(surface_id),
+            self.session_closed,
+            lambda surface_id: self.panel is not None
+            and self.panel.owns_surface(surface_id),
         )
         self.scheduler = GenerationScheduler(
             self.manager.get,
@@ -100,7 +100,7 @@ class Container:
         base_css = sublime.load_resource(
             "Packages/MarkdownGlance/resources/preview.css"
         )
-        self.outline = OutlineController(
+        self.panel = PanelController(
             self.backend,
             self.layout,
             self.clock,
@@ -111,6 +111,10 @@ class Container:
             caret_row,
             reveal_line,
             base_css,
+            lambda surface_id: self.manager.for_surface(surface_id),
+            lambda window_id, buffer_id, slug: self.usecases.scroll_preview(
+                window_id, buffer_id, slug
+            ),
         )
         self.usecases = UseCases(
             self.manager,
@@ -122,6 +126,7 @@ class Container:
             theme_snapshot,
             self.observe_theme,
             base_css,
+            self.panel,
         )
         self.loaded = True
         for window in sublime.windows():
@@ -129,9 +134,9 @@ class Container:
         self._watch_viewports()
 
     def reconcile(self, window) -> None:
-        """Both registries sweep the same window; the outline's must run first
+        """Both registries sweep the same window; the panel's must run first
         so that its surfaces are still claimed when the preview sweep looks."""
-        self.outline.reconcile(window)
+        self.panel.reconcile(window)
         self.usecases.reconcile(window)
 
     def policy(self) -> NetworkPolicy:
@@ -213,8 +218,8 @@ class Container:
             self.policy_revision += 1
         if self.usecases is not None:
             self.usecases.settings_changed(render_required, policy_changed)
-        if self.outline is not None and render_required:
-            self.outline.settings_changed()
+        if self.panel is not None:
+            self.panel.settings_changed()
 
     def record_stage(self, stage: str) -> None:
         self.recent_stages.append(stage)
@@ -279,11 +284,15 @@ class Container:
         view.settings().add_on_change(key, changed)
         self._theme_callbacks[session_id] = (view, key)
 
-    def detach_theme(self, session: PreviewSession) -> None:
+    def session_closed(self, session: PreviewSession) -> None:
+        """Every path that ends a preview arrives here, so the panel learns
+        that its table-of-contents half has nothing behind it any more."""
         callback = self._theme_callbacks.pop(session.id, None)
         if callback is not None:
             view, key = callback
             view.settings().clear_on_change(key)
+        if self.panel is not None:
+            self.panel.document_closed(session.window_id, session.source_buffer_id)
 
     def handle_link(self, handle, href: str) -> None:
         window = _window(handle.window_id)
@@ -300,13 +309,15 @@ class Container:
                 )
             except (TypeError, ValueError):
                 return
+            # Both halves of the panel navigate through the same controller:
+            # the table of contents by slug, the outline by source line.
             if command == "mdglance_navigate":
-                self.usecases.navigate(
-                    window, args.get("token", ""), args.get("slug", "")
+                self.panel.navigate(
+                    window, args.get("token", ""), slug=args.get("slug", "")
                 )
             elif command == "mdglance_outline_navigate":
-                self.outline.navigate(
-                    window, args.get("token", ""), args.get("line", -1)
+                self.panel.navigate(
+                    window, args.get("token", ""), line=args.get("line", -1)
                 )
             elif command == "mdglance_open_relative":
                 self.usecases.open_relative(
@@ -323,7 +334,7 @@ class Container:
         if not self.loaded:
             return
         self.settings.detach()
-        self.outline.close_all()
+        self.panel.close_all()
         self.manager.close_all(CloseCause.UNLOAD)
         self.executors.shutdown()
         self.loaded = False

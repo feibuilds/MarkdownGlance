@@ -22,8 +22,8 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
 - **Preview as you type**, even before you've saved the file.
 - **Read your way**: side-by-side or full-screen preview, with adjustable zoom.
 - **Keep your theme**: the preview follows your editor's colours.
-- **Navigate long documents** with a source outline or an optional preview
-  table of contents.
+- **Navigate long documents** with one panel that shows the source outline
+  while you edit and the preview's table of contents while you read.
 - **View images and tables**, including local and remote images.
 - **Add diagrams and formulas** with optional Mermaid and LaTeX math support.
 - **Open in Browser** when you want to see the document as a web page.
@@ -89,7 +89,7 @@ instead of `Ctrl` for the shortcuts below.
 | --- | --- |
 | MarkdownGlance: Open Preview to the Side | `Ctrl+K`, then `V` |
 | MarkdownGlance: Toggle Preview | `Ctrl+Shift+V` |
-| MarkdownGlance: Toggle Outline | `Ctrl+Shift+B` |
+| MarkdownGlance: Toggle Contents Panel | `Ctrl+Shift+B` |
 | MarkdownGlance: Zoom In / Out / Reset Zoom | `Ctrl+=`, `Ctrl+-`, `Ctrl+0` |
 | Preferences: MarkdownGlance Settings | — |
 | Preferences: MarkdownGlance Key Bindings | — |
@@ -108,32 +108,39 @@ are rendered and how embedded scripts are handled.
 ### Changes to default shortcuts
 
 While you're editing Markdown, `Ctrl+Shift+V` opens the preview instead of
-**Paste and Indent**, and `Ctrl+Shift+B` opens the outline instead of
-**Build With…**. These shortcuts also work in their respective preview or
-outline panels. They don't change shortcuts in other source files.
+**Paste and Indent**, and `Ctrl+Shift+B` opens the contents panel instead of
+**Build With…**. These shortcuts also work inside the preview and the panel.
+They don't change shortcuts in other source files.
 
 Normal paste (`Ctrl+V`) and build (`Ctrl+B`) still work. **Paste and Indent**
 is also available from the **Edit** menu. To customise the shortcuts, run
 **Preferences: MarkdownGlance Key Bindings** and add your preferred bindings
 in the user file.
 
-## Outline of the source
+## The contents panel
 
-Press `Ctrl+Shift+B` to see the headings of the file you're editing. Click a
-heading to jump to it. The outline updates as you type and highlights your
-current section, even when no preview is open.
+Press `Ctrl+Shift+B` for a list of the document's headings beside it. Click one
+to go to it. There is one panel, and it shows the half that matches whatever
+you are looking at:
 
-![The outline of this README beside the source, with the current heading highlighted](docs/screenshots/source-outline.png)
+- **Editing the source** — the headings of the file as you have written them,
+  updating as you type, with your current section highlighted. Clicking one
+  moves the caret. This works with no preview open at all.
+- **Reading the preview** — the headings of the rendered document. Clicking
+  one scrolls the preview.
 
-The shortcut opens and focuses the outline. If it's already open, the shortcut
-focuses it; press it again from inside the outline to close it.
+![The contents panel beside the source, with the current heading highlighted](docs/screenshots/source-outline.png)
 
-To navigate the **preview** instead, enable `"enable_toc": true` in settings.
-A clickable table of contents appears for documents that meet the length and
-heading thresholds (`toc_minimum_length` and `toc_minimum_headings`). Closing
-its tab hides it until you close and reopen the preview.
+The shortcut opens and focuses the panel. If it's already open, the shortcut
+focuses it; press it again from inside the panel to close it.
 
-Both panels adjust their width to fit the headings. Drag the divider if you
+With `"enable_toc": true` in settings, the panel also opens by itself for
+previews that meet the length and heading thresholds (`toc_minimum_length` and
+`toc_minimum_headings`). That setting governs only whether it opens on its
+own; one you opened yourself shows both halves whichever way it is set.
+Closing its tab hides it until you ask for it again.
+
+The panel adjusts its width to fit the headings. Drag the divider if you
 prefer to set the width yourself.
 
 ## Settings
@@ -145,10 +152,10 @@ Common options:
 
 | Setting | What it does | Default |
 | --- | --- | --- |
-| `enable_toc` | Show a table of contents beside longer previews | `false` |
+| `enable_toc` | Open the contents panel by itself for longer previews | `false` |
 | `enable_mermaid` | Render Mermaid diagrams using an online service | `false` |
 | `enable_math` | Render LaTeX formulas using an online service | `false` |
-| `auto_width` | Fit outline and table-of-contents widths to their headings | `true` |
+| `auto_width` | Fit the contents panel's width to its headings | `true` |
 
 Before enabling diagrams or math, read [Network and privacy](#network-and-privacy).
 

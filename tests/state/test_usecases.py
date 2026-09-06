@@ -242,6 +242,25 @@ class Resolver:
         pass
 
 
+class Panel:
+    """The panel controller, as the use cases see it: a place to hand a
+    rendered document and a close. It owns its own surface and lifetime."""
+
+    def __init__(self):
+        self.rendered = []
+        self.closed = []
+        self.shown = []
+
+    def document_rendered(self, window_id, buffer_id, document):
+        self.rendered.append((window_id, buffer_id, document))
+
+    def document_closed(self, window_id, buffer_id):
+        self.closed.append((window_id, buffer_id))
+
+    def heading_shown(self, window_id, buffer_id, slug):
+        self.shown.append((window_id, buffer_id, slug))
+
+
 class Fixture(unittest.TestCase):
     """One window, one Markdown source, fakes for everything Sublime owns."""
 
@@ -252,11 +271,17 @@ class Fixture(unittest.TestCase):
         self.backend = Backend(self.windows)
         self.layout = Layout()
         self.scheduler = Scheduler()
+        self.panel = Panel()
         self.manager = SessionManager(
             self.backend,
             self.layout,
             Resolver(),
             lambda identifier: self.windows.get(identifier),
+            # What the container wires: every path that ends a preview tells
+            # the panel that its table-of-contents half has nothing behind it.
+            lambda session: self.panel.document_closed(
+                session.window_id, session.source_buffer_id
+            ),
         )
         self.usecases = UseCases(
             self.manager,
@@ -268,6 +293,7 @@ class Fixture(unittest.TestCase):
             lambda view: ThemeSnapshot(),
             lambda view, session_id: None,
             "",
+            self.panel,
         )
 
 
@@ -345,53 +371,50 @@ class UseCasesTest(Fixture):
                 self.usecases.open_relative(self.window, session.action_token, index)
         self.assertEqual(self.window.opened, [])
 
-    def test_toc_navigation_uses_action_token_not_active_sheet(self):
+    def test_the_panel_scrolls_the_preview_of_the_document_it_names(self):
         self.usecases.open_side_by_side(self.window)
         first = self.manager.for_source(1, 10)
         first.last_document = PreviewDocument(
-            1,
-            "",
-            (Heading(2, "First", "first", 0, 0.5),),
-            (),
-            (),
-            (),
+            1, "", (Heading(2, "First", "first", 0, 0.5),), (), (), ()
         )
-
         second_source = View(20, filename=os.path.join(BASE, "second.md"))
         second_source._window = self.window
         self.usecases.open_side_by_side(self.window, second_source)
         second = self.manager.for_source(1, 20)
         second.last_document = PreviewDocument(
-            1,
-            "",
-            (Heading(2, "Second", "second", 0, 0.5),),
-            (),
-            (),
-            (),
+            1, "", (Heading(2, "Second", "second", 0, 0.5),), (), (), ()
         )
+        # The focus is somewhere else entirely; the panel names the document.
         self.window._active = Sheet(9999, SurfaceView(9999))
 
-        self.usecases.navigate(self.window, first.action_token, "first")
+        self.assertTrue(self.usecases.scroll_preview(1, 10, "first"))
 
         self.assertEqual(
             self.backend.navigations, [(first.preview_surface.id, "first")]
         )
 
-    def test_toc_navigation_rejects_slug_outside_token_session(self):
+    def test_a_slug_outside_the_document_scrolls_nowhere(self):
         self.usecases.open_side_by_side(self.window)
         session = self.manager.for_source(1, 10)
         session.last_document = PreviewDocument(
-            1,
-            "",
-            (Heading(2, "First", "first", 0, 0.5),),
-            (),
-            (),
-            (),
+            1, "", (Heading(2, "First", "first", 0, 0.5),), (), (), ()
         )
 
-        self.usecases.navigate(self.window, session.action_token, "missing")
+        self.assertFalse(self.usecases.scroll_preview(1, 10, "missing"))
 
         self.assertEqual(self.backend.navigations, [])
+
+    def test_a_link_clicked_in_the_preview_body_tells_the_panel(self):
+        session = self.usecases._create(
+            self.window, self.source, PreviewMode.SIDE_BY_SIDE
+        )
+        session.last_document = PreviewDocument(
+            1, "", (Heading(2, "First", "first", 0, 0.5),), (), (), ()
+        )
+
+        self.usecases.navigate_for_surface(session.preview_surface.id, "first")
+
+        self.assertEqual(self.panel.shown, [(1, 10, "first")])
 
 
 class Snapshot:
@@ -399,8 +422,13 @@ class Snapshot:
         self.markdown = markdown
 
 
-class TocLifecycleTest(Fixture):
-    """A table of contents is opened by a render, so it is closed by one too."""
+class RenderedSessionTest(Fixture):
+    """A session that has rendered once, for the tests that need a document.
+
+    What the table of contents does with that document is the panel
+    controller's, and is tested in `test_panel.py`; from here a render is
+    something handed over.
+    """
 
     LONG = "#" * 4000
 
@@ -431,99 +459,34 @@ class TocLifecycleTest(Fixture):
         self.usecases.present(session, session.last_document)
         return session
 
-    def test_render_opens_a_table_of_contents_beside_the_preview(self):
+    def test_a_render_hands_the_document_to_the_panel(self):
         session = self.open()
-        self.assertIsNotNone(session.toc_surface)
-        self.assertEqual(self.backend.roles[session.toc_surface.id], "toc")
-
-    def test_a_closed_table_of_contents_is_not_reopened_by_the_next_render(self):
-        session = self.open()
-        toc_id = session.toc_surface.id
-        self.backend.close(session.toc_surface)
-        self.manager.surface_closed(toc_id)
-        self.assertIsNone(session.toc_surface)
-
-        self.usecases.present(session, session.last_document)
-
-        self.assertIsNone(session.toc_surface)
-        self.assertTrue(session.toc_dismissed)
-
-    def test_the_setting_closes_a_table_of_contents_that_is_already_open(self):
-        session = self.open()
-        toc_id = session.toc_surface.id
-        session.settings = RenderSettings(enable_toc=False)
-
-        self.usecases.present(session, session.last_document)
-
-        self.assertIsNone(session.toc_surface)
-        self.assertIn(toc_id, self.backend.closed)
-
-    def test_the_setting_off_opens_none_at_all(self):
-        self.settings = RenderSettings()
-        session = self.open()
-        self.assertIsNone(session.toc_surface)
-
-    def test_the_group_is_asked_for_the_width_the_entries_need(self):
-        session = self.open()
-        toc = [item for item in self.layout.acquired if item[1] == GroupRole.TOC]
-        self.assertEqual(len(toc), 1)
-        self.assertAlmostEqual(
-            toc[0][3], toc_width_px(session.last_document.headings, 16)
-        )
-        self.assertGreater(toc[0][3], 0.0)
-
-    def test_every_repaint_re_fits_the_group(self):
-        session = self.open()
-        group = self.backend.group_of(session.toc_surface)
         self.assertEqual(
-            self.layout.fitted,
-            [(group, GroupRole.TOC, toc_width_px(session.last_document.headings, 16))],
+            self.panel.rendered, [(1, 10, session.last_document)]
         )
 
-        session.zoom = 2.0
-        self.usecases.represent(session)
-
-        self.assertEqual(
-            self.layout.fitted[-1],
-            (group, GroupRole.TOC, toc_width_px(session.last_document.headings, 32)),
-        )
-
-    def test_the_setting_off_asks_for_the_default_share(self):
-        self.settings = RenderSettings(enable_toc=True, auto_width=False)
+    def test_closing_the_session_tells_the_panel_its_document_is_gone(self):
         session = self.open()
-        self.assertIsNotNone(session.toc_surface)
-        self.assertEqual([item[3] for item in self.layout.acquired], [0.0, 0.0])
-        self.assertEqual([item[2] for item in self.layout.fitted], [0.0])
-
-    def test_turning_the_setting_back_on_outlives_a_close(self):
-        # The setting is the stronger switch, so it clears the session's own
-        # dismissal rather than leaving the preview permanently without one.
-        session = self.open()
-        self.manager.surface_closed(session.toc_surface.id)
-        session.settings = RenderSettings(enable_toc=False)
-        self.usecases.present(session, session.last_document)
-        session.settings = RenderSettings(enable_toc=True)
-
-        self.usecases.present(session, session.last_document)
-
-        self.assertIsNotNone(session.toc_surface)
+        self.usecases.source_closed(self.source)
+        self.assertEqual(self.panel.closed, [(1, 10)])
+        self.assertIsNone(self.manager.get(session.id))
 
 
-class RepaintCostTest(TocLifecycleTest):
+class RepaintCostTest(RenderedSessionTest):
     """A repaint must not do work Sublime charges a full minihtml layout for."""
 
-    def test_a_repaint_does_not_reveal_the_table_of_contents_again(self):
+    def test_a_repaint_reveals_nothing(self):
         session = self.open()
         # `reveal` focuses the group, the view, then the previous group back,
         # and each focus change makes Sublime fire `on_activated`, which reads
-        # the theme and repaints -- landing here again. Creation reveals; a
-        # repaint must not.
-        self.assertEqual(self.backend.revealed, [session.toc_surface.id])
+        # the theme and repaints -- landing here again. A repaint must not
+        # move a tab; only a focus change does, through `reveal_preview`.
+        self.assertEqual(self.backend.revealed, [])
 
         self.usecases.present(session, session.last_document)
         self.usecases.represent(session)
 
-        self.assertEqual(self.backend.revealed, [session.toc_surface.id])
+        self.assertEqual(self.backend.revealed, [])
 
     def test_an_unchanged_theme_does_not_repaint(self):
         session = self.open()
@@ -544,9 +507,10 @@ class RepaintCostTest(TocLifecycleTest):
         self.assertEqual(session.theme.background, "#101010")
 
 
-class SurfacesFollowFocusTest(TocLifecycleTest):
-    """Every session stacks its preview in one group and its table of contents
-    in another, so the tabs in front have to be the focused document's."""
+class PreviewFollowsFocusTest(RenderedSessionTest):
+    """Every document previewed in a window stacks its preview in one group,
+    so the tab in front has to be the focused document's. The panel beside it
+    follows on its own; see `test_panel.py`."""
 
     def surface_view(self, handle):
         view = self.backend.sheet_for(handle).view()
@@ -558,34 +522,22 @@ class SurfacesFollowFocusTest(TocLifecycleTest):
         self.window._active = view.sheet() if hasattr(view, "sheet") else Sheet(0, view)
         return view
 
-    def test_focusing_the_source_brings_both_surfaces_forward(self):
+    def test_focusing_the_source_brings_its_preview_forward(self):
         session = self.open()
         self.backend.revealed = []
 
-        self.usecases.reveal_surfaces(self.focus(self.source))
+        self.usecases.reveal_preview(self.focus(self.source))
 
-        self.assertEqual(
-            self.backend.revealed,
-            [session.preview_surface.id, session.toc_surface.id],
-        )
+        self.assertEqual(self.backend.revealed, [session.preview_surface.id])
 
-    def test_focusing_the_preview_brings_its_table_of_contents_forward(self):
+    def test_focusing_the_preview_does_not_reveal_it_again(self):
         session = self.open()
         self.backend.revealed = []
         view = self.focus(self.surface_view(session.preview_surface))
 
-        self.usecases.reveal_surfaces(view)
+        self.usecases.reveal_preview(view)
 
-        self.assertEqual(self.backend.revealed, [session.toc_surface.id])
-
-    def test_focusing_the_table_of_contents_brings_its_preview_forward(self):
-        session = self.open()
-        self.backend.revealed = []
-        view = self.focus(self.surface_view(session.toc_surface))
-
-        self.usecases.reveal_surfaces(view)
-
-        self.assertEqual(self.backend.revealed, [session.preview_surface.id])
+        self.assertEqual(self.backend.revealed, [])
 
     def test_a_view_the_window_has_not_settled_on_moves_nothing(self):
         session = self.open()
@@ -596,7 +548,7 @@ class SurfacesFollowFocusTest(TocLifecycleTest):
         self.focus(self.surface_view(session.preview_surface))
         self.backend.revealed = []
 
-        self.usecases.reveal_surfaces(self.source)
+        self.usecases.reveal_preview(self.source)
 
         self.assertEqual(self.backend.revealed, [])
 
@@ -605,24 +557,24 @@ class SurfacesFollowFocusTest(TocLifecycleTest):
         self.usecases.switch_mode(session, PreviewMode.FULL_SCREEN)
         self.backend.revealed = []
 
-        self.usecases.reveal_surfaces(self.focus(self.source))
+        self.usecases.reveal_preview(self.focus(self.source))
 
         # The preview sits in the source's own group; revealing it would put
         # the file the user just clicked behind it.
-        self.assertNotIn(session.preview_surface.id, self.backend.revealed)
+        self.assertEqual(self.backend.revealed, [])
 
-    def test_a_document_with_no_session_leaves_the_front_tabs_alone(self):
+    def test_a_document_with_no_session_leaves_the_front_tab_alone(self):
         self.open()
         other = View(30, filename=os.path.join(BASE, "other.md"))
         other._window = self.window
         self.backend.revealed = []
 
-        self.usecases.reveal_surfaces(self.focus(other))
+        self.usecases.reveal_preview(self.focus(other))
 
         self.assertEqual(self.backend.revealed, [])
 
 
-class DiagramThemeTest(TocLifecycleTest):
+class DiagramThemeTest(RenderedSessionTest):
     """A Mermaid diagram is an image the server baked for one background, so a
     change of colour scheme has to fetch it again. Everything else in the
     document is recoloured by a repaint alone.
@@ -711,7 +663,7 @@ class FormulaThemeTest(DiagramThemeTest):
         self.assertEqual(self.renders(session), before + ["theme"])
 
 
-class SurfaceColourSchemeTest(TocLifecycleTest):
+class SurfaceColourSchemeTest(RenderedSessionTest):
     """A Markdown file can carry a colour scheme of its own -- MarkdownEditing
     writes one into `Markdown.sublime-settings`, and it beats the global one.
     Every surface has to be put on that scheme: minihtml resolves a phantom's
@@ -725,14 +677,11 @@ class SurfaceColourSchemeTest(TocLifecycleTest):
         super().setUp()
         self.usecases.theme_provider = lambda view: ThemeSnapshot(scheme=self.SCHEME)
 
-    def test_the_source_scheme_reaches_the_preview_and_the_contents(self):
+    def test_the_source_scheme_reaches_the_preview(self):
         session = self.open()
 
         self.assertEqual(
             self.backend.themes[session.preview_surface.id].scheme, self.SCHEME
-        )
-        self.assertEqual(
-            self.backend.themes[session.toc_surface.id].scheme, self.SCHEME
         )
 
     def test_a_scheme_chosen_while_the_preview_is_open_still_reaches_it(self):
@@ -743,7 +692,6 @@ class SurfaceColourSchemeTest(TocLifecycleTest):
         self.usecases.theme_changed(self.source)
 
         self.assertEqual(self.backend.themes[session.preview_surface.id].scheme, moved)
-        self.assertEqual(self.backend.themes[session.toc_surface.id].scheme, moved)
 
 
 if __name__ == "__main__":

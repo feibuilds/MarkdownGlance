@@ -22,7 +22,7 @@
     {
         "keys": ["super+shift+b"],
         "command": "mdglance_toggle_outline",
-        "context": [{"key": "mdglance.outline_focused", "operator": "equal", "operand": true}]
+        "context": [{"key": "mdglance.panel_focused", "operator": "equal", "operand": true}]
     },
     {
         "keys": ["super+equals"],

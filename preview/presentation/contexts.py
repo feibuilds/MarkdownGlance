@@ -13,7 +13,7 @@ def preview_focused(window, backend):
     return bool(sheet and backend.owner_of(sheet))
 
 
-def outline_focused(window, owns_surface):
+def panel_focused(window, owns_surface):
     sheet = window.active_sheet() if window else None
     view = sheet.view() if sheet is not None else None
     return bool(view is not None and owns_surface(view.id()))
