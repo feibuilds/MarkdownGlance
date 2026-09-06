@@ -31,6 +31,11 @@ Packages…** opens, under the name `MarkdownGlance`. Sublime Text reloads the
 plugin on save. Before a release, walk the
 [manual test plan](docs/manual-test-plan.md).
 
+On Linux, `.claude/skills/run-markdownglance/` drives a portable Sublime Text
+4200 unattended: `setup.sh` builds a throwaway profile linked to the checkout,
+`drive.sh <scenario>` runs a scripted check against the live preview and
+leaves JSON snapshots and screenshots behind. Its `SKILL.md` has the details.
+
 ## Pull requests
 
 - A behavioural change should come with a test.
