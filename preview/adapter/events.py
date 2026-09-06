@@ -83,6 +83,7 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
             container.reconcile(window)
             container.outline.source_renamed(self.view)
             container.outline.refresh_source(self.view)
+            container.usecases.reveal_surfaces(self.view)
             session = container.manager.for_source(window.id(), self.view.buffer_id())
             if session is None:
                 return

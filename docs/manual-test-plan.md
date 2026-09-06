@@ -47,15 +47,25 @@ forward-compatibility testing.
    watch it appear; click entries top, middle and bottom; toggle focus and
    close; zoom; close the outline, the source, the group and the window; open
    outlines for two files at once and switch between them.
-10. Widths: with `auto_width` on, open a table of contents and an outline over
+10. Two documents: preview two Markdown files long enough for a table of
+   contents each. The previews share one group and the tables of contents
+   share another, and the tab in front of each must belong to the focused
+   document — click the first source, its preview, its table of contents, then
+   the second document's three, and confirm both front tabs follow every time,
+   that the focus stays where you put it, and that the window settles at once
+   rather than flickering between the two documents. Repeat in Full Screen,
+   where the preview shares the source's group: clicking the source must leave
+   the source in front. Automated as `run-markdownglance`'s `follow_focus`
+   scenario, Side-by-Side only.
+11. Widths: with `auto_width` on, open a table of contents and an outline over
    documents with short headings and with one very long heading — no entry may
    wrap, and neither group may be wider than it was with the setting off. Drag
    the divider and confirm nothing moves it back until the group is closed and
    reopened; then zoom, resize the window and type a longer heading and confirm
    the group follows. Switch `auto_width` off and confirm both widen back.
-11. Install beside MarkdownLivePreview. Check directory, module, command,
+12. Install beside MarkdownLivePreview. Check directory, module, command,
    settings and resource isolation; document the expected shortcut collision.
-12. Open in Browser: on a saved file with a relative image, a table, a nested
+13. Open in Browser: on a saved file with a relative image, a table, a nested
    list, a fenced block inside a list item and two headings with the same
    text linked as `#same` and `#same-2`, run the command and confirm the page
    opens, the image resolves, both heading links stay on the page and the list
@@ -66,18 +76,18 @@ forward-compatibility testing.
    space and a `#`. Repeat on an unsaved buffer. Confirm the command is absent
    from the palette on a non-Markdown view. On Linux, `ls -l` the page under
    `$TMPDIR/MarkdownGlance` and confirm mode 600.
-13. Fresh install through Package Control (`Add Repository` with this
+14. Fresh install through Package Control (`Add Repository` with this
    repository while the channel entry is pending): confirm the `Markdown` and
    `pymdown-extensions` libraries are installed with the package and that a
    preview renders without any other step; confirm the install note is the
    only message shown. In the console, `import markdown, pymdownx` and print
    both `__version__` and `__file__`: 3.2.2 and 8.1.1, from the Python 3.8
    library directory.
-14. Manual install without the libraries: clone into Packages and start
+15. Manual install without the libraries: clone into Packages and start
    Sublime Text. A dialog must name the two libraries and the fix; the console
    must show no traceback; the commands stay in the palette and repeat the
    dialog. Run Satisfy Libraries, restart, confirm the preview renders.
-15. Pygments present: install MarkdownPreview beside this package (it brings
+16. Pygments present: install MarkdownPreview beside this package (it brings
    the Pygments library), restart, and confirm a Mermaid fence with
    `enable_mermaid` on is still a diagram and a fenced block still has its
    language class.

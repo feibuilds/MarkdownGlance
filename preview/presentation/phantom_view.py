@@ -162,6 +162,11 @@ class PhantomViewBackend:
             return
         previous = window.active_group()
         group, _ = window.get_view_index(view)
+        # Already at the front: the focus round trip below would fire
+        # `on_activated` for the previous view, which is what asked for this
+        # reveal in the first place, and the two would chase each other.
+        if window.active_view_in_group(group) == view:
+            return
         window.focus_group(group)
         window.focus_view(view)
         window.focus_group(previous)

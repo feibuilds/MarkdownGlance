@@ -40,12 +40,16 @@ class SurfaceView:
 
     def __init__(self, identifier):
         self._id = identifier
+        self._window = None
 
     def id(self):
         return self._id
 
     def buffer_id(self):
         return -self._id
+
+    def window(self):
+        return self._window
 
     def match_selector(self, point, selector):
         return False
@@ -538,6 +542,84 @@ class RepaintCostTest(TocLifecycleTest):
 
         self.assertGreater(len(self.backend.updates), before)
         self.assertEqual(session.theme.background, "#101010")
+
+
+class SurfacesFollowFocusTest(TocLifecycleTest):
+    """Every session stacks its preview in one group and its table of contents
+    in another, so the tabs in front have to be the focused document's."""
+
+    def surface_view(self, handle):
+        view = self.backend.sheet_for(handle).view()
+        view._window = self.window
+        return view
+
+    def focus(self, view):
+        """Put the window's focus where a click would, then hand back the view."""
+        self.window._active = view.sheet() if hasattr(view, "sheet") else Sheet(0, view)
+        return view
+
+    def test_focusing_the_source_brings_both_surfaces_forward(self):
+        session = self.open()
+        self.backend.revealed = []
+
+        self.usecases.reveal_surfaces(self.focus(self.source))
+
+        self.assertEqual(
+            self.backend.revealed,
+            [session.preview_surface.id, session.toc_surface.id],
+        )
+
+    def test_focusing_the_preview_brings_its_table_of_contents_forward(self):
+        session = self.open()
+        self.backend.revealed = []
+        view = self.focus(self.surface_view(session.preview_surface))
+
+        self.usecases.reveal_surfaces(view)
+
+        self.assertEqual(self.backend.revealed, [session.toc_surface.id])
+
+    def test_focusing_the_table_of_contents_brings_its_preview_forward(self):
+        session = self.open()
+        self.backend.revealed = []
+        view = self.focus(self.surface_view(session.toc_surface))
+
+        self.usecases.reveal_surfaces(view)
+
+        self.assertEqual(self.backend.revealed, [session.preview_surface.id])
+
+    def test_a_view_the_window_has_not_settled_on_moves_nothing(self):
+        session = self.open()
+        # `reveal` activates whatever was at the front of the group it focuses
+        # on the way past. That activation arrives a tick later, by which time
+        # the window has settled somewhere else; acting on it is what makes two
+        # documents take turns pulling their tabs forward.
+        self.focus(self.surface_view(session.preview_surface))
+        self.backend.revealed = []
+
+        self.usecases.reveal_surfaces(self.source)
+
+        self.assertEqual(self.backend.revealed, [])
+
+    def test_a_full_screen_preview_never_hides_the_source_it_shares_a_group_with(self):
+        session = self.open()
+        self.usecases.switch_mode(session, PreviewMode.FULL_SCREEN)
+        self.backend.revealed = []
+
+        self.usecases.reveal_surfaces(self.focus(self.source))
+
+        # The preview sits in the source's own group; revealing it would put
+        # the file the user just clicked behind it.
+        self.assertNotIn(session.preview_surface.id, self.backend.revealed)
+
+    def test_a_document_with_no_session_leaves_the_front_tabs_alone(self):
+        self.open()
+        other = View(30, filename=os.path.join(BASE, "other.md"))
+        other._window = self.window
+        self.backend.revealed = []
+
+        self.usecases.reveal_surfaces(self.focus(other))
+
+        self.assertEqual(self.backend.revealed, [])
 
 
 class DiagramThemeTest(TocLifecycleTest):

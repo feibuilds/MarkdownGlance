@@ -481,6 +481,46 @@ class UseCases:
             if render_required or policy_changed:
                 self.scheduler.request_render(session.id, "settings")
 
+    def reveal_surfaces(self, view) -> None:
+        """Bring the focused document's preview and contents to the front.
+
+        Every session in a window stacks its preview in one group and its table
+        of contents in another, so without this the tabs left in front are
+        whichever document was previewed last, and they stay there while the
+        user reads a different file. Called for the source, the preview and the
+        table of contents alike: each of them means "this is the document I am
+        looking at".
+        """
+        window = view.window()
+        if window is None:
+            return
+        # `reveal` focuses a group, a view, and the previous group back, and
+        # each of those makes Sublime activate a view the user never chose --
+        # starting with whatever was already at the front of the group being
+        # focused. Those activations arrive here a tick later, and each would
+        # reveal the surfaces of a *different* document, which reveals more:
+        # the two documents take turns pulling their tabs forward and the
+        # window never settles. Only the view the window has come to rest on
+        # gets to move a tab.
+        active = window.active_view()
+        if active is None or active.id() != view.id():
+            return
+        session = self.manager.for_surface(view.id()) or self.manager.for_source(
+            window.id(), view.buffer_id()
+        )
+        if session is None:
+            return
+        group, _ = window.get_view_index(view)
+        for handle in (session.preview_surface, session.toc_surface):
+            if handle is None or handle.id == view.id():
+                continue
+            # In Full Screen the preview is a tab in the source's own group.
+            # Bringing it forward there would hide the file the user has just
+            # clicked, and the two would take turns hiding each other.
+            if self.backend.group_of(handle) == group:
+                continue
+            self.backend.reveal(handle)
+
     def theme_changed(self, view) -> None:
         window = view.window()
         session = (

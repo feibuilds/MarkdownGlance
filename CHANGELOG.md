@@ -8,6 +8,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- The preview and the table of contents now follow the focus. Two documents
+  previewed at once share one preview group and one table-of-contents group, so
+  the tabs left in front used to be whichever document was previewed last, and
+  they stayed there while you read the other file. Focusing a Markdown source,
+  its preview or its table of contents now brings that document's other
+  surfaces forward, without moving the focus off what you clicked. In Full
+  Screen the preview shares the source's own group and is left alone.
+
 - Numbered lists now display explicit numbers in the minihtml preview, including
   non-1 starts and nested lists. Loose items keep the number in their first
   paragraph. Adjacent ordered and unordered lists separated by a blank line
