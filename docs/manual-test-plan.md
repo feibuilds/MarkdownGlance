@@ -45,17 +45,28 @@ forward-compatibility testing.
    preview's. With the source focused it shows the outline: check ATX, setext,
    fenced-code and front-matter documents and one with no headings; move the
    caret across headings; type a new heading and watch it appear; click entries
-   top, middle and bottom and confirm the caret moves. Focus the preview and
-   confirm the same panel switches to the rendered table of contents and that
-   clicking scrolls the preview, then focus the source again — with
+   top, middle and bottom and confirm that **both** the caret and the preview
+   go to that section, with the focus staying where it was. Scroll the preview
+   with the wheel (which does not move the focus), click a panel entry, and
+   confirm the preview jumps — this is the case the halves used to get wrong.
+   Try a document with a heading inside a raw `<h2>` block and one inside a
+   block quote: those appear in the table of contents only, and clicking them
+   must move the preview alone rather than sending the caret somewhere wrong.
+   Focus the preview and confirm the same panel switches to the rendered table
+   of contents, then focus the source again — with
    `enable_toc` off as well as on, since that setting governs only whether a
    panel opens by itself. Open a preview *after* the panel and confirm the
    preview gets a group of its own rather than replacing the panel, and that
    the caret stays where it was when a panel opens by itself. Then toggle focus
    and close: the panel's pane must go with it, leaving the source and the
    preview and no empty pane, whether or not you dragged a divider first.
-   Zoom; close the panel, the source, the group and the window; open panels for
-   two files at once and switch between them.
+   Zoom from the Markdown file (`Ctrl+=` must resize the preview, not the
+   editor font) and with `Ctrl`-scroll over the preview without clicking it
+   first; then close the preview and confirm `Ctrl+=` is Sublime's font size
+   again and `Ctrl+0` is Focus Side Bar throughout. Close the panel, the
+   source, the group and the window; open panels for two files at once and
+   switch between them. Automated as `run-markdownglance`'s `panel_navigation`
+   and `zoom_reach` scenarios.
    Automated as `run-markdownglance`'s `panel_toggle` scenario.
 10. Several documents: preview two Markdown files long enough for a panel.
    There must be exactly one preview tab and one contents tab however many

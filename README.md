@@ -92,15 +92,22 @@ instead of `Ctrl` for the shortcuts below.
 | MarkdownGlance: Open Preview to the Side | `Ctrl+K`, then `V` |
 | MarkdownGlance: Toggle Preview | `Ctrl+Shift+V` |
 | MarkdownGlance: Toggle Contents Panel | `Ctrl+Shift+B` |
-| MarkdownGlance: Zoom In / Out / Reset Zoom | `Ctrl+=`, `Ctrl+-`, `Ctrl+0` |
+| MarkdownGlance: Zoom In / Out | `Ctrl+=`, `Ctrl+-` |
+| MarkdownGlance: Reset Zoom | `Ctrl+0`, in the preview |
 | Preferences: MarkdownGlance Settings | — |
 | Preferences: MarkdownGlance Key Bindings | — |
 | MarkdownGlance: Copy Diagnostics | — |
 | MarkdownGlance: Open in Browser | — |
 
 **Toggle Preview** switches between your Markdown text and a full-screen
-preview. To zoom, click the preview first, then use the zoom keys or hold
-`Ctrl`/`Cmd` and scroll. Closing a preview leaves your source files open.
+preview. Closing a preview leaves your source files open.
+
+**Zoom** works from your Markdown file as well as from the preview: with a
+preview open, `Ctrl+=` and `Ctrl+-` resize it rather than the editor font, and
+holding `Ctrl`/`Cmd` while scrolling over the preview zooms it without clicking
+it first. With no preview open they are Sublime's own font size. `Ctrl+0`
+resets the zoom from inside the preview; in your file it stays Sublime's
+**Focus Side Bar**.
 
 A window has one preview, however many Markdown files you have open in it. It
 shows whichever one you are working on and is named for it, and it remembers
@@ -132,10 +139,14 @@ to go to it. There is one panel per window, showing the file you are working
 on, and it shows the half that matches whatever you are looking at:
 
 - **Editing the source** — the headings of the file as you have written them,
-  updating as you type, with your current section highlighted. Clicking one
-  moves the caret. This works with no preview open at all.
-- **Reading the preview** — the headings of the rendered document. Clicking
-  one scrolls the preview.
+  updating as you type, with your current section highlighted. This works with
+  no preview open at all.
+- **Reading the preview** — the headings of the rendered document, with the
+  section you last jumped to highlighted.
+
+Clicking an entry takes you to that section in **both** panes: the caret moves
+to it and the preview scrolls to it, whichever half you clicked and wherever
+the focus is. You do not have to click the preview first.
 
 ![The contents panel beside the source, with the current heading highlighted](docs/screenshots/source-outline.png)
 

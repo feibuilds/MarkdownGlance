@@ -15,9 +15,21 @@ PLATFORMS = ("Linux", "OSX", "Windows")
 MACOS_KEY_NAMES = {"=": "equals", "-": "minus"}
 # ADR 0009: the Full Screen toggle deliberately shadows paste_and_indent, and
 # ADR 0010: the panel toggle shadows Build With…, both only while a Markdown
-# source view is focused. Nothing else may cost the user a key.
+# source view is focused. ADR 0016: the two zoom keys shadow Sublime's own font
+# size, and only while a Markdown source is focused *and* the window has a
+# preview -- `ctrl+0` is deliberately not among them, because Sublime has no
+# other binding for `focus_side_bar`. Nothing else may cost the user a key.
 SINGLE_STROKE_OUTSIDE_PREVIEW = frozenset(
-    {"ctrl+shift+v", "super+shift+v", "ctrl+shift+b", "super+shift+b"}
+    {
+        "ctrl+shift+v",
+        "super+shift+v",
+        "ctrl+shift+b",
+        "super+shift+b",
+        "ctrl+=",
+        "super+equals",
+        "ctrl+-",
+        "super+minus",
+    }
 )
 # Contexts that are true only inside a view this package created.
 OWN_SURFACE_CONTEXTS = frozenset(
@@ -104,6 +116,33 @@ class PackageIdentityTest(unittest.TestCase):
                     for context in item.get("context", ()):
                         self.assertTrue(context["key"].startswith("mdglance."), name)
                         self.assertIs(context["operand"], True)
+
+    def test_the_zoom_keys_never_fire_without_a_preview_to_zoom(self):
+        """`ctrl+=` in a Markdown file with no preview open is Sublime's.
+
+        The binding costs the user their font-size key only for as long as
+        there is a preview in the window for it to act on.
+        """
+        for platform in PLATFORMS:
+            name = "Default ({}).sublime-keymap".format(platform)
+            for item in self.load(name):
+                contexts = {entry["key"] for entry in item.get("context", ())}
+                if item["command"] != "mdglance_zoom":
+                    continue
+                if contexts <= OWN_SURFACE_CONTEXTS:
+                    continue
+                self.assertIn("mdglance.preview_open", contexts, (name, item["keys"]))
+                self.assertIn("mdglance.markdown_source", contexts, name)
+
+    def test_the_reset_zoom_key_stays_out_of_the_source(self):
+        # `ctrl+0` falls through to `focus_side_bar`, which has no other key.
+        for platform in PLATFORMS:
+            name = "Default ({}).sublime-keymap".format(platform)
+            for item in self.load(name):
+                contexts = {entry["key"] for entry in item.get("context", ())}
+                if contexts <= OWN_SURFACE_CONTEXTS:
+                    continue
+                self.assertNotIn(item["keys"], (["ctrl+0"], ["super+0"]), name)
 
     def test_single_stroke_bindings_outside_the_preview_are_declared(self):
         # ADR 0009: a single-stroke default outside the preview shadows a key

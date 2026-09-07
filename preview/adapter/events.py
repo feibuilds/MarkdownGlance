@@ -9,6 +9,7 @@ from ..presentation.contexts import (
     markdown_source,
     panel_focused,
     preview_focused,
+    preview_open,
 )
 from .container import container
 
@@ -121,7 +122,15 @@ class MarkdownGlanceEventListener(sublime_plugin.EventListener):
         window = view.window() if view else sublime.active_window()
         if key == "mdglance.preview_focused":
             return context_result(
-                preview_focused(window, container.backend), operator, operand
+                preview_focused(view, container.backend), operator, operand
+            )
+        if key == "mdglance.preview_open":
+            return context_result(
+                preview_open(
+                    window, lambda window_id: container.manager.stage(window_id)
+                ),
+                operator,
+                operand,
             )
         if key == "mdglance.panel_focused":
             return context_result(

@@ -1,45 +1,158 @@
 [
     {
-        "keys": ["super+k", "v"],
+        "keys": [
+            "super+k",
+            "v"
+        ],
         "command": "mdglance_open_side_by_side",
-        "context": [{"key": "mdglance.markdown_source", "operator": "equal", "operand": true}]
+        "context": [
+            {
+                "key": "mdglance.markdown_source",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+shift+v"],
+        "keys": [
+            "super+shift+v"
+        ],
         "command": "mdglance_toggle_full_screen",
-        "context": [{"key": "mdglance.markdown_source", "operator": "equal", "operand": true}]
+        "context": [
+            {
+                "key": "mdglance.markdown_source",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+shift+v"],
+        "keys": [
+            "super+shift+v"
+        ],
         "command": "mdglance_toggle_full_screen",
-        "context": [{"key": "mdglance.preview_focused", "operator": "equal", "operand": true}]
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+shift+b"],
+        "keys": [
+            "super+shift+b"
+        ],
         "command": "mdglance_toggle_outline",
-        "context": [{"key": "mdglance.markdown_source", "operator": "equal", "operand": true}]
+        "context": [
+            {
+                "key": "mdglance.markdown_source",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+shift+b"],
+        "keys": [
+            "super+shift+b"
+        ],
         "command": "mdglance_toggle_outline",
-        "context": [{"key": "mdglance.panel_focused", "operator": "equal", "operand": true}]
+        "context": [
+            {
+                "key": "mdglance.panel_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+equals"],
+        "keys": [
+            "super+equals"
+        ],
         "command": "mdglance_zoom",
-        "args": {"delta": 0.1},
-        "context": [{"key": "mdglance.preview_focused", "operator": "equal", "operand": true}]
+        "args": {
+            "delta": 0.1
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+minus"],
+        "keys": [
+            "super+minus"
+        ],
         "command": "mdglance_zoom",
-        "args": {"delta": -0.1},
-        "context": [{"key": "mdglance.preview_focused", "operator": "equal", "operand": true}]
+        "args": {
+            "delta": -0.1
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     },
     {
-        "keys": ["super+0"],
+        "keys": [
+            "super+0"
+        ],
         "command": "mdglance_zoom",
-        "args": {"reset": true},
-        "context": [{"key": "mdglance.preview_focused", "operator": "equal", "operand": true}]
+        "args": {
+            "reset": true
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "super+equals"
+        ],
+        "command": "mdglance_zoom",
+        "args": {
+            "delta": 0.1
+        },
+        "context": [
+            {
+                "key": "mdglance.markdown_source",
+                "operator": "equal",
+                "operand": true
+            },
+            {
+                "key": "mdglance.preview_open",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "super+minus"
+        ],
+        "command": "mdglance_zoom",
+        "args": {
+            "delta": -0.1
+        },
+        "context": [
+            {
+                "key": "mdglance.markdown_source",
+                "operator": "equal",
+                "operand": true
+            },
+            {
+                "key": "mdglance.preview_open",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     }
 ]

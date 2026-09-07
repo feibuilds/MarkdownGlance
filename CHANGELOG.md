@@ -8,6 +8,24 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Clicking a heading in the contents panel now takes you there in both
+  panes.** It used to move only the pane the panel's current half belonged to,
+  which was the wrong one exactly when it mattered: you read a preview by
+  scrolling, the wheel does not move the focus, so the panel was showing the
+  source outline while you were looking at the preview, and clicking an entry
+  moved the caret and left the preview where it was. Either half now moves the
+  caret *and* scrolls the preview, from either pane, without taking the focus.
+  Headings the two lists cannot be matched on — one inside a raw HTML block or
+  a block quote is in the rendered document and not in the source scan — still
+  move only their own pane rather than guessing. See
+  [ADR 0016](docs/adr/0016-navigation-and-zoom-do-not-wait-for-the-focus.md).
+
+- **The zoom keys reach the preview from your Markdown file.** `Ctrl+=` and
+  `Ctrl+-` zoom the preview while you are editing, as long as the window has
+  one; without a preview they are Sublime's font size, as before. `Ctrl`-scroll
+  over a preview zooms it without clicking it first. `Ctrl+0` still resets from
+  inside the preview only, because in the editor it belongs to the side bar.
+
 - **One preview tab and one contents tab per window, showing the file you are
   working on.** Every Markdown document used to get a preview tab of its own,
   and after the change below a contents tab too, so a window with three files

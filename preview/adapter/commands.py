@@ -23,6 +23,11 @@ def _panel_focused(window):
     )
 
 
+def _preview_open(window):
+    """The window has a preview, whether or not it has the focus."""
+    return bool(container.manager and container.manager.stage(window.id()))
+
+
 def _owned_session(window):
     # Sheets and views have separate id spaces; surfaces are keyed by view id.
     view = _active_view(window)
@@ -132,7 +137,11 @@ class MdglanceZoomCommand(sublime_plugin.WindowCommand):
     def is_enabled(self):
         return bool(
             container.loaded
-            and (_owned_session(self.window) or _panel_focused(self.window))
+            and (
+                _owned_session(self.window)
+                or _panel_focused(self.window)
+                or _preview_open(self.window)
+            )
         )
 
 

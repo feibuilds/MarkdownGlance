@@ -8,9 +8,25 @@ def context_result(actual, operator, operand):
     return actual == expected
 
 
-def preview_focused(window, backend):
-    sheet = window.active_sheet() if window else None
-    return bool(sheet and backend.owner_of(sheet))
+def preview_focused(view, backend):
+    """True when the view the event is about is one this package created.
+
+    The *view* rather than the window's active sheet, because a mouse binding
+    is asked about the view under the pointer: `Ctrl`-scrolling a preview you
+    are reading should zoom it, and the wheel does not move the focus. For a
+    key press the two are the same view.
+    """
+    return bool(view is not None and backend.owner_of(view))
+
+
+def preview_open(window, has_stage):
+    """True when this window has a preview, focused or not.
+
+    Zoom keys pressed in the Markdown source are meant for it: the source has
+    the focus because that is where you last typed, not because it is what you
+    are looking at.
+    """
+    return bool(window is not None and has_stage(window.id()))
 
 
 def panel_focused(window, owns_surface):
