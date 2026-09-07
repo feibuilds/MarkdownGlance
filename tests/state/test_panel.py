@@ -205,6 +205,7 @@ class PanelControllerTest(unittest.TestCase):
         self.previews = {}
         self.previews_by_id = {}
         self.scrolled = []
+        self.scrollable = True
         self.controller = PanelController(
             self.backend,
             self.layout,
@@ -217,10 +218,13 @@ class PanelControllerTest(unittest.TestCase):
             lambda view, line: self.reveals.append((view.id(), line)),
             "/* css */",
             lambda surface_id: self.previews.get(surface_id),
-            lambda window_id, buffer_id, slug: self.scrolled.append(
-                (window_id, buffer_id, slug)
-            ),
+            self.scroll,
         )
+
+    def scroll(self, window_id, buffer_id, slug):
+        """The real one answers whether the preview actually moved."""
+        self.scrolled.append((window_id, buffer_id, slug))
+        return self.scrollable
 
     # -- helpers ---------------------------------------------------------
 
@@ -266,10 +270,14 @@ class PanelControllerTest(unittest.TestCase):
             self.previews_by_id[identifier] = view
         return view
 
+    # The texts and levels the fixture's own SOURCE has, so that the two
+    # heading lists align the way a real document's do.
+    TEXTS = (("One", 1), ("Two", 2), ("Three", 3), ("Four", 4))
+
     def document(self, count=2):
         headings = tuple(
-            Heading(index + 1, "H{}".format(index), "h{}".format(index), index, 0.1)
-            for index in range(count)
+            Heading(level, text, "h{}".format(index), index, 0.1)
+            for index, (text, level) in enumerate(self.TEXTS[:count])
         )
         return PreviewDocument(1, "<p>body</p>", headings, (), (), ())
 
@@ -675,6 +683,69 @@ class OneRegionTest(PanelControllerTest):
         self.controller.navigate(self.window, self.stage().action_token, slug="missing")
 
         self.assertEqual(self.scrolled, [])
+
+    def test_clicking_an_outline_entry_also_scrolls_the_preview(self):
+        """The point of the change: a preview is read by scrolling, which
+        leaves the focus on the source, so the outline is the half in front --
+        and it used to move only the caret."""
+        self.render(focused="source")
+
+        self.controller.navigate(self.window, self.stage().action_token, line=4)
+
+        self.assertEqual(self.reveals, [(1, 4)])
+        self.assertEqual(self.scrolled, [(1, self.source.buffer_id(), "h1")])
+        self.assertEqual(self.record().active_slug, "h1")
+        self.assertEqual(self.record().active, 1)
+
+    def test_clicking_a_contents_entry_also_moves_the_caret(self):
+        self.render()
+
+        self.controller.navigate(self.window, self.stage().action_token, slug="h1")
+
+        self.assertEqual(self.reveals, [(1, 4)])
+        self.assertEqual(self.record().active, 1)
+
+    def test_an_entry_the_alignment_could_not_pair_moves_only_its_own_pane(self):
+        # A heading in a raw `<h2>` block or a block quote is in the render and
+        # not in the scan; pairing by position would send the reader to the
+        # wrong section, so it is not paired at all.
+        self.render()
+        record = self.record()
+        record.document = record.document + (
+            Heading(2, "Raw", "raw", len(record.document), 0.9),
+        )
+        record.realign()
+
+        self.controller.navigate(self.window, self.stage().action_token, slug="raw")
+
+        self.assertEqual(self.scrolled, [(1, self.source.buffer_id(), "raw")])
+        self.assertEqual(self.reveals, [])
+
+    def test_a_preview_that_did_not_move_does_not_claim_the_highlight(self):
+        self.render()
+        self.scrollable = False
+
+        self.controller.navigate(self.window, self.stage().action_token, slug="h1")
+
+        self.assertIsNone(self.record().active_slug)
+
+    def test_the_caret_carries_the_other_half_highlight_with_it(self):
+        # Otherwise switching to the table of contents shows the heading you
+        # were at three sections ago.
+        self.render(focused="source")
+        self.source.row = 6
+
+        self.controller.sync_caret(self.source)
+
+        self.assertEqual(self.record().active_slug, "h1")
+
+    def test_a_link_clicked_in_the_preview_moves_the_caret_too(self):
+        self.render()
+
+        self.controller.heading_shown(1, self.source.buffer_id(), "h1")
+
+        self.assertEqual(self.reveals, [(1, 4)])
+        self.assertEqual(self.record().active, 1)
 
     def test_a_link_clicked_in_the_preview_highlights_that_heading(self):
         self.render()

@@ -24,6 +24,7 @@ from typing import Callable, Dict, Optional, Set, Tuple
 
 from ..domain.contracts import Heading, SourceHeading, ThemeSnapshot
 from ..domain.ids import new_action_token, new_session_id
+from ..renderer.align import NOTHING, HeadingLinks, align
 from ..renderer.measure import outline_width_px, toc_width_px
 from ..renderer.outline import active_ordinal, build_outline, scan_outline
 from ..renderer.stylesheet import represent, root_font_px
@@ -45,7 +46,14 @@ class PanelDocument:
     # whenever no preview is open for this buffer.
     document: Tuple[Heading, ...] = ()
     active_slug: Optional[str] = None
+    # Which scanned heading is which rendered one, where the two agree. Kept
+    # here rather than worked out per click: it is the same answer until one
+    # of the two lists changes.
+    links: HeadingLinks = NOTHING
     debounce_handle: object = None
+
+    def realign(self) -> None:
+        self.links = align(self.headings, self.document)
 
 
 @dataclass
@@ -77,7 +85,7 @@ class PanelController:
         reveal_line: Callable[[object, int], None],
         base_css: str,
         preview_for_surface: Callable[[int], object] = lambda surface_id: None,
-        scroll_preview: Callable[[int, int, str], None] = lambda *unused: None,
+        scroll_preview: Callable[[int, int, str], bool] = lambda *unused: False,
     ) -> None:
         self.backend = backend
         self.layout_owner = layout_owner
@@ -180,6 +188,7 @@ class PanelController:
         # it appears rather than snapping narrower on the first repaint.
         record.headings = scan_outline(self.read_source(source))
         record.active = active_ordinal(record.headings, self.caret_row(source))
+        record.realign()
         stage.showing = record.buffer_id
         stage.showing_preview = bool(record.document) and self._focus_is_preview(
             window, record.buffer_id
@@ -321,6 +330,7 @@ class PanelController:
         record = self._record(window_id, source)
         had_document = bool(record.document)
         record.document = headings
+        record.realign()
         stage = self._stages.get(window_id)
         if stage is None:
             if self._wants_automatic(window_id, source, headings):
@@ -352,6 +362,7 @@ class PanelController:
         if record is not None:
             record.document = ()
             record.active_slug = None
+            record.realign()
         stage = self._stages.get(window_id)
         if stage is None or stage.showing != buffer_id:
             return
@@ -360,15 +371,30 @@ class PanelController:
         self._present(stage, self._source_for_buffer(window, buffer_id))
 
     def heading_shown(self, window_id: int, buffer_id: int, slug: str) -> None:
-        """A `#slug` link was clicked in the preview body."""
+        """A `#slug` link was clicked in the preview body.
+
+        The preview has already scrolled; the caret follows, for the same
+        reason a panel click moves both panes.
+        """
         record = self._documents.get((window_id, buffer_id))
-        if record is None or record.active_slug == slug:
+        if record is None:
+            return
+        window = self.window_for_id(window_id)
+        source = self._source_for_buffer(window, buffer_id)
+        line = record.links.line_for(slug)
+        if record.active_slug == slug and line is None:
             return
         record.active_slug = slug
+        if isinstance(line, int) and source is not None:
+            self.reveal_line(source, line)
+            heading = next(
+                (item for item in record.headings if item.line == line), None
+            )
+            if heading is not None:
+                record.active = heading.ordinal
         stage = self._stages.get(window_id)
-        if stage is not None and stage.showing == buffer_id and stage.showing_preview:
-            window = self.window_for_id(window_id)
-            self._present(stage, self._source_for_buffer(window, buffer_id))
+        if stage is not None and stage.showing == buffer_id:
+            self._present(stage, source)
 
     def _wants_automatic(self, window_id: int, source, headings) -> bool:
         settings = self.settings_provider()
@@ -388,6 +414,7 @@ class PanelController:
             return
         record.headings = scan_outline(self.read_source(source))
         record.active = active_ordinal(record.headings, self.caret_row(source))
+        record.realign()
         stage = self._stages.get(record.window_id)
         if stage is not None and stage.showing == record.buffer_id:
             self._present(stage, source)
@@ -420,6 +447,12 @@ class PanelController:
         if active == record.active:
             return
         record.active = active
+        # Keep the other half's highlight in step, so switching to it does not
+        # show the heading you were at three sections ago.
+        if active is not None:
+            paired = record.links.slug_for(active)
+            if paired is not None:
+                record.active_slug = paired
         stage = self._stages.get(window.id())
         # The caret's heading is the outline's highlight; while the table of
         # contents is on screen, or another document is, there is nothing to
@@ -481,6 +514,7 @@ class PanelController:
         if not record.headings:
             record.headings = scan_outline(self.read_source(source))
             record.active = active_ordinal(record.headings, self.caret_row(source))
+            record.realign()
         showing_preview = showing_preview and bool(record.document)
         if stage.showing == buffer_id and stage.showing_preview == showing_preview:
             return
@@ -500,6 +534,18 @@ class PanelController:
         return True
 
     def navigate(self, window, token: str, line=None, slug=None) -> None:
+        """Take the reader to a section, in both panes where that is possible.
+
+        An entry is a place in the document, not a place in one pane. Clicking
+        one moves the caret to its line *and* scrolls the preview to it, so it
+        does not matter which half is on screen or which view has the focus --
+        the reason it used to matter is that a preview is read by scrolling,
+        which leaves the focus behind on the source.
+
+        Only the halves the alignment could pair move; see `renderer/align.py`.
+        Neither move takes the focus: `reveal_line` sets a selection and
+        centres it, and scrolling the preview is a viewport move.
+        """
         stage = self._stages.get(window.id())
         if stage is None or stage.action_token != token:
             return
@@ -510,18 +556,31 @@ class PanelController:
         if slug:
             if not any(item.slug == slug for item in record.document):
                 return
-            self.scroll_preview(stage.window_id, record.buffer_id, slug)
-            record.active_slug = slug
-            self._present(stage, source)
+            paired = record.links.line_for(slug)
+        elif isinstance(line, int):
+            heading = next(
+                (item for item in record.headings if item.line == line), None
+            )
+            if heading is None:
+                return
+            slug = record.links.slug_for(heading.ordinal)
+            paired = line
+        else:
             return
-        if not isinstance(line, int):
-            return
-        heading = next((item for item in record.headings if item.line == line), None)
-        if heading is None:
-            return
-        self.reveal_line(source, line)
-        record.active = heading.ordinal
+        self._go_to(stage, record, source, slug, paired)
         self._present(stage, source)
+
+    def _go_to(self, stage, record, source, slug, line) -> None:
+        """Move both panes as far as the alignment allows, and remember where."""
+        if slug and self.scroll_preview(stage.window_id, record.buffer_id, slug):
+            record.active_slug = slug
+        if isinstance(line, int):
+            self.reveal_line(source, line)
+            heading = next(
+                (item for item in record.headings if item.line == line), None
+            )
+            if heading is not None:
+                record.active = heading.ordinal
 
     def _source_for_buffer(self, window, buffer_id):
         if window is None or buffer_id is None:
