@@ -55,6 +55,7 @@ class UseCases:
         theme_observer: Callable[[object, str], None],
         base_css: str,
         panel=None,
+        record=None,
     ) -> None:
         self.manager = manager
         self.scheduler = scheduler
@@ -68,6 +69,9 @@ class UseCases:
         # The panel beside the preview. It owns its own surface and its own
         # lifetime; a render only hands it the headings it produced.
         self.panel = panel
+        # What this window leaves behind for the process after it: the groups
+        # (written by the layout owner) and the document on them. See ADR 0018.
+        self.record = record
 
     def _is_markdown(self, view) -> bool:
         return bool(view and view.match_selector(0, "text.html.markdown"))
@@ -128,13 +132,23 @@ class UseCases:
         self.scheduler.request_render(session.id, "open")
         return session
 
-    def _open_surface(self, window, stage, source_group: int, focus: bool) -> None:
-        """Make the window's one preview surface, in the group its mode wants."""
-        group = source_group
-        if stage.mode == PreviewMode.SIDE_BY_SIDE:
+    def _open_surface(
+        self, window, stage, source_group: int, focus: bool, group: Optional[int] = None
+    ) -> None:
+        """Make the window's one preview surface, in the group its mode wants.
+
+        `group` names a pane that is already there -- the one a previous
+        process left behind, on the restore path -- and is adopted rather than
+        split off, so that it is released and collapsed like any other.
+        """
+        if group is not None:
+            self.layout_owner.adopt(window, group, GroupRole.PREVIEW, stage.id)
+        elif stage.mode == PreviewMode.SIDE_BY_SIDE:
             group = self.layout_owner.acquire(
                 window, source_group, GroupRole.PREVIEW, stage.id
             )
+        else:
+            group = source_group
         # `new_file` focuses the view it makes, so a surface the user did not
         # ask for has to put the focus back where it found it.
         was_focused = None if focus else window.active_view()
@@ -171,6 +185,7 @@ class UseCases:
         )
         self._paint(stage, session, document.body_html if document else "")
         self.backend.restore_scroll(stage.surface, stage.scroll.get(session.id, 0.0))
+        self._remember(stage, session)
 
     def _stage_focused(self, window, stage) -> bool:
         """True when the active view is the stage's own surface."""
@@ -332,6 +347,7 @@ class UseCases:
         session = self.manager.get(stage.showing) if stage.showing else None
         if session is not None:
             self.represent(session)
+            self._remember(stage, session)
 
     def scroll_preview(self, window_id: int, buffer_id: int, slug: str) -> bool:
         """Scroll a document's preview to one heading. The panel's click path."""
@@ -409,6 +425,90 @@ class UseCases:
 
     def reconcile(self, window) -> None:
         self.manager.reconcile(window)
+
+    def _remember(self, stage, session: PreviewSession) -> None:
+        """Keep the record's half of the story current: what is on the stage.
+
+        Only into a record that already has groups in it. A full-screen
+        preview owns no group, so it leaves nothing behind and must not start
+        a record of its own -- there would be no pane to restore into. A
+        document with no file of its own records `None`, which is honest: an
+        unsaved buffer cannot be found again by name after a restart, and the
+        pane it was in is tidied away instead.
+        """
+        window = self.manager.window_for_id(stage.window_id)
+        if window is None or self.record is None:
+            return
+        source = self._find_source(session)
+        self.record.update_existing(
+            window,
+            document=source.file_name() if source is not None else None,
+            zoom=stage.zoom,
+        )
+
+    def restore(self, window) -> bool:
+        """Put the preview back into the pane a previous process left for it.
+
+        The other half of ADR 0018. The layout of a window outlives the process
+        that made it and the preview in it does not, so a restart used to leave
+        blank panes; this fills them again with what was in them -- the same
+        document, in the same pane, at the same zoom -- and falls back to
+        `reclaim`, which takes the panes away, whenever it cannot.
+
+        It cannot when the document is not open in the window any more, when it
+        was an unsaved buffer with no name to find it by, or when only a panel
+        was recorded and the document to outline is gone. Doing nothing at all
+        is the answer while a group still holds a sheet: a restored window has
+        not settled yet, and the sweep runs again on the next activation.
+        """
+        if self.manager.stage(window.id()) is not None or self.record is None:
+            return False
+        free = self.layout_owner.free_groups(window)
+        if not free:
+            return False
+        source = self._recorded_source(window, self.record.read(window).get("document"))
+        if source is not None and source.is_loading():
+            # Sublime has the file but not its syntax yet, so there is no
+            # telling whether it is Markdown. Come back on the next sweep.
+            return False
+        if source is None or not self._is_markdown(source):
+            return self.layout_owner.reclaim(window)
+        source_group, _ = window.get_view_index(source)
+        preview_group = free.get(GroupRole.PREVIEW)
+        panel_group = free.get(GroupRole.PANEL)
+        restored = False
+        if preview_group is not None:
+            stage = self.manager.open_stage(window.id(), PreviewMode.SIDE_BY_SIDE)
+            # Before the render: the zoom is part of what the surface is
+            # measured and laid out for, not something applied to it after.
+            stage.zoom = self._recorded_zoom(window)
+            session = self.manager.for_source(
+                window.id(), source.buffer_id()
+            ) or self._create(window, source)
+            # The focus stays on whatever Sublime restored it to. A preview
+            # that steals it on startup would be worse than the blank pane.
+            self._open_surface(
+                window, stage, source_group, focus=False, group=preview_group
+            )
+            self.show(stage, session)
+            restored = True
+        if panel_group is not None and self.panel is not None:
+            restored = self.panel.restore(window, source, panel_group) or restored
+        return restored or self.layout_owner.reclaim(window)
+
+    def _recorded_source(self, window, path):
+        """The view the record names, if the window still has it open."""
+        if not isinstance(path, str) or not path:
+            return None
+        return next(
+            (view for view in window.views() if view.file_name() == path), None
+        )
+
+    def _recorded_zoom(self, window) -> float:
+        zoom = self.record.read(window).get("zoom")
+        if not isinstance(zoom, (int, float)) or isinstance(zoom, bool):
+            return 1.0
+        return max(0.5, min(3.0, float(zoom)))
 
     def _find_source(self, session: PreviewSession):
         window = self.manager.window_for_id(session.window_id)

@@ -14,6 +14,7 @@ from ..application.usecases import UseCases
 from ..assets import AssetCache, AssetResolver, ImageFetcher, NetworkPolicy
 from ..domain.contracts import RenderRequest
 from ..domain.paths import HOST
+from ..presentation import window_record
 from ..presentation.layout import LayoutOwner
 from ..presentation.phantom_view import PhantomViewBackend
 from ..renderer.stylesheet import root_font_px
@@ -116,6 +117,7 @@ class Container:
             lambda window_id, buffer_id, slug: self.usecases.scroll_preview(
                 window_id, buffer_id, slug
             ),
+            window_record,
         )
         self.usecases = UseCases(
             self.manager,
@@ -128,6 +130,7 @@ class Container:
             self.observe_theme,
             base_css,
             self.panel,
+            window_record,
         )
         self.loaded = True
         for window in sublime.windows():
@@ -136,7 +139,14 @@ class Container:
 
     def reconcile(self, window) -> None:
         """Both registries sweep the same window; the panel's must run first
-        so that its surfaces are still claimed when the preview sweep looks."""
+        so that its surfaces are still claimed when the preview sweep looks.
+
+        The restore runs before either, and is about a window rather than a
+        surface: it fills the panes a *previous* process left behind, or takes
+        them away, neither of which the two registries can see -- nothing in
+        the window is theirs to find.
+        """
+        self.usecases.restore(window)
         self.panel.reconcile(window)
         self.usecases.reconcile(window)
 

@@ -12,6 +12,14 @@ The selected backend is a read-only scratch `View` containing one block
 ownership is fingerprinted; restoration occurs only for an empty, unchanged,
 plugin-created group after its last holder closes.
 
+A window outlives the process that arranged it: Sublime persists the layout and
+not the scratch surfaces standing in it. `presentation/window_record.py` keeps
+one entry in `window.settings()` -- the groups this package made, under their
+roles, the cell count they were made in, and the document and zoom on the
+preview -- which Sublime does persist. On the way back in, `UseCases.restore`
+fills those panes again and `LayoutOwner.reclaim` takes away the ones it
+cannot. See [ADR 0018](adr/0018-groups-outlive-the-process-that-made-them.md).
+
 The table of contents and the outline are sized to their content rather than to
 a fixed share of the window. `renderer/measure.py` estimates the pixels the
 longest entry needs from per-character advances, and `LayoutOwner.acquire` and

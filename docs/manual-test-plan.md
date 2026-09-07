@@ -117,6 +117,18 @@ forward-compatibility testing.
    the Pygments library), restart, and confirm a Mermaid fence with
    `enable_mermaid` on is still a diagram and a fenced block still has its
    language class.
+17. Restart with a preview open: with `hot_exit` on, open a Markdown file,
+   `Ctrl+Shift+V`, `Ctrl+Shift+B`, zoom the preview once, and quit Sublime
+   Text. Start it again: the same document must be back on the preview at the
+   same zoom, the contents panel beside it, and the focus on whichever view
+   Sublime restored it to — not on the preview. Repeat with the panel alone
+   (`Ctrl+Shift+B`, no preview). Then close the Markdown file before quitting
+   and confirm the panes are gone rather than blank on the next start, and do
+   the same for an unsaved buffer, which has no name to be found by. Repeat
+   once with Sublime killed (`kill -9`) rather than quit, which is the case
+   `plugin_unloaded` cannot help with; and once with a file dragged into the
+   preview's group before quitting, whose group must survive holding the
+   file.
 
 ## Automated prerequisites
 

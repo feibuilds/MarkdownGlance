@@ -26,6 +26,8 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
   while you edit and the preview's table of contents while you read.
 - **One preview, whatever you have open**: the preview and the contents panel
   follow you between files rather than piling up a tab each.
+- **Where you left it**: reopen Sublime Text and the preview comes back on the
+  same document, in the same pane, at the same zoom.
 - **View images and tables**, including local and remote images.
 - **Add diagrams and formulas** with optional Mermaid and LaTeX math support.
 - **Open in Browser** when you want to see the document as a web page.

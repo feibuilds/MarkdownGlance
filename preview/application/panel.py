@@ -86,6 +86,7 @@ class PanelController:
         base_css: str,
         preview_for_surface: Callable[[int], object] = lambda surface_id: None,
         scroll_preview: Callable[[int, int, str], bool] = lambda *unused: False,
+        record=None,
     ) -> None:
         self.backend = backend
         self.layout_owner = layout_owner
@@ -99,6 +100,10 @@ class PanelController:
         self.base_css = base_css
         self.preview_for_surface = preview_for_surface
         self.scroll_preview = scroll_preview
+        # What the window leaves behind for the process after it. A window
+        # whose only pane is the panel's has no preview to name the document,
+        # so the panel names it. See ADR 0018.
+        self.record = record
         self._stages: Dict[int, PanelStage] = {}
         self._documents: Dict[Tuple[int, int], PanelDocument] = {}
         # Windows whose panel the user closed. A render must not put it back;
@@ -174,7 +179,19 @@ class PanelController:
             return self._source_for_buffer(window, session.source_buffer_id)
         return view
 
-    def _open(self, window, source, automatic: bool) -> Optional[PanelStage]:
+    def restore(self, window, source, group: int) -> bool:
+        """Re-open the panel into the group a previous process left for it.
+
+        Never automatic, whatever `enable_toc` says: a panel that was on screen
+        when Sublime was closed is one the reader kept. See ADR 0018.
+        """
+        if self._stages.get(window.id()) is not None:
+            return False
+        return self._open(window, source, automatic=False, group=group) is not None
+
+    def _open(
+        self, window, source, automatic: bool, group: Optional[int] = None
+    ) -> Optional[PanelStage]:
         source_group, _ = window.get_view_index(source)
         stage = PanelStage(
             new_session_id(),
@@ -193,9 +210,13 @@ class PanelController:
         stage.showing_preview = bool(record.document) and self._focus_is_preview(
             window, record.buffer_id
         )
-        group = self.layout_owner.acquire_panel(
-            window, source_group, stage.id, self._width(stage, record)
-        )
+        if group is None:
+            group = self.layout_owner.acquire_panel(
+                window, source_group, stage.id, self._width(stage, record)
+            )
+        else:
+            # A group that is already in the window: adopted, not split off.
+            self.layout_owner.adopt(window, group, GroupRole.PANEL, stage.id)
         # `new_file` focuses the view it makes. Only `toggle` wants that, and
         # it focuses the panel itself afterwards.
         was_focused = self._active_view(window)
@@ -643,3 +664,15 @@ class PanelController:
             represent(html, theme, stage.zoom, self.base_css, panel=True),
         )
         self._fit(stage, record)
+        self._remember(stage, source)
+
+    def _remember(self, stage: PanelStage, source) -> None:
+        """Name the document this panel is on, for a restart to find.
+
+        The preview does the same from its own side; either alone is enough,
+        and a window can have a panel without ever having had a preview.
+        """
+        window = self.window_for_id(stage.window_id)
+        if window is None or self.record is None or source is None:
+            return
+        self.record.remember_document(window, source.file_name() or None)

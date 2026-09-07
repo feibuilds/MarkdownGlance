@@ -53,6 +53,22 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **Reopening Sublime Text brings the preview back, instead of a blank
+  pane.** A window remembered its three-column layout across a restart and
+  nothing else: the preview and the contents panel are scratch buffers, which
+  Sublime does not keep, so the file came back beside two empty groups that
+  nothing in the package could account for — the marks that identify a surface
+  do not survive a restart either. A window now records the panes this package
+  made in the window's own settings, which Sublime does persist, along with
+  the document that was on the preview and its zoom. The next start puts that
+  document back in the same pane at the same zoom, with the contents panel
+  beside it if it was there, without taking the focus off the file you land
+  on. When it cannot — the document is not open any more, or was an unsaved
+  buffer — the panes are taken away instead, so a restart, a crash and a
+  package reload all end with a window you could have arranged yourself. See
+  [ADR 0018](docs/adr/0018-groups-outlive-the-process-that-made-them.md).
+  Where the preview was scrolled to is not restored; it opens at the top.
+
 - **The preview and the contents panel now follow you to a document that has
   never been previewed.** With several Markdown files open, the preview group
   and the panel group each hold one tab per document, and the tab in front is

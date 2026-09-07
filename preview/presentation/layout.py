@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 from ..application.ports import GroupRole
+from . import window_record
 
 EPSILON = 1e-6
 
@@ -187,9 +188,34 @@ def refit_cell(layout: dict, cell_index: int, share: float) -> Optional[dict]:
     return {"cols": cols, "rows": list(layout["rows"]), "cells": cells}
 
 
+def recorded_groups(record: dict) -> List[Tuple[int, GroupRole]]:
+    """The `[group, role]` pairs in a record, dropping anything unreadable.
+
+    A record is read back out of a session file that any version of this
+    package -- or anything else -- may have written, so nothing in it is
+    trusted: an entry of the wrong shape, a negative index or a role this
+    version does not have is skipped rather than raising.
+    """
+    groups = []
+    for entry in record.get("groups") or []:
+        if not isinstance(entry, (list, tuple)) or len(entry) != 2:
+            continue
+        group, role = entry
+        if not isinstance(group, int) or isinstance(group, bool) or group < 0:
+            continue
+        try:
+            groups.append((group, GroupRole(role)))
+        except ValueError:
+            continue
+    return groups
+
+
 class LayoutOwner:
-    def __init__(self) -> None:
+    def __init__(self, record=window_record) -> None:
         self._owned: Dict[int, Dict[int, OwnedGroup]] = {}
+        # Where the groups this owner makes are written down, so that the
+        # process after this one can find them again. See ADR 0018.
+        self.record = record
 
     def acquire(
         self,
@@ -221,6 +247,7 @@ class LayoutOwner:
             new_group, fingerprint(updated), {session_id}, role
         )
         self._restamp(window, updated)
+        self._record(window, updated)
         return new_group
 
     def acquire_panel(
@@ -261,6 +288,7 @@ class LayoutOwner:
             new_group, fingerprint(updated), {session_id}, GroupRole.PANEL
         )
         self._restamp(window, updated)
+        self._record(window, updated)
         return new_group
 
     def fit(self, window, group: int, role: GroupRole, width_px: float) -> None:
@@ -329,6 +357,10 @@ class LayoutOwner:
             return
         empty = restore and not window.sheets_in_group(group)
         groups.pop(group, None)
+        # Only `_collapse` re-records. Losing the group without giving it back
+        # -- `restore=False` on unload, or a group the user has since put a
+        # file in -- leaves the cell in the window, and the record has to keep
+        # naming it or the next process will not know it is there.
         if empty:
             # Out of the layout the window has *now*, never out of one recorded
             # when the group was made: another group of this owner's may have
@@ -371,6 +403,7 @@ class LayoutOwner:
             moved[owned.group] = owned
         self._owned[window.id()] = moved
         self._restamp(window, updated)
+        self._record(window, updated)
         return True
 
     def _restamp(self, window, layout: dict) -> None:
@@ -385,5 +418,121 @@ class LayoutOwner:
         for owned in self._owned.get(window.id(), {}).values():
             owned.fingerprint = stamp
 
+    def _record(self, window, layout: Optional[dict] = None) -> None:
+        """Name this owner's groups for whatever process reads the window next.
+
+        Each group goes down with its role, so that a restore can put the
+        preview back in the preview's pane and the panel in the panel's. The
+        cell count goes with them, as the one check that the window is still
+        the shape the record was written for -- not the fingerprint `fit`
+        compares against: a dragged divider is what a user does to a pane they
+        mean to keep, and it must not turn the pane into one nobody can
+        account for.
+
+        Losing the last group clears the whole record, document and all: there
+        is nothing left to restore into.
+        """
+        owned = self._owned.get(window.id())
+        if not owned:
+            self.record.clear(window)
+            return
+        cells = layout if layout is not None else window.layout()
+        self.record.update(
+            window,
+            cells=len(cells["cells"]),
+            groups=[[group, owned[group].role.value] for group in sorted(owned)],
+        )
+
+    def free_groups(self, window) -> Dict[GroupRole, int]:
+        """The recorded groups still standing empty in this window, by role.
+
+        Empty is the whole test, and it is made once here for both callers:
+        `reclaim` collapses what this returns, a restore fills it. A group with
+        a sheet in it -- a file the user dragged in, or a scratch sheet the
+        restored session has not finished dropping -- is not in it, and neither
+        is anything at all while this process holds groups of its own or the
+        window has stopped being the shape the record describes.
+        """
+        if self._owned.get(window.id()):
+            return {}
+        record = self.record.read(window)
+        cells = len(window.layout()["cells"])
+        if record.get("cells") != cells:
+            return {}
+        return {
+            role: group
+            for group, role in recorded_groups(record)
+            if group < cells and not window.sheets_in_group(group)
+        }
+
+    def adopt(self, window, group: int, role: GroupRole, session_id: str) -> None:
+        """Take a group a previous process made as this owner's own.
+
+        The group is already in the window -- the layout outlived the process
+        that split it -- so there is nothing to lay out, only a registry to
+        fill in, and from here on the group is released and collapsed like any
+        other.
+        """
+        owned = self._owned.setdefault(window.id(), {})
+        owned[group] = OwnedGroup(
+            group, fingerprint(window.layout()), {session_id}, role
+        )
+        self._record(window)
+
+    def reclaim(self, window) -> bool:
+        """Take back the groups a previous process left empty in this window.
+
+        The layout a preview split off outlives the process that made it --
+        across a restart, a crash, or a package reload -- and the surface that
+        justified it does not, so the user is left with a blank pane nothing
+        owns. This is the sweep for that, and the record written by `_record`
+        is the only thing that says which groups they are.
+
+        It acts on a window this process holds nothing in, and only on a group
+        that is genuinely empty in a layout still the shape the record
+        describes. A group with a sheet in it is never removed, whoever put it
+        there. The record survives a sweep that gave nothing back, because at
+        `plugin_loaded` a restored window has not finished settling and a
+        group that is about to be empty still looks occupied; only a sweep
+        that actually collapsed a group ends it.
+        """
+        record = self.record.read(window)
+        if not record:
+            # Nothing recorded, or something that is not a record at all.
+            self.record.clear(window)
+            return False
+        free = self.free_groups(window)
+        if not free:
+            return False
+        # What the sweep cannot take now -- a group still holding a sheet --
+        # stays recorded, renumbered as each cell above it goes, or the pane it
+        # is in would be left with nothing to account for it when it does empty.
+        remaining = [
+            [group, role.value]
+            for group, role in recorded_groups(record)
+            if group not in free.values()
+        ]
+        collapsed = False
+        for group in sorted(free.values(), reverse=True):
+            if not self._collapse(window, group):
+                continue
+            collapsed = True
+            remaining = [
+                [index - 1 if index > group else index, role]
+                for index, role in remaining
+            ]
+        if not collapsed:
+            return False
+        if remaining:
+            # `_collapse` cleared the record on the way past, this owner having
+            # nothing of its own in the window; the rest of it goes back.
+            record["cells"] = len(window.layout()["cells"])
+            record["groups"] = remaining
+            self.record.update(window, **record)
+        else:
+            self.record.clear(window)
+        return True
+
     def invalidate(self, window) -> None:
         self._owned.pop(window.id(), None)
+        self._record(window)

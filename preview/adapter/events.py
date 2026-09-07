@@ -142,6 +142,31 @@ class MarkdownGlanceEventListener(sublime_plugin.EventListener):
             return context_result(markdown_source(view), operator, operand)
         return None
 
+    def on_init(self, views):
+        """The views Sublime restored before the plugin API was ready.
+
+        The one signal that a window has come back from a session rather than
+        been opened: its groups are already filled, so a group that looks empty
+        here really is empty, and `reconcile` can take back the ones a previous
+        process left behind. `plugin_loaded` sweeps every window too; this
+        covers the order where the session arrives after the container is up.
+        """
+        if not container.loaded:
+            return
+        windows = {}
+        for view in views:
+            window = view.window()
+            if window is not None:
+                windows[window.id()] = window
+        for window in windows.values():
+            container.reconcile(window)
+
+    def on_new_window(self, window):
+        """A window opened after startup carries a restored session too, when
+        it comes from a project or a workspace."""
+        if container.loaded:
+            _ui(lambda: container.loaded and container.reconcile(window))
+
     def on_post_window_command(self, window, command_name, args):
         if not container.loaded:
             return
