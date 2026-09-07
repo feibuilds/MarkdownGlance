@@ -26,7 +26,12 @@ forward-compatibility testing.
    and maximise the window, and zoom in and out: the table refits within about
    a second and still fills the group.
 6. Check relative, absolute, missing, oversized and extensionless local images;
-   HTTPS, redirect, timeout, invalid and oversized remote images.
+   HTTPS, redirect, timeout, invalid and oversized remote images. With resvg
+   installed, a local SVG and a remote SVG badge must appear as images; with
+   `svg_renderer_path` pointing at nothing they must read *No SVG renderer*,
+   with `enable_svg` off *Not a PNG, JPEG or GIF*, while a WebP always reads
+   the latter and a missing file always reads *Unavailable*. The `svg_render`
+   scenario covers all three.
 7. Check Mermaid disabled, enabled disclosure, offline, timeout, invalid source
    and custom HTTPS server. Confirm diagnostics contain no source or locator.
    Render a `sequenceDiagram` under a dark and a light colour scheme: message

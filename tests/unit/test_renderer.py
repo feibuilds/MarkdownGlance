@@ -173,6 +173,32 @@ Unicode: 中文 café 😀
         self.assertIn("width: 20.0000rem", document.body_html)
         self.assertIn("height: 10.0000rem", document.body_html)
 
+    def test_a_drawn_svg_is_shown_at_the_size_it_asked_for(self):
+        # The renderer draws it at twice the size for a high-DPI screen; the
+        # page shows it at the size the document asked for.
+        parsed = parse(request("![alt](diagram.svg)"))
+        asset = FetchedAsset(
+            "data:image/png;base64,AA==", 320, 160, 1, 30, "file", 0, 2.0
+        )
+        document = serialise(parsed, {parsed.asset_keys[0]: Ready(asset)}, request("x"))
+        self.assertIn('width="160"', document.body_html)
+        self.assertIn("width: 10.0000rem", document.body_html)
+
+    def test_a_format_with_no_renderer_names_itself_and_what_to_install(self):
+        parsed = parse(request("![alt](diagram.svg)"))
+        failed = Failed(AssetStatus.SVG_RENDERER_MISSING)
+        html = serialise(parsed, {parsed.asset_keys[0]: failed}, request("x")).body_html
+        self.assertIn("No SVG renderer", html)
+        self.assertIn("resvg", html)
+
+    def test_an_undrawable_format_names_itself_and_points_at_the_export(self):
+        parsed = parse(request("![alt](diagram.svg)"))
+        failed = Failed(AssetStatus.UNSUPPORTED_FORMAT)
+        html = serialise(parsed, {parsed.asset_keys[0]: failed}, request("x")).body_html
+        self.assertIn("Not a PNG, JPEG or GIF", html)
+        self.assertIn("Open in Browser", html)
+        self.assertNotIn("Unavailable", html)
+
     def test_remote_image_url_is_canonical_and_credentials_are_rejected(self):
         canonical = parse(request("![x](HTTPS://Example.TEST:443/a.png?q=1#frag)"))
         self.assertEqual(

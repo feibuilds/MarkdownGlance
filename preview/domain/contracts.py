@@ -61,6 +61,9 @@ class RenderSettings:
     math_server: str = "https://latex.codecogs.com"
     allow_insecure_remote_images: bool = False
     remote_timeout_seconds: float = 15.0
+    enable_svg: bool = True
+    svg_renderer_path: str = ""
+    svg_timeout_seconds: float = 10.0
     remote_max_bytes: int = 10 * 1024 * 1024
     remote_max_dimension: int = 4096
     table_max_columns: int = 200
@@ -126,11 +129,21 @@ class FetchedAsset:
     cache_cost_bytes: int
     effective_scheme: str
     fetched_revision: int
+    # How many image pixels one shown pixel was drawn from. Above one for an
+    # SVG drawn by the local renderer, so that the serialiser shows it at the
+    # size the document asked for and keeps the detail for a high-DPI screen.
+    pixel_scale: float = 1.0
+    # Drawn from an SVG by the local renderer rather than decoded as it
+    # arrived, so that turning that renderer off puts the placeholder back.
+    from_svg: bool = False
 
 
 class AssetStatus(Enum):
     LOADING = "loading"
     UNAVAILABLE = "unavailable"
+    UNSUPPORTED_FORMAT = "unsupported_format"
+    SVG_RENDERER_MISSING = "svg_renderer_missing"
+    RENDER_FAILED = "render_failed"
     BLOCKED = "blocked"
     TOO_LARGE = "too_large"
     TIMEOUT = "timeout"

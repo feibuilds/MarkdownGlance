@@ -14,8 +14,9 @@ from ..domain.contracts import (
     FetchedAsset,
     Ready,
 )
-from .images import InvalidImage, detect
+from .images import InvalidImage, SvgImage, UnsupportedImage, detect
 from .policy import NetworkPolicy
+from .svg import SvgRasteriser, SvgRenderFailed
 
 
 class _RedirectHandler(urllib.request.HTTPRedirectHandler):
@@ -38,6 +39,9 @@ class _RedirectHandler(urllib.request.HTTPRedirectHandler):
 
 
 class ImageFetcher:
+    def __init__(self, rasteriser: Optional[SvgRasteriser] = None) -> None:
+        self._svg = rasteriser or SvgRasteriser()
+
     def fetch(self, key: AssetKey, policy: NetworkPolicy):
         settings = policy.settings
         blocked = policy.evaluate_key(key)
@@ -69,7 +73,20 @@ class ImageFetcher:
                         return Failed(AssetStatus.TOO_LARGE)
                     chunks.append(chunk)
                 content = b"".join(chunks)
-                info = detect(io.BytesIO(content))
+                scale, drawn = 1.0, False
+                try:
+                    info = detect(io.BytesIO(content))
+                except SvgImage:
+                    # Already off the UI thread, so the renderer runs here
+                    # rather than being handed on. A badge or a diagram from
+                    # the network is drawn with no directory of ours behind
+                    # it: nothing local can be pulled into the image.
+                    status = self._svg.unavailable(settings)
+                    if status is not None:
+                        return Failed(status)
+                    content, scale = self._svg.rasterise(content, settings)
+                    drawn = True
+                    info = detect(io.BytesIO(content))
                 if (
                     info.width > settings.remote_max_dimension
                     or info.height > settings.remote_max_dimension
@@ -86,6 +103,8 @@ class ImageFetcher:
                     len(data_uri),
                     urlsplit(response.geturl()).scheme.lower(),
                     policy.revision,
+                    scale,
+                    drawn,
                 )
                 status = policy.evaluate(key, asset)
                 return Failed(status) if status is not None else Ready(asset)
@@ -93,5 +112,9 @@ class ImageFetcher:
             return Failed(AssetStatus.TIMEOUT)
         except PermissionError:
             return Failed(AssetStatus.BLOCKED)
+        except SvgRenderFailed:
+            return Failed(AssetStatus.RENDER_FAILED)
+        except UnsupportedImage:
+            return Failed(AssetStatus.UNSUPPORTED_FORMAT)
         except (InvalidImage, OSError, ValueError, urllib.error.URLError):
             return Failed(AssetStatus.UNAVAILABLE)

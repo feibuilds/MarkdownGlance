@@ -69,6 +69,32 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   [ADR 0018](docs/adr/0018-groups-outlive-the-process-that-made-them.md).
   Where the preview was scrolled to is not restored; it opens at the top.
 
+- **SVG images are drawn in the preview.** A diagram beside the document and
+  the badges at the top of a README appear like any other image: the file, or
+  the download, is converted to a PNG on your machine by
+  [resvg](https://github.com/linebender/resvg), which you install and the
+  package finds on your `PATH` or at `svg_renderer_path`. Nothing is uploaded,
+  no service or account is involved, and the document keeps its own image
+  reference. The image is drawn at twice the size it is shown at, so it stays
+  sharp on a high-DPI display, and the conversion runs off the editor's thread.
+  A local drawing may reference images beside it; one from the web is drawn
+  with no access to your files. With no renderer installed the image reads *No
+  SVG renderer* and says what to install; one the renderer cannot draw reads
+  *Could not be drawn*. `"enable_svg": false` turns it off. This is the first
+  thing the package runs as a process on the preview path — see
+  [ADR 0019](docs/adr/0019-svg-is-drawn-by-a-local-renderer.md).
+
+- **A WebP or any other image the preview cannot draw now says which failure
+  it was.** The preview is drawn by minihtml, which decodes PNG, JPEG and GIF
+  and nothing else, so an image in any other format could never appear — but
+  it reported "Unavailable", the same words as a missing file or a dead link,
+  and the reader had no way to tell an intact file from a broken path. The
+  placeholder now reads *Not a PNG, JPEG or GIF — The preview cannot draw it;
+  Open in Browser can*, and the export does draw it, since it hands the
+  parser's own output to a real browser. The format is recognised by its bytes
+  rather than its extension. See
+  [ADR 0017](docs/adr/0017-formats-minihtml-cannot-draw.md).
+
 - **The preview and the contents panel now follow you to a document that has
   never been previewed.** With several Markdown files open, the preview group
   and the panel group each hold one tab per document, and the tab in front is

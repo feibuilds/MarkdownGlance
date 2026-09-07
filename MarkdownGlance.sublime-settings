@@ -18,6 +18,14 @@
     "remote_max_bytes": 10485760,
     "remote_max_dimension": 4096,
 
+    // minihtml draws PNG, JPEG and GIF, so an SVG -- a local drawing, or a
+    // README badge -- is converted to a PNG here on this machine before it is
+    // shown. Nothing is uploaded. It needs resvg installed: on your PATH, or
+    // named below. Without one the image says so in place.
+    "enable_svg": true,
+    "svg_renderer_path": "",
+    "svg_timeout_seconds": 10.0,
+
     // minihtml cannot lay out tables, so they are typeset as monospace
     // columns that fill the measured width of the preview. This is only an
     // upper bound, for keeping tables readable on a very wide screen.

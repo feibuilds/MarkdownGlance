@@ -129,8 +129,14 @@ def _serialise_image(
     if isinstance(result, Ready):
         asset = result.asset
         # A formula is fetched at twice its size and shown at one, so that it
-        # is as crisp as the text beside it on a high-DPI display.
-        scale = MATH_SCALE if key is not None and key.kind == AssetKind.MATH else 1
+        # is as crisp as the text beside it on a high-DPI display. A drawn SVG
+        # carries the same idea in the asset itself, at whatever factor the
+        # renderer was given.
+        scale = (
+            MATH_SCALE
+            if key is not None and key.kind == AssetKind.MATH
+            else asset.pixel_scale
+        )
         width, height = asset.width / scale, asset.height / scale
         attrs = [
             'src="{}"'.format(_attr(asset.data_uri)),

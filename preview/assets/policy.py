@@ -33,6 +33,8 @@ class NetworkPolicy:
         blocked = self.evaluate_key(key)
         if blocked is not None:
             return blocked
+        if asset.from_svg and not self.settings.enable_svg:
+            return AssetStatus.UNSUPPORTED_FORMAT
         if (
             asset.effective_scheme == "http"
             and not self.settings.allow_insecure_remote_images

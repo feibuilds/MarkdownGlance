@@ -28,7 +28,12 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
   follow you between files rather than piling up a tab each.
 - **Where you left it**: reopen Sublime Text and the preview comes back on the
   same document, in the same pane, at the same zoom.
-- **View images and tables**, including local and remote images.
+- **View images and tables**, including local and remote images. Sublime
+  Text's minihtml draws PNG, JPEG and GIF; an SVG — a diagram beside the
+  document, or the badges at the top of a README — is drawn as a PNG by
+  [resvg](#svg-images) on your machine, with nothing uploaded. An image in a
+  format neither can draw, WebP most often, says so in place, and **Open in
+  Browser** shows the document with those images drawn.
 - **Add diagrams and formulas** with optional Mermaid and LaTeX math support.
 - **Open in Browser** when you want to see the document as a web page.
 
@@ -36,6 +41,9 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
 
 Sublime Text build 4200 or newer, on Linux, macOS or Windows, with Package
 Control installed to manage the required libraries.
+
+To display SVG images, [resvg](https://github.com/linebender/resvg) as well;
+see [SVG images](#svg-images). Everything else works without it.
 
 ## Installation
 
@@ -177,6 +185,8 @@ Common options:
 | `enable_mermaid` | Render Mermaid diagrams using an online service | `false` |
 | `enable_math` | Render LaTeX formulas using an online service | `false` |
 | `auto_width` | Fit the contents panel's width to its headings | `true` |
+| `enable_svg` | Draw SVG images with a local renderer | `true` |
+| `svg_renderer_path` | Where that renderer is, when it is not on your `PATH` | `""` |
 
 Before enabling diagrams or math, read [Network and privacy](#network-and-privacy).
 
@@ -184,6 +194,36 @@ Before enabling diagrams or math, read [Network and privacy](#network-and-privac
 
 Markdown tables appear as aligned columns in a fixed-width font and adjust to
 the preview's width. For a traditional web-style table, use **Open in Browser**.
+
+## SVG images
+
+minihtml decodes PNG, JPEG and GIF and nothing else, so an SVG is converted to
+a PNG before it is shown. The conversion happens on your machine, with
+[resvg](https://github.com/linebender/resvg): install it, and a local drawing
+or a remote badge appears like any other image. Without it, the image reads
+*No SVG renderer* in place.
+
+Its releases carry ready-made binaries for Linux and macOS; put one on your
+`PATH`, or set `svg_renderer_path` to it:
+
+```json
+{
+    "svg_renderer_path": "/home/you/.local/bin/resvg"
+}
+```
+
+On Windows, build it with `cargo install resvg` until a binary is published.
+
+The image is drawn at twice the size it is shown at, so it stays sharp on a
+high-DPI display, and the conversion runs off the editor's thread — a large
+drawing shows *Loading* and then appears. A local SVG may reference images
+beside it; one downloaded from the web is drawn without access to your files.
+Nothing is uploaded, and the document keeps its original image reference.
+resvg draws static SVG: animation and scripts are outside what it does, and
+HTML labels inside `foreignObject` — which Mermaid exports by default — are
+drawn as empty boxes rather than an error. An image the renderer rejects reads
+*Could not be drawn*. **Open in Browser** shows any of these as a browser
+would. Set `"enable_svg": false` to turn the whole thing off.
 
 ## Math
 
@@ -200,6 +240,9 @@ the network are:
 - **Remote images** are downloaded from their URLs. Insecure HTTP images are
   blocked by default, downloads have time and size limits, and downloaded
   images are cached only in memory.
+- **SVG images** are converted on your machine by a renderer you install. The
+  image is not uploaded and no service is involved; the renderer runs as a
+  short-lived process with a timeout.
 - **Diagrams and math in the live preview** are off by default. Enabling them
   sends the diagram or formula text and a theme colour to the configured
   service: `mermaid_server` (default: `https://mermaid.ink`) or `math_server`

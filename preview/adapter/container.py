@@ -11,7 +11,13 @@ from ..application.scheduler import GenerationScheduler
 from ..application.session import CloseCause, PreviewSession
 from ..application.session_manager import SessionManager
 from ..application.usecases import UseCases
-from ..assets import AssetCache, AssetResolver, ImageFetcher, NetworkPolicy
+from ..assets import (
+    AssetCache,
+    AssetResolver,
+    ImageFetcher,
+    NetworkPolicy,
+    SvgRasteriser,
+)
 from ..domain.contracts import RenderRequest
 from ..domain.paths import HOST
 from ..presentation import window_record
@@ -51,6 +57,7 @@ class Container:
         self.settings = None
         self.executors = None
         self.resolver = None
+        self.rasteriser = None
         self.clock = None
         self.policy_revision = 0
         self.recent_stages = []
@@ -71,13 +78,17 @@ class Container:
         self.layout = LayoutOwner()
         self.settings = SettingsAdapter(self._settings_changed)
         cache = AssetCache()
+        # One rasteriser for both halves, so that the renderer is looked up
+        # once and a local drawing and a remote badge are drawn the same way.
+        self.rasteriser = SvgRasteriser()
         self.resolver = AssetResolver(
             cache,
-            ImageFetcher(),
+            ImageFetcher(self.rasteriser),
             self.policy,
             self.executors.network,
             lambda callback: sublime.set_timeout(callback, 0),
             lambda key, waiters: self.scheduler.asset_available(key, waiters),
+            self.rasteriser,
         )
         self.manager = SessionManager(
             self.backend,
@@ -149,6 +160,12 @@ class Container:
         self.usecases.restore(window)
         self.panel.reconcile(window)
         self.usecases.reconcile(window)
+
+    def svg_renderer_found(self) -> bool:
+        """Whether an SVG in a document would be drawn, for diagnostics."""
+        if self.rasteriser is None or self.settings is None:
+            return False
+        return self.rasteriser.backend(self.settings.get()) is not None
 
     def policy(self) -> NetworkPolicy:
         return NetworkPolicy(self.settings.get(), self.policy_revision)

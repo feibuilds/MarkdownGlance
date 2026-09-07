@@ -48,8 +48,11 @@ leaves JSON snapshots and screenshots behind. Its `SKILL.md` has the details.
 ## Scope
 
 MarkdownGlance renders Markdown with the Sublime API alone: no browser, no
-WebView, no external process, and no runtime dependency outside the standard
-library and the two Package Control libraries it declares. `Open in Browser`
-is an export, off the preview path, and the one command that starts a process.
-A change that needs more than this is unlikely to be accepted — open an issue
-first and let us talk it through.
+WebView, and no runtime dependency outside the standard library and the two
+Package Control libraries it declares. It starts a process in two places, both
+of them narrow: `Open in Browser`, which is an export off the preview path,
+and the SVG renderer, which converts an image the preview cannot decode into
+one it can and is described in
+[ADR 0019](docs/adr/0019-svg-is-drawn-by-a-local-renderer.md). A change that
+needs more than this is unlikely to be accepted — open an issue first and let
+us talk it through.

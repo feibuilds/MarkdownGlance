@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A local drawing, with a sibling PNG inside it. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="180" height="60" viewBox="0 0 180 60">
+  <rect width="180" height="60" fill="#4f8cc9"/>
+  <circle cx="30" cy="30" r="20" fill="#ffffff"/>
+  <text x="60" y="37" font-family="DejaVu Sans, Arial, sans-serif" font-size="18"
+        fill="#ffffff">local SVG</text>
+  <image href="checker.png" xlink:href="checker.png" x="150" y="15" width="20" height="20"/>
+</svg>

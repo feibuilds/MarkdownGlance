@@ -26,6 +26,9 @@ POLICY_KEYS = frozenset(
         "remote_timeout_seconds",
         "remote_max_bytes",
         "remote_max_dimension",
+        "enable_svg",
+        "svg_renderer_path",
+        "svg_timeout_seconds",
     )
 )
 

@@ -56,6 +56,7 @@ every check passed. Evidence goes to `/tmp/mdglance-st/evidence/<scenario>-<time
 .claude/skills/run-markdownglance/drive.sh preview_switch # scroll, switch document, switch back
 .claude/skills/run-markdownglance/drive.sh panel_navigation # a panel click moves both panes
 .claude/skills/run-markdownglance/drive.sh zoom_reach     # zoom keys and wheel, real input
+.claude/skills/run-markdownglance/drive.sh svg_render      # local SVG, badge and WebP, needs network and resvg
 .claude/skills/run-markdownglance/drive.sh math --xvfb   # same, on a private X server
 ```
 

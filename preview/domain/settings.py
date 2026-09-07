@@ -48,6 +48,24 @@ def _https_server(
     return value.rstrip("/")
 
 
+def _path(
+    values: Mapping[str, Any],
+    key: str,
+    default: str,
+    warn: Callable[[str], None],
+) -> str:
+    """A path to an executable the preview may run: a string, or the default.
+
+    Only a path; the arguments it is run with are the package's own, so this
+    cannot become an arbitrary command line.
+    """
+    value = values.get(key, default)
+    if not isinstance(value, str):
+        warn("Invalid setting {!r}; using default".format(key))
+        return default
+    return value
+
+
 def parse_settings(
     values: Mapping[str, Any], warn: Optional[Callable[[str], None]] = None
 ) -> RenderSettings:
@@ -75,6 +93,19 @@ def parse_settings(
             values,
             "remote_timeout_seconds",
             defaults.remote_timeout_seconds,
+            1,
+            120,
+            False,
+            report,
+        ),
+        enable_svg=_boolean(values, "enable_svg", defaults.enable_svg, report),
+        svg_renderer_path=_path(
+            values, "svg_renderer_path", defaults.svg_renderer_path, report
+        ),
+        svg_timeout_seconds=_number(
+            values,
+            "svg_timeout_seconds",
+            defaults.svg_timeout_seconds,
             1,
             120,
             False,

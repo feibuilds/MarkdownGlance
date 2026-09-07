@@ -4,7 +4,12 @@ import struct
 import unittest
 
 from MarkdownGlance.preview.assets.cache import AssetCache
-from MarkdownGlance.preview.assets.images import InvalidImage, detect
+from MarkdownGlance.preview.assets.images import (
+    InvalidImage,
+    SvgImage,
+    UnsupportedImage,
+    detect,
+)
 from MarkdownGlance.preview.assets.policy import NetworkPolicy
 from MarkdownGlance.preview.domain.contracts import (
     AssetKey,
@@ -46,6 +51,39 @@ class AssetTest(unittest.TestCase):
     def test_rejects_non_image(self):
         with self.assertRaises(InvalidImage):
             detect(io.BytesIO(b"not an image"))
+
+    def test_svg_behind_a_prologue_is_an_svg_rather_than_malformed(self):
+        prologued = (
+            b'<?xml version="1.0" encoding="UTF-8"?>\n'
+            b"<!-- drawn by hand -->\n"
+            b'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "svg11.dtd">\n'
+            b'<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"/>'
+        )
+        for content in (b"<svg/>", b"\xef\xbb\xbf<svg >", prologued):
+            # An SVG has a way through -- the local renderer draws it as a PNG
+            # -- so it is told apart from the formats that have none.
+            with self.assertRaises(SvgImage):
+                detect(io.BytesIO(content))
+
+    def test_the_other_formats_a_browser_draws_are_unsupported_too(self):
+        for content in (
+            b"RIFF\x24\x00\x00\x00WEBPVP8 ",
+            b"BM" + b"\x00" * 30,
+            b"II*\x00" + b"\x00" * 28,
+            b"\x00\x00\x01\x00\x01\x00" + b"\x00" * 26,
+            b"\x00\x00\x00\x20ftypavif" + b"\x00" * 20,
+        ):
+            with self.assertRaises(UnsupportedImage) as raised:
+                detect(io.BytesIO(content))
+            self.assertNotIsInstance(raised.exception, SvgImage)
+
+    def test_an_html_page_is_a_broken_link_not_a_format(self):
+        # An error page served where an image was expected has an inline icon
+        # in it often enough that searching for `<svg` would mislabel it.
+        page = b"<!DOCTYPE html>\n<html><body><svg viewBox='0 0 1 1'/></body></html>"
+        with self.assertRaises(InvalidImage) as raised:
+            detect(io.BytesIO(page))
+        self.assertNotIsInstance(raised.exception, UnsupportedImage)
 
     def test_lru_evicts_by_data_uri_cost(self):
         cache = AssetCache(max_bytes=8)

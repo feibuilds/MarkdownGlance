@@ -174,6 +174,12 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
                 "remote_timeout_seconds": settings.remote_timeout_seconds,
                 "remote_max_bytes": settings.remote_max_bytes,
                 "remote_max_dimension": settings.remote_max_dimension,
+                "enable_svg": settings.enable_svg,
+                "svg_timeout_seconds": settings.svg_timeout_seconds,
+                # Whether a renderer was found, not where it is: the path is
+                # the user's, and "my SVGs do not appear" only needs the
+                # boolean.
+                "svg_renderer_found": container.svg_renderer_found(),
                 "toc_minimum_length": settings.toc_minimum_length,
                 "toc_minimum_headings": settings.toc_minimum_headings,
                 "debug_logging": settings.debug_logging,
