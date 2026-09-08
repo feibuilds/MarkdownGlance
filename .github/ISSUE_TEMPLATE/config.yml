@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Migrating from MarkdownLivePreview
-    url: https://github.com/pandadolphin/MarkdownGlance/blob/main/docs/migration.md
+    url: https://github.com/feibuilds/MarkdownGlance/blob/main/docs/migration.md
     about: Shortcut overlap and coexistence are covered here.
   - name: Settings reference
-    url: https://github.com/pandadolphin/MarkdownGlance/blob/main/MarkdownGlance.sublime-settings
+    url: https://github.com/feibuilds/MarkdownGlance/blob/main/MarkdownGlance.sublime-settings
     about: Every setting with its default and a comment.

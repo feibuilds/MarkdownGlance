@@ -1,6 +1,6 @@
 # MarkdownGlance
 
-[![CI](https://github.com/pandadolphin/MarkdownGlance/actions/workflows/markdown-glance.yml/badge.svg)](https://github.com/pandadolphin/MarkdownGlance/actions/workflows/markdown-glance.yml)
+[![CI](https://github.com/feibuilds/MarkdownGlance/actions/workflows/markdown-glance.yml/badge.svg)](https://github.com/feibuilds/MarkdownGlance/actions/workflows/markdown-glance.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Sublime Text](https://img.shields.io/badge/Sublime%20Text-4200%2B-orange.svg)](https://www.sublimetext.com/)
 
@@ -58,7 +58,7 @@ Until it is approved, use one of the manual methods below.
 
 No Git or command line is needed.
 
-1. Go to the [latest release](https://github.com/pandadolphin/MarkdownGlance/releases/latest).
+1. Go to the [latest release](https://github.com/feibuilds/MarkdownGlance/releases/latest).
 2. Under **Assets**, download **Source code (zip)** and unzip it.
 3. Rename the extracted folder to exactly `MarkdownGlance`, removing the
    version number from its name.
@@ -78,7 +78,7 @@ Open **Preferences → Browse Packages…**, then open a terminal in that direct
 and run:
 
 ```bash
-git clone https://github.com/pandadolphin/MarkdownGlance.git MarkdownGlance
+git clone https://github.com/feibuilds/MarkdownGlance.git MarkdownGlance
 ```
 
 Run **Package Control: Satisfy Libraries** from the Command Palette, then
@@ -281,7 +281,7 @@ Sublime Text 4.
 
 ## My Markdown workflow
 
-I use [Auto Save After Delay](https://github.com/pandadolphin/sublime-auto-save-after-delay)
+I use [Auto Save After Delay](https://github.com/feibuilds/sublime-auto-save-after-delay)
 alongside MarkdownGlance. MarkdownGlance keeps the preview up to date while I
 write; Auto Save After Delay saves the file when I pause typing.
 

@@ -153,7 +153,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   in the colour scheme's foreground, the way a Mermaid diagram is, under the
   same HTTPS, timeout, size, cache and one-time privacy caption rules. Off, a
   formula is shown as its source in a code span or block. Asked for in
-  [#2](https://github.com/pandadolphin/MarkdownGlance/issues/2); see
+  [#2](https://github.com/feibuilds/MarkdownGlance/issues/2); see
   [ADR 0013](docs/adr/0013-latex-math-as-a-baked-image.md).
 
 - **`Open in Browser` renders Mermaid diagrams and LaTeX math.** A Mermaid
@@ -469,16 +469,16 @@ First public release.
 - `MarkdownGlance: Copy Diagnostics`, which redacts source text, paths, URLs
   and Mermaid payloads.
 
-[Unreleased]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.2...HEAD
-[0.4.2]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.1...0.4.2
-[0.4.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.4.0...0.4.1
-[0.4.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.1...0.4.0
-[0.3.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.3.0...0.3.1
-[0.3.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.2.1...0.3.0
-[0.2.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.2.0...0.2.1
-[0.2.0]: https://github.com/pandadolphin/MarkdownGlance/compare/0.1.4...0.2.0
-[0.1.4]: https://github.com/pandadolphin/MarkdownGlance/compare/0.1.3...0.1.4
-[0.1.3]: https://github.com/pandadolphin/MarkdownGlance/compare/0.1.2...0.1.3
-[0.1.2]: https://github.com/pandadolphin/MarkdownGlance/compare/0.1.1...0.1.2
-[0.1.1]: https://github.com/pandadolphin/MarkdownGlance/compare/0.1.0...0.1.1
-[0.1.0]: https://github.com/pandadolphin/MarkdownGlance/releases/tag/0.1.0
+[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.2...HEAD
+[0.4.2]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.1...0.4.2
+[0.4.1]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.0...0.4.1
+[0.4.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.3.1...0.4.0
+[0.3.1]: https://github.com/feibuilds/MarkdownGlance/compare/0.3.0...0.3.1
+[0.3.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.2.1...0.3.0
+[0.2.1]: https://github.com/feibuilds/MarkdownGlance/compare/0.2.0...0.2.1
+[0.2.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.1.4...0.2.0
+[0.1.4]: https://github.com/feibuilds/MarkdownGlance/compare/0.1.3...0.1.4
+[0.1.3]: https://github.com/feibuilds/MarkdownGlance/compare/0.1.2...0.1.3
+[0.1.2]: https://github.com/feibuilds/MarkdownGlance/compare/0.1.1...0.1.2
+[0.1.1]: https://github.com/feibuilds/MarkdownGlance/compare/0.1.0...0.1.1
+[0.1.0]: https://github.com/feibuilds/MarkdownGlance/releases/tag/0.1.0

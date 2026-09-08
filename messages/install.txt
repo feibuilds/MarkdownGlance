@@ -3,4 +3,4 @@ MarkdownGlance previews Markdown in the same Sublime Text window.
 Open a Markdown file and run "MarkdownGlance: Open Preview to the Side".
 Mermaid and LaTeX math rendering are off by default; enabling either sends
 diagram or formula source to the configured server. Remote images are fetched under size and timeout
-limits. Details: https://github.com/pandadolphin/MarkdownGlance#readme
+limits. Details: https://github.com/feibuilds/MarkdownGlance#readme

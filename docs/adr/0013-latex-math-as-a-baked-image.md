@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-[Issue #2](https://github.com/pandadolphin/MarkdownGlance/issues/2) asks for
+[Issue #2](https://github.com/feibuilds/MarkdownGlance/issues/2) asks for
 LaTeX math in the preview. The preview is drawn by minihtml, which runs no
 JavaScript, lays out no MathML and decodes no SVG, so KaTeX and MathJax are
 not available to it and neither is their output. What minihtml can show is a

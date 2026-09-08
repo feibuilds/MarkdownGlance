@@ -7,7 +7,7 @@ The latest released version is the only one that receives fixes.
 ## Reporting a vulnerability
 
 Report privately through GitHub's
-[security advisory form](https://github.com/pandadolphin/MarkdownGlance/security/advisories/new).
+[security advisory form](https://github.com/feibuilds/MarkdownGlance/security/advisories/new).
 Please do not open a public issue for a vulnerability. Expect an
 acknowledgement within a week.
 

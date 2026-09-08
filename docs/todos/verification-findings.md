@@ -10,7 +10,7 @@
 
 Status: reproduced in `cfdaf25` (0.4.2). Fixed in the working tree and
 verified on real Windows; not committed, so not closed. Tracked as
-[issue #3](https://github.com/pandadolphin/MarkdownGlance/issues/3).
+[issue #3](https://github.com/feibuilds/MarkdownGlance/issues/3).
 
 Evidence: [Windows Finding 1](../verification/windows-2026-09-06.md#finding-1-absolute-local-image-paths-do-not-resolve-on-windows),
 and the post-fix run in
@@ -38,7 +38,7 @@ with `preview/domain/paths.py` when fixing it.
 Status: reproduced in `cfdaf25` (0.4.2) on Windows and Linux. Fixed in the
 working tree and verified on both; not committed, so not closed. macOS was not
 tested. Tracked as
-[issue #4](https://github.com/pandadolphin/MarkdownGlance/issues/4).
+[issue #4](https://github.com/feibuilds/MarkdownGlance/issues/4).
 
 Evidence: [Windows Finding 2 and Linux confirmation](../verification/windows-2026-09-06.md#finding-2-the-outline-is-carved-out-of-the-table-of-contents-group).
 
