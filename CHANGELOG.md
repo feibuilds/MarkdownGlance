@@ -6,7 +6,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-15
+
 ### Changed
+
+- **The install note tells a first-time user how to open the preview.** The
+  message Package Control shows once after installing gives the quick start,
+  the key bindings per platform, which features are opt-in and why, and where
+  the settings are. It used to describe another package.
 
 - **Clicking a heading in the contents panel now takes you there in both
   panes.** It used to move only the pane the panel's current half belonged to,
@@ -469,7 +476,8 @@ First public release.
 - `MarkdownGlance: Copy Diagnostics`, which redacts source text, paths, URLs
   and Mermaid payloads.
 
-[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.2...HEAD
+[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.2...0.5.0
 [0.4.2]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.3.1...0.4.0
