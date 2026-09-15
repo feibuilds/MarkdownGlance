@@ -1,6 +1,45 @@
-MarkdownGlance previews Markdown in the same Sublime Text window.
+MarkdownGlance
+==============
 
-Open a Markdown file and run "MarkdownGlance: Open Preview to the Side".
-Mermaid and LaTeX math rendering are off by default; enabling either sends
-diagram or formula source to the configured server. Remote images are fetched under size and timeout
-limits. Details: https://github.com/feibuilds/MarkdownGlance#readme
+Thank you for installing MarkdownGlance. It previews Markdown inside
+Sublime Text: no browser, no server, and the colours follow your color
+scheme.
+
+Quick start
+-----------
+1. Open a Markdown file.
+2. Press Ctrl+K, V (macOS: Cmd+K, V) to open the preview beside it, or
+   Ctrl+Shift+V (macOS: Cmd+Shift+V) for a full-screen preview.
+3. Keep typing. The preview updates as you edit, even before you save.
+
+Every command is also in the Command Palette under "MarkdownGlance:".
+
+Key bindings (Windows/Linux; macOS uses Cmd instead of Ctrl)
+------------------------------------------------------------
+Ctrl+K, V           Open Preview to the Side
+Ctrl+Shift+V        Toggle full-screen preview
+Ctrl+Shift+B        Toggle the contents panel: source outline while you
+                    edit, table of contents while you read
+Ctrl+=  Ctrl+-      Zoom in / out (also Ctrl + mouse wheel over the preview)
+Ctrl+0              Reset zoom
+
+Optional features
+-----------------
+- Mermaid diagrams and LaTeX math are off by default. Turning either on
+  sends the diagram or formula source to a rendering server
+  (mermaid.ink and latex.codecogs.com by default). Set "enable_mermaid"
+  or "enable_math" to true if that is acceptable to you.
+- SVG images (diagrams, README badges) need resvg installed on your PATH.
+  Nothing is uploaded; without resvg the image says so in place.
+- Remote images are fetched over HTTPS only, under size and timeout limits.
+- "Open in Browser" shows the document as a web page, including WebP
+  images that the preview cannot draw.
+
+Settings
+--------
+Preferences → Package Settings → MarkdownGlance → Settings
+
+Something wrong? Run "MarkdownGlance: Copy Diagnostics" and paste the
+result into an issue (https://github.com/feibuilds/MarkdownGlance/issues).
+
+Details: https://github.com/feibuilds/MarkdownGlance#readme
