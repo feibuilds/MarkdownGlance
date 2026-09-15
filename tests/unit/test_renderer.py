@@ -102,6 +102,17 @@ Unicode: 中文 café 😀
         self.assertNotIn("file:///secret", body)
         self.assertEqual(body.count('class="blocked-link"'), 3)
 
+    def test_sup_and_sub_become_raised_spans(self):
+        # minihtml has no <sup> or <sub>, so each becomes a span whose class
+        # preview.css raises or lowers; the browser page keeps the real tag.
+        markdown = "H<sub>2</sub>O and x<sup>2</sup>, <sup class=\"x\" onclick=\"steal()\">1</sup>"
+        body = render(request(markdown), FakeResolver()).body_html
+        self.assertIn('H<span class="sub">2</span>O', body)
+        self.assertIn('x<span class="sup">2</span>', body)
+        self.assertIn('<span class="sup">1</span>', body)
+        self.assertNotIn("onclick", body)
+        self.assertNotIn("<sup", body)
+
     def test_relative_link_uses_opaque_index_and_token(self):
         document = render(request("[next](notes/next.md)"), FakeResolver())
         self.assertEqual(document.links, ("notes/next.md",))

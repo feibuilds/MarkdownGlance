@@ -58,6 +58,22 @@ p {
     margin: 0 0 0.9rem;
 }
 
+/* minihtml has no <sup> or <sub>; the renderer turns each into a span with
+   the tag as its class, and these raise or lower it off the baseline. */
+.sup,
+.sub {
+    font-size: 0.75em;
+    position: relative;
+}
+
+.sup {
+    top: -0.45em;
+}
+
+.sub {
+    top: 0.25em;
+}
+
 a {
     color: var(--preview-link);
     text-decoration: underline;

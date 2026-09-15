@@ -6,6 +6,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`<sup>` and `<sub>` in raw HTML are raised and lowered in the preview.**
+  minihtml does not implement either tag, so `x<sup>2</sup>` used to show as
+  `x2`. Each is now a span that `preview.css` shrinks and moves off the
+  baseline, which minihtml can do; the line height is unchanged, and the
+  browser page keeps the real tags. Reported in
+  [#2](https://github.com/feibuilds/MarkdownGlance/issues/2).
+
 ## [0.5.0] - 2026-09-15
 
 ### Changed

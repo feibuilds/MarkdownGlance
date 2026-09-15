@@ -50,6 +50,7 @@ ALLOWED_TAGS = frozenset(
         "div",
     )
 )
+RAISED_TAGS = frozenset(("sup", "sub"))
 DROP_CONTENT_TAGS = frozenset(("script", "style", "iframe", "object", "embed"))
 VOID_TAGS = frozenset(("img", "br", "hr"))
 CLASS_TOKEN = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -192,6 +193,10 @@ def _serialise_node(
         )
         for child in node.children
     )
+    if node.tag in RAISED_TAGS:
+        # minihtml has no <sup> or <sub>, but it can shrink a span and move it
+        # off the baseline, which is what the two classes in preview.css do.
+        return '<span class="{}">{}</span>'.format(node.tag, body)
     if node.tag not in ALLOWED_TAGS:
         return body
 
