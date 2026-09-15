@@ -61,6 +61,7 @@ class SchedulerTest(unittest.TestCase):
         self.executor = ManualExecutor()
         self.presented = []
         self.errors = []
+        self.reported = []
         self.scheduler = GenerationScheduler(
             lambda session_id: self.session if session_id == "s" else None,
             lambda session, generation: RenderRequest(
@@ -78,6 +79,7 @@ class SchedulerTest(unittest.TestCase):
             self.executor,
             self.clock,
             lambda callback: callback(),
+            lambda session, stage, error: self.reported.append((stage, error)),
         )
 
     def test_latest_wins_and_only_one_render_is_in_flight(self):
@@ -125,3 +127,63 @@ class SchedulerTest(unittest.TestCase):
         self.assertEqual(self.executor.calls[1][1].generation, 2)
         self.executor.complete(1, document(2))
         self.assertEqual(self.presented, [2])
+
+    def test_a_failure_the_pipeline_named_keeps_its_stage_and_its_exception(self):
+        cause = ModuleNotFoundError("No module named 'pymdownx.superfences'")
+        self.scheduler.request_render("s")
+        self.clock.fire_latest()
+        self.executor.complete(
+            0, error=RenderFailure.wrap(DiagnosticStage.PARSE, cause)
+        )
+        self.assertEqual(
+            self.errors,
+            [
+                (
+                    DiagnosticStage.PARSE,
+                    "ModuleNotFoundError: No module named 'pymdownx.superfences'",
+                )
+            ],
+        )
+        self.assertEqual(self.reported, [(DiagnosticStage.PARSE, cause)])
+        self.assertEqual(self.session.state, SessionState.ERROR)
+
+    def test_an_exception_from_outside_the_pipeline_is_described_not_hidden(self):
+        error = RuntimeError("pool is closed")
+        self.scheduler.request_render("s")
+        self.clock.fire_latest()
+        self.executor.complete(0, error=error)
+        self.assertEqual(
+            self.errors, [(DiagnosticStage.SERIALISE, "RuntimeError: pool is closed")]
+        )
+        self.assertEqual(self.reported, [(DiagnosticStage.SERIALISE, error)])
+
+    def test_a_snapshot_failure_is_described_and_reported(self):
+        error = RuntimeError("source view is gone")
+
+        def failing_snapshot(session, generation):
+            raise error
+
+        self.scheduler._snapshot = failing_snapshot
+        self.scheduler.request_render("s")
+        self.clock.fire_latest()
+        self.assertEqual(
+            self.errors, [(DiagnosticStage.PARSE, "RuntimeError: source view is gone")]
+        )
+        self.assertEqual(self.reported, [(DiagnosticStage.PARSE, error)])
+        self.assertEqual(self.session.state, SessionState.ERROR)
+
+    def test_a_scheduler_without_a_reporter_still_presents_the_failure(self):
+        scheduler = GenerationScheduler(
+            lambda session_id: self.session,
+            self.scheduler._snapshot,
+            self.scheduler._render,
+            lambda session, doc: None,
+            lambda session, stage, message: self.errors.append((stage, message)),
+            self.executor,
+            self.clock,
+            lambda callback: callback(),
+        )
+        scheduler.request_render("s")
+        self.clock.fire_latest()
+        self.executor.complete(0, error=ValueError("bad"))
+        self.assertEqual(self.errors, [(DiagnosticStage.SERIALISE, "ValueError: bad")])

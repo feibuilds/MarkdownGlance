@@ -58,6 +58,7 @@ every check passed. Evidence goes to `/tmp/mdglance-st/evidence/<scenario>-<time
 .claude/skills/run-markdownglance/drive.sh zoom_reach     # zoom keys and wheel, real input
 .claude/skills/run-markdownglance/drive.sh svg_render      # local SVG, badge and WebP, needs network and resvg
 .claude/skills/run-markdownglance/drive.sh supsub          # raw <sup> and <sub> as raised and lowered spans
+.claude/skills/run-markdownglance/drive.sh render_failure  # a broken engine: the card names the stage and the exception, diagnostics carry the traceback
 .claude/skills/run-markdownglance/drive.sh math --xvfb   # same, on a private X server
 ```
 

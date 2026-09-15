@@ -2,7 +2,7 @@ from concurrent.futures import Executor
 from typing import Callable, Dict, Optional
 
 from ..domain.contracts import AssetKey, DiagnosticStage, PreviewDocument, RenderRequest
-from .errors import RenderFailure
+from .errors import RenderFailure, describe
 from .ports import Clock, RunOnUi
 from .session import PreviewSession, SessionState
 
@@ -18,12 +18,18 @@ class GenerationScheduler:
         executor: Executor,
         clock: Clock,
         run_on_ui: RunOnUi,
+        report_failure: Optional[
+            Callable[[PreviewSession, DiagnosticStage, BaseException], None]
+        ] = None,
     ) -> None:
         self._session = sessions
         self._snapshot = snapshot
         self._render = render
         self._present = present
         self._present_error = present_error
+        # The exception behind a failure, for the console and the diagnostics.
+        # The card gets one line of it; this gets the traceback.
+        self._report_failure = report_failure
         self._executor = executor
         self._clock = clock
         self._run_on_ui = run_on_ui
@@ -57,7 +63,9 @@ class GenerationScheduler:
             request = self._snapshot(session, generation)
         except Exception as error:
             session.completed_generation = generation
-            self._apply_failure(session, DiagnosticStage.PARSE, "Snapshot failed")
+            self._apply_failure(
+                session, DiagnosticStage.PARSE, describe(error), error
+            )
             return
         future = self._executor.submit(self._render, request)
         session.inflight_generation = generation
@@ -81,10 +89,16 @@ class GenerationScheduler:
             document = future.result()
         except RenderFailure as error:
             if generation == session.requested_generation:
-                self._apply_failure(session, error.stage, error.safe_message)
-        except Exception:
+                self._apply_failure(
+                    session, error.stage, error.safe_message, error.cause or error
+                )
+        except Exception as error:
+            # The pipeline names its stage; anything else that reaches here
+            # was raised outside it, and is still worth a traceback.
             if generation == session.requested_generation:
-                self._apply_failure(session, DiagnosticStage.SERIALISE, "Render failed")
+                self._apply_failure(
+                    session, DiagnosticStage.SERIALISE, describe(error), error
+                )
         else:
             if generation == session.requested_generation:
                 session.last_document = document
@@ -100,8 +114,14 @@ class GenerationScheduler:
             self._dispatch(session_id, session.requested_generation)
 
     def _apply_failure(
-        self, session: PreviewSession, stage: DiagnosticStage, message: str
+        self,
+        session: PreviewSession,
+        stage: DiagnosticStage,
+        message: str,
+        error: Optional[BaseException] = None,
     ) -> None:
+        if error is not None and self._report_failure is not None:
+            self._report_failure(session, stage, error)
         self._present_error(session, stage, message)
         session.state = SessionState.ERROR
 

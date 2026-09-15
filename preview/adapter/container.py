@@ -1,10 +1,12 @@
 import json
 import os.path
 import time
+import traceback
 from typing import Optional
 
 import sublime
 
+from ..application.errors import describe
 from ..application.panel import PanelController
 from ..application.render_pipeline import render
 from ..application.scheduler import GenerationScheduler
@@ -67,6 +69,10 @@ class Container:
         # it is the only view of that cost there is from here.
         self.recent_renders = []
         self.recent_paints = []
+        # The last failure's stage, one-line description and traceback, for
+        # `mdglance_copy_diagnostics`: the card in the preview shows the line,
+        # an issue needs the frames.
+        self.last_error = None
         self._theme_callbacks = {}
 
     def build(self) -> None:
@@ -109,6 +115,7 @@ class Container:
             self.executors.render,
             self.clock,
             lambda callback: sublime.set_timeout(callback, 0),
+            self.report_failure,
         )
         base_css = sublime.load_resource(
             "Packages/MarkdownGlance/resources/preview.css"
@@ -249,6 +256,26 @@ class Container:
     def present_error(self, session, stage, message) -> None:
         self.record_stage("error:{}".format(stage.value))
         self.usecases.present_error(session, stage, message)
+
+    def report_failure(self, session, stage, error) -> None:
+        """Put the traceback where a reader can find it.
+
+        The console always gets it, `debug_logging` or not: a preview that
+        shows an error card and a console that says nothing about it was what
+        issue #5 had to work with. The frames also go into the diagnostics,
+        which is what an issue report carries.
+        """
+        frames = traceback.format_exception(type(error), error, error.__traceback__)
+        self.last_error = {
+            "stage": stage.value,
+            "message": describe(error),
+            "traceback": "".join(frames).rstrip().splitlines(),
+        }
+        print(
+            "MarkdownGlance: {} failed for {}\n{}".format(
+                stage.value, session.id, "".join(frames).rstrip()
+            )
+        )
 
     def _settings_changed(self, render_required: bool, policy_changed: bool) -> None:
         if policy_changed:

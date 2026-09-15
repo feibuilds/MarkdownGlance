@@ -6,6 +6,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A render failure now says what failed, and where the traceback is.**
+  Every exception on the render pool used to become the card "Serialise /
+  Render failed", with nothing in the console and nothing more in the
+  diagnostics -- which is all
+  [#5](https://github.com/feibuilds/MarkdownGlance/issues/5) had to go on.
+  The pipeline now names the stage that failed (parse, asset or serialise),
+  the card carries the exception's class and message, the traceback is
+  printed to the console whether or not `debug_logging` is on, and **Copy
+  Diagnostics** carries it under `last_error` together with the version and
+  location of the `Markdown` and `pymdown-extensions` this host actually
+  imports, or the error if it cannot.
+
 ## [0.5.1] - 2026-09-15
 
 ### Fixed

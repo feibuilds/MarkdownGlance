@@ -1,3 +1,4 @@
+import importlib
 import json
 import os
 import platform
@@ -156,6 +157,23 @@ class MdglanceOpenRelativeCommand(sublime_plugin.WindowCommand):
         container.usecases.open_relative(self.window, token, path)
 
 
+def _library_report():
+    from ..renderer.markdown_engine import LIBRARIES
+
+    report = {}
+    for module_name, library in LIBRARIES:
+        try:
+            module = importlib.import_module(module_name)
+        except Exception as error:  # an import can fail with anything
+            report[library] = {"error": "{}: {}".format(type(error).__name__, error)}
+            continue
+        report[library] = {
+            "version": str(getattr(module, "__version__", "")),
+            "location": os.path.dirname(getattr(module, "__file__", "") or ""),
+        }
+    return report
+
+
 class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
     def run(self):
         settings = container.settings.get()
@@ -190,6 +208,12 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
             # the HTML had not changed.
             "recent_renders": list(container.recent_renders),
             "recent_paints": list(container.recent_paints),
+            # The last render or snapshot failure with its traceback, or None.
+            "last_error": container.last_error,
+            # Which Markdown and pymdown-extensions this host imports, from
+            # where -- or why it cannot. `find_spec` at load only says the
+            # module exists; an import is what a render actually does.
+            "libraries": _library_report(),
         }
         sublime.set_clipboard(json.dumps(payload, indent=2, sort_keys=True))
         sublime.status_message("MarkdownGlance diagnostics copied")

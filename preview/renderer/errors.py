@@ -48,7 +48,12 @@ def asset_placeholder(
     return '<div class="mdglance-asset-placeholder">{}</div>'.format(detail)
 
 
+# Where the rest of a failure went. The card carries one line of it.
+ERROR_NOTE = "Traceback: View > Show Console, or MarkdownGlance: Copy Diagnostics."
+
+
 def error_card(stage: DiagnosticStage, message: str) -> str:
-    return '<div class="mdglance-error"><strong>{}</strong><br />{}</div>'.format(
-        escape(stage.value.title()), escape(message)
-    )
+    return (
+        '<div class="mdglance-error"><strong>{}</strong><br />{}'
+        "<br /><span>{}</span></div>"
+    ).format(escape(stage.value.title()), escape(message), escape(ERROR_NOTE))
