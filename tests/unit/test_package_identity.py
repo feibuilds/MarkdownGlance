@@ -80,9 +80,9 @@ class PackageIdentityTest(unittest.TestCase):
         # Package Control shows a message once and then it is gone, and users
         # do not read a note for every release. Only a change that needs an
         # action from the user earns one, and it stays short and links the
-        # changelog. The install note is the exception: it is the one message
-        # a first-time user does read, so it has room for the quick start and
-        # the key bindings, bounded so it stays one screen.
+        # changelog. The install note is the one message a first-time user does
+        # read, so it gets the quick start and the key bindings, in a few
+        # lines and a link, as the channel reviewer asked.
         messages = self.load("messages.json")
         self.assertEqual(messages["install"], "messages/install.txt")
         with open(os.path.join(ROOT, "CHANGELOG.md"), encoding="utf-8") as source:
@@ -91,7 +91,7 @@ class PackageIdentityTest(unittest.TestCase):
             self.assertTrue(key == "install" or key in released, key)
             with open(os.path.join(ROOT, path), encoding="utf-8") as source:
                 lines = source.read().rstrip("\n").split("\n")
-            self.assertLessEqual(len(lines), 50 if key == "install" else 8, path)
+            self.assertLessEqual(len(lines), 16 if key == "install" else 8, path)
             if key != "install":
                 self.assertIn("CHANGELOG", "\n".join(lines), path)
 

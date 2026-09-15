@@ -1,45 +1,13 @@
-MarkdownGlance
-==============
+MarkdownGlance previews Markdown inside Sublime Text. No browser needed,
+and the colours follow your color scheme.
 
-Thank you for installing MarkdownGlance. It previews Markdown inside
-Sublime Text: no browser, no server, and the colours follow your color
-scheme.
+Open a Markdown file and press Ctrl+K, V (macOS: Cmd+K, V) for a preview
+beside it, or Ctrl+Shift+V (Cmd+Shift+V) for a full-screen one. It updates
+as you type. Ctrl+Shift+B (Cmd+Shift+B) opens the contents panel. Every
+command is in the Command Palette under "MarkdownGlance:".
 
-Quick start
------------
-1. Open a Markdown file.
-2. Press Ctrl+K, V (macOS: Cmd+K, V) to open the preview beside it, or
-   Ctrl+Shift+V (macOS: Cmd+Shift+V) for a full-screen preview.
-3. Keep typing. The preview updates as you edit, even before you save.
+Mermaid diagrams and LaTeX math are off by default: turning either on sends
+diagram or formula source to a rendering server. SVG images need resvg.
 
-Every command is also in the Command Palette under "MarkdownGlance:".
-
-Key bindings (Windows/Linux; macOS uses Cmd instead of Ctrl)
-------------------------------------------------------------
-Ctrl+K, V           Open Preview to the Side
-Ctrl+Shift+V        Toggle full-screen preview
-Ctrl+Shift+B        Toggle the contents panel: source outline while you
-                    edit, table of contents while you read
-Ctrl+=  Ctrl+-      Zoom in / out (also Ctrl + mouse wheel over the preview)
-Ctrl+0              Reset zoom
-
-Optional features
------------------
-- Mermaid diagrams and LaTeX math are off by default. Turning either on
-  sends the diagram or formula source to a rendering server
-  (mermaid.ink and latex.codecogs.com by default). Set "enable_mermaid"
-  or "enable_math" to true if that is acceptable to you.
-- SVG images (diagrams, README badges) need resvg installed on your PATH.
-  Nothing is uploaded; without resvg the image says so in place.
-- Remote images are fetched over HTTPS only, under size and timeout limits.
-- "Open in Browser" shows the document as a web page, including WebP
-  images that the preview cannot draw.
-
-Settings
---------
-Preferences → Package Settings → MarkdownGlance → Settings
-
-Something wrong? Run "MarkdownGlance: Copy Diagnostics" and paste the
-result into an issue (https://github.com/feibuilds/MarkdownGlance/issues).
-
-Details: https://github.com/feibuilds/MarkdownGlance#readme
+Settings: Preferences → Package Settings → MarkdownGlance
+Key bindings, options and more: https://github.com/feibuilds/MarkdownGlance#readme
