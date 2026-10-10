@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-10-10
+
 ### Fixed
 
 - **A render failure now says what failed, and where the traceback is.**
@@ -501,7 +503,8 @@ First public release.
 - `MarkdownGlance: Copy Diagnostics`, which redacts source text, paths, URLs
   and Mermaid payloads.
 
-[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.1...HEAD
+[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.2...HEAD
+[0.5.2]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.1...0.5.2
 [0.5.1]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.2...0.5.0
 [0.4.2]: https://github.com/feibuilds/MarkdownGlance/compare/0.4.1...0.4.2
