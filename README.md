@@ -49,8 +49,14 @@ see [SVG images](#svg-images). Everything else works without it.
 
 ### Package Control
 
-The [Package Control submission is still pending](https://github.com/sublimehq/package_control_channel/pull/9539).
-Until it is approved, use one of the manual methods below.
+MarkdownGlance is on [Package Control](https://packagecontrol.io/packages/MarkdownGlance).
+
+1. Open the Command Palette (**Tools → Command Palette…**) and run
+   **Package Control: Install Package**.
+2. Type `MarkdownGlance` and press Enter.
+
+Package Control installs the libraries the preview needs, and updates the
+package when a new version is released.
 
 ### Manual installation
 
@@ -84,7 +90,7 @@ git clone https://github.com/feibuilds/MarkdownGlance.git MarkdownGlance
 Run **Package Control: Satisfy Libraries** from the Command Palette, then
 restart Sublime Text.
 
-#### Open your first preview
+### Open your first preview
 
 Open a Markdown file, then run **MarkdownGlance: Open Preview to the Side**
 from the Command Palette. The preview updates as you type.
