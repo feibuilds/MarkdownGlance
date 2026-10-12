@@ -1,4 +1,7 @@
 import importlib.util
+import os
+import re
+import sys
 import threading
 from typing import Dict, List, Optional, Protocol
 
@@ -7,7 +10,7 @@ from typing import Dict, List, Optional, Protocol
 # with it (ADR 0012). Nothing here imports them at module level: a package
 # whose import fails never loads at all, and a user whose libraries are not
 # installed yet would get a traceback where a message belongs. See
-# `missing_libraries`.
+# `missing_libraries` and `library_failure`.
 
 MARKDOWN_EXTENSIONS = (
     "pymdownx.superfences",
@@ -96,3 +99,55 @@ def default_engine() -> MarkdownEngine:
         if _default is None:
             _default = PythonMarkdownEngine()
         return _default
+
+
+def library_failure() -> Optional[BaseException]:
+    """What building the engine raises, or None when the libraries work.
+
+    `missing_libraries` says a module can be found, and a module that is found
+    is not always one that imports. Sublime Text 4213 and later run plugins
+    under Python 3.14 and keep `Lib/python38` on `sys.path`, so until the
+    libraries for 3.14 are installed the Markdown that was installed for 3.8
+    is the one found, and it fails inside its own import. Building the engine
+    is what a render does, so that is the test; once it succeeds it is the
+    engine every render shares, and asking again costs a lock.
+    """
+    try:
+        default_engine()
+    except Exception as error:  # an import can fail with anything
+        return error
+    return None
+
+
+def library_locations() -> Dict[str, str]:
+    """Where each library would be imported from, without importing it."""
+    locations = {}
+    for module, library in LIBRARIES:
+        try:
+            spec = importlib.util.find_spec(module)
+        except Exception:  # a half-imported module has no usable spec
+            spec = None
+        if spec is not None and spec.origin:
+            locations[library] = os.path.dirname(spec.origin)
+    return locations
+
+
+_HOST_DIRECTORY = re.compile(r"python(\d)(\d+)")
+
+
+def other_python(location: str) -> Optional[str]:
+    """The Python a library directory was filled for, when it is not this one.
+
+    Sublime Text keeps one library directory per plugin host, `python38` or
+    `python314`, and Package Control installs into the one for the host that
+    is running. `None` for that one, and for a path that is not such a
+    directory at all.
+    """
+    for part in reversed(os.path.normpath(location).split(os.sep)):
+        match = _HOST_DIRECTORY.fullmatch(part)
+        if match:
+            version = (int(match.group(1)), int(match.group(2)))
+            if version == tuple(sys.version_info[:2]):
+                return None
+            return "{}.{}".format(*version)
+    return None

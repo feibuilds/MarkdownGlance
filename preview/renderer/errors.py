@@ -51,9 +51,16 @@ def asset_placeholder(
 # Where the rest of a failure went. The card carries one line of it.
 ERROR_NOTE = "Traceback: View > Show Console, or MarkdownGlance: Copy Diagnostics."
 
+# The line it carries instead when the parser's libraries are what failed:
+# there is something to do, and the traceback is not it.
+LIBRARIES_NOTE = (
+    "The Markdown libraries could not be loaded. Run Package Control: Satisfy "
+    "Libraries, then restart Sublime Text."
+)
 
-def error_card(stage: DiagnosticStage, message: str) -> str:
+
+def error_card(stage: DiagnosticStage, message: str, note: str = ERROR_NOTE) -> str:
     return (
         '<div class="mdglance-error"><strong>{}</strong><br />{}'
         "<br /><span>{}</span></div>"
-    ).format(escape(stage.value.title()), escape(message), escape(ERROR_NOTE))
+    ).format(escape(stage.value.title()), escape(message), escape(note))

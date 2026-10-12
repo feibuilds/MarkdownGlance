@@ -25,6 +25,8 @@ from ..domain.paths import HOST
 from ..presentation import window_record
 from ..presentation.layout import LayoutOwner
 from ..presentation.phantom_view import PhantomViewBackend
+from ..renderer.errors import ERROR_NOTE, LIBRARIES_NOTE
+from ..renderer.markdown_engine import library_failure
 from ..renderer.stylesheet import root_font_px
 from ..renderer.tables import budgets
 from .clock import SublimeClock
@@ -255,7 +257,11 @@ class Container:
 
     def present_error(self, session, stage, message) -> None:
         self.record_stage("error:{}".format(stage.value))
-        self.usecases.present_error(session, stage, message)
+        # A command loads the libraries before it opens a preview; one that
+        # Sublime Text restores at startup renders without a command. If the
+        # engine cannot be built, that is the failure, whatever the stage.
+        note = LIBRARIES_NOTE if library_failure() is not None else ERROR_NOTE
+        self.usecases.present_error(session, stage, message, note)
 
     def report_failure(self, session, stage, error) -> None:
         """Put the traceback where a reader can find it.

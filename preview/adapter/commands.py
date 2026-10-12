@@ -48,24 +48,63 @@ LIBRARIES_MESSAGE = (
 )
 
 
-def libraries_missing(report=True):
-    """True, after telling the user what to do, when the parser is absent.
+UNUSABLE_MESSAGE = (
+    "MarkdownGlance cannot load its Package Control libraries under Python "
+    "{python}.\n\n"
+    "{error}\n\n"
+    "{found}\n\n"
+    "Run \"Package Control: Satisfy Libraries\" from the Command Palette, then "
+    "restart Sublime Text."
+)
 
-    The libraries are looked up without being imported, so this is cheap and
-    cannot itself fail.
-    """
-    from ..renderer.markdown_engine import missing_libraries
 
-    names = missing_libraries()
-    if names and report:
-        sublime.error_message(
-            LIBRARIES_MESSAGE.format(
-                plural="ies" if len(names) > 1 else "y",
-                names=" and ".join(names),
-                verb="are" if len(names) > 1 else "is",
+def _unusable_message(error):
+    from ..renderer.markdown_engine import library_locations, other_python
+
+    found = []
+    for library, location in sorted(library_locations().items()):
+        python = other_python(location)
+        found.append(
+            "{}: {}{}".format(
+                library,
+                location,
+                " (installed for Python {})".format(python) if python else "",
             )
         )
-    return bool(names)
+    return UNUSABLE_MESSAGE.format(
+        python="{}.{}".format(*sys.version_info[:2]),
+        error="{}: {}".format(type(error).__name__, error),
+        found="\n".join(found),
+    )
+
+
+def libraries_missing(report=True, load=True):
+    """True, after telling the user what to do, when the parser cannot be used.
+
+    The libraries are first looked up without being imported, which is cheap
+    and cannot itself fail. With `load` they are then loaded as a render
+    would load them, because one that is found may still be the copy another
+    Python left behind; see `library_failure`.
+    """
+    from ..renderer.markdown_engine import library_failure, missing_libraries
+
+    names = missing_libraries()
+    if names:
+        if report:
+            sublime.error_message(
+                LIBRARIES_MESSAGE.format(
+                    plural="ies" if len(names) > 1 else "y",
+                    names=" and ".join(names),
+                    verb="are" if len(names) > 1 else "is",
+                )
+            )
+        return True
+    error = library_failure() if load else None
+    if error is None:
+        return False
+    if report:
+        sublime.error_message(_unusable_message(error))
+    return True
 
 
 class MdglanceOpenSideBySideCommand(sublime_plugin.WindowCommand):

@@ -5,7 +5,11 @@ from MarkdownGlance.preview.application import render_pipeline
 from MarkdownGlance.preview.application.errors import RenderFailure, describe
 from MarkdownGlance.preview.domain.contracts import DiagnosticStage
 from MarkdownGlance.preview.renderer import markdown_engine
-from MarkdownGlance.preview.renderer.errors import ERROR_NOTE, error_card
+from MarkdownGlance.preview.renderer.errors import (
+    ERROR_NOTE,
+    LIBRARIES_NOTE,
+    error_card,
+)
 from MarkdownGlance.tests.unit.test_renderer import request
 
 
@@ -71,6 +75,15 @@ class RenderPipelineTest(unittest.TestCase):
         self.assertIn("<strong>Parse</strong>", html)
         self.assertIn("ModuleNotFoundError: No module named &#x27;x&#x27;", html)
         self.assertIn(ERROR_NOTE.replace(">", "&gt;"), html)
+
+    def test_the_card_for_the_libraries_carries_the_fix_instead(self):
+        html = error_card(
+            DiagnosticStage.PARSE,
+            "AttributeError: 'EntryPoints' object has no attribute 'get'",
+            LIBRARIES_NOTE,
+        )
+        self.assertIn("Package Control: Satisfy Libraries", html)
+        self.assertNotIn("Show Console", html)
 
 
 if __name__ == "__main__":

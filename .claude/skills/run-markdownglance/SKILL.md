@@ -1,6 +1,6 @@
 ---
 name: run-markdownglance
-description: Run, drive and screenshot MarkdownGlance inside a real portable Sublime Text 4200 on Linux, unattended. Use when asked to run the plugin, verify a preview change in the real app, take a screenshot of the preview, or run a manual-test-plan step automatically (math, mermaid, images, tables). Also covers the pure-Python unit tests.
+description: Run, drive and screenshot MarkdownGlance inside a real portable Sublime Text on Linux, unattended -- build 4215 (Python 3.14) by default, build 4200 (Python 3.8) on request. Use when asked to run the plugin, verify a preview change in the real app, take a screenshot of the preview, or run a manual-test-plan step automatically (math, mermaid, images, tables). Also covers the pure-Python unit tests.
 ---
 
 MarkdownGlance is a Sublime Text 4 package; the app is Sublime Text itself.
@@ -24,24 +24,36 @@ all of them already:
 for t in xdotool wmctrl import xvfb-run python3 curl; do command -v $t; done
 ```
 
-Network access to `download.sublimetext.com` (once, 16 MB, cached under
-`~/.cache/markdownglance/`) and, for the math and Mermaid scenarios, to the
-rendering servers the package uses.
+Network access to `download.sublimetext.com` (once per build, about 20 MB,
+cached under `~/.cache/markdownglance/`) and, for the math and Mermaid
+scenarios, to the rendering servers the package uses.
 
 ## Setup
 
-Builds the portable profile: extracts Sublime Text 4200, links this checkout
-in as `Data/Packages/MarkdownGlance` and the probe as
-`Data/Packages/MdglanceProbe`, pip-installs the two Package Control
-libraries into `Data/Lib/python38`, and writes conservative preferences
-(`hot_exit` off, software rendering). Idempotent; rerun after a clone.
+Builds the portable profile: extracts Sublime Text, links this checkout in as
+`Data/Packages/MarkdownGlance` and the probe as `Data/Packages/MdglanceProbe`,
+pip-installs the two Package Control libraries into the plugin host's library
+directory, and writes conservative preferences (`hot_exit` off, software
+rendering). Idempotent; rerun after a clone.
 
 ```bash
-.claude/skills/run-markdownglance/setup.sh            # -> /tmp/mdglance-st
+.claude/skills/run-markdownglance/setup.sh                         # 4215 -> /tmp/mdglance-st
+MDGLANCE_ST_BUILD=4200 .claude/skills/run-markdownglance/setup.sh  # 4200 -> /tmp/mdglance-st-4200
 ```
 
-`MDGLANCE_ST_ROOT=/some/dir` or a positional argument chooses another root.
-Nothing is written to `~/.config/sublime-text`.
+The two builds are the two plugin hosts the package supports, and each gets
+the library pair the channel serves it:
+
+| Build | Host | Libraries | Directory |
+| --- | --- | --- | --- |
+| 4215, the default | Python 3.14 | Markdown 3.11, pymdown-extensions 12.1 | `Data/Lib/python314` |
+| 4200 | Python 3.8 | Markdown 3.2.2, pymdown-extensions 8.1.1 | `Data/Lib/python38` |
+
+Run a change that touches the libraries, the plugin entry or anything
+version-dependent on both. `MDGLANCE_ST_ROOT=/some/dir` or a positional
+argument chooses another root; a root keeps the build it was made with, and
+`setup.sh` refuses to put another one in it. Nothing is written to
+`~/.config/sublime-text`.
 
 ## Run (agent path)
 
@@ -59,7 +71,9 @@ every check passed. Evidence goes to `/tmp/mdglance-st/evidence/<scenario>-<time
 .claude/skills/run-markdownglance/drive.sh svg_render      # local SVG, badge and WebP, needs network and resvg
 .claude/skills/run-markdownglance/drive.sh supsub          # raw <sup> and <sub> as raised and lowered spans
 .claude/skills/run-markdownglance/drive.sh render_failure  # a broken engine: the card names the stage and the exception, diagnostics carry the traceback
+.claude/skills/run-markdownglance/drive.sh stale_libraries # a Markdown left by another Python: the dialog and the card name the fix
 .claude/skills/run-markdownglance/drive.sh math --xvfb   # same, on a private X server
+.claude/skills/run-markdownglance/drive.sh preview --root /tmp/mdglance-st-4200 --xvfb  # the same scenario on build 4200
 ```
 
 Output ends with a table like:
@@ -128,10 +142,22 @@ nothing.
   Sublime Text window on the desktop; the first run of this driver resized
   and captured someone else's instance. `--all` is required and is in
   `drive.sh`.
-- **A plugin that imports the package must run in the 3.8 host.** Packages
-  default to Python 3.3, where `MarkdownGlance.preview` does not exist. The
-  probe directory carries `.python-version` = `3.8` for that reason; a
-  scenario file is imported by the probe, so it needs nothing.
+- **A plugin that imports the package must run in the package's host.** On
+  build 4200 packages default to Python 3.3, where `MarkdownGlance.preview`
+  does not exist. The probe directory carries `.python-version` = `3.8` for
+  that reason; a scenario file is imported by the probe, so it needs nothing.
+  On build 4213 and later the 3.3 host is off and `3.8` selects Python 3.14,
+  so the same file is right for both.
+- **The 3.14 host also looks in `Data/Lib/python38` and `python33`.** Its own
+  `python314` comes first, so a profile from `setup.sh` is unaffected, but a
+  library that is only in an older directory is found and imported. That is
+  the state `stale_libraries` builds for itself.
+- **The runner writes `<phase>.json` after a phase's `check` returns.** A
+  scenario that keeps evidence of its own with `ctx.write` must not use a
+  phase's name for the file, or the snapshot replaces it.
+- **A dialog stops the probe.** `sublime.error_message` and
+  `message_dialog` are modal; a scenario that expects one replaces the
+  function for the run and keeps the text, as `stale_libraries` does.
 - **Sublime Text follows symlinked packages.** Both the checkout and the
   probe are symlinks under `Data/Packages`, so an edit is live at the next
   launch with no copy step.
@@ -145,9 +171,13 @@ nothing.
 - **`import -window` needs the window on top.** `drive.sh` raises it with
   `wmctrl` first. Under Xvfb there is no window manager: `wmctrl` no-ops,
   the window is undecorated and full-size, and the capture is fine.
-- **The invalid-formula phase talks to the network.** `codecogs` answers
-  400 for bad LaTeX, which the preview shows as `Unavailable`; offline, every
-  formula shows it and the `math-on` checks fail.
+- **The invalid-formula phase talks to the network, and `math` fails because
+  of it.** `codecogs` used to answer 400 for bad LaTeX, which the preview
+  shows as `Unavailable`. Seen on 2026-10-10, on both builds: it answers 200
+  with a picture for every input, the fixture's `\frac{a` included, so the
+  checks that count three images, one `Unavailable` and one privacy caption
+  fail with nothing wrong in the package. Offline, every formula shows
+  `Unavailable` and the `math-on` checks fail too.
 - **The preview's privacy caption appears once per render**, on the first
   formula that is not ready. A document whose formulas all render never
   shows it, so `privacy_captions == 1` depends on the fixture's bad formula.

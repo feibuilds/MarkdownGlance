@@ -102,3 +102,48 @@ each reproduced against both library pairs and fixed:
   resolves relative images and links in the tree, gives headings the preview's
   slugs (`same-2`, not toc's `same_1`), is written private to the user, and
   reports a browser that would not start.
+
+## Amendments, Sublime Text 4213
+
+Build 4213, stable on 2026-09-21, replaced the Python 3.8 plugin host with
+Python 3.14 and turned the 3.3 host off. `.python-version` stays `3.8`: the
+API Environments documentation maps it to 3.14 on these builds, and build
+4200 reads any value it does not know as 3.3. Measured on build 4215, Linux,
+on 2026-10-10:
+
+- **The pair served to 3.14 has moved.** The channel gives Python 3.13 and
+  3.14 `Markdown` 3.11 and `pymdown-extensions` 12.1; 3.3 and 3.8 still get
+  3.2.2 and 8.1.1. CI and CONTRIBUTING pin the new pair. The suite, 457
+  tests, passes on it, on the 3.10.3 / 11.0.2 it replaces, and on the 3.8
+  pair.
+- **A library that is found is not always one that imports.** The 3.14
+  host's `sys.path` holds `Lib/python314`, then `Lib/python38`, then
+  `Lib/python33`. With only the 3.8 pair on disk, `find_spec` finds Markdown
+  3.2.2, which fails inside its own import under Python 3.12 and later, and
+  the preview opened on a card reading "Parse / AttributeError: 'EntryPoints'
+  object has no attribute 'get'".
+
+  Package Control 4.2.8 keeps most users out of that state. On the first
+  start after the upgrade it emptied `Lib/python38`, installed the 3.14 pair
+  and asked for a restart, all within five seconds, and a preview opened
+  after that in the same session. The state is left standing where that
+  clean-up does not run: Package Control absent or disabled, its
+  `remove_orphaned_environments` setting off, or libraries put in place by
+  hand.
+
+  A command now builds the engine before it runs. When that fails a dialog
+  gives the exception, where each library was found, the Python that
+  directory was filled for, and the fix, and no preview is opened. A preview
+  that Sublime Text restores at startup renders without a command, so its
+  error card asks the same question and carries the fix in place of the
+  pointer to the traceback. The lookup at plugin load is unchanged and loads
+  nothing: that start is when Package Control is installing, and a dialog
+  then would be a second one saying the same thing.
+- **The newer host is faster with nothing changed.** The 100 KiB benchmark
+  timed inside the plugin host, minimum of 30 samples after 3 warm-ups, both
+  on the same loaded machine:
+
+  | Host | Parser | min |
+  | --- | --- | --- |
+  | 4200, Python 3.8.12 | Markdown 3.2.2 + pymdown-extensions 8.1.1 | 393 ms |
+  | 4215, Python 3.14.6 | Markdown 3.11 + pymdown-extensions 12.1 | 258 ms |

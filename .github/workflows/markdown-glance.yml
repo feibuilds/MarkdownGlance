@@ -20,7 +20,7 @@ jobs:
           - python-version: "3.8"
             libraries: "Markdown==3.2.2 pymdown-extensions==8.1.1"
           - python-version: "3.14"
-            libraries: "Markdown==3.10.3 pymdown-extensions==11.0.2"
+            libraries: "Markdown==3.11 pymdown-extensions==12.1"
         exclude:
           # macOS runners are arm64 and setup-python publishes no 3.8 build for
           # them, so macOS covers 3.14 only. Linux and Windows cover 3.8.

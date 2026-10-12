@@ -6,6 +6,21 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Libraries left behind by an older Python are named, with the fix.**
+  Sublime Text 4213 replaced the Python 3.8 plugin host with Python 3.14, and
+  still looks in the old host's library directory. Package Control empties
+  that directory and installs the libraries for 3.14 on the first start after
+  the upgrade; where it does not -- it is not installed, or the libraries
+  were put in place by hand -- the `Markdown` installed for 3.8 was found,
+  failed inside its own import, and the preview opened on "Parse /
+  AttributeError: 'EntryPoints' object has no attribute 'get'". The commands
+  now load the libraries before they open anything, and a dialog gives the
+  exception, where each library was found and for which Python, and the fix.
+  A preview that Sublime Text restores at startup carries the fix on its
+  card, in place of the pointer to the traceback.
+
 ## [0.5.2] - 2026-10-10
 
 ### Fixed

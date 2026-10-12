@@ -12,7 +12,7 @@ from ..domain.contracts import (
     ThemeSnapshot,
 )
 from ..domain.paths import HOST
-from ..renderer.errors import error_card
+from ..renderer.errors import ERROR_NOTE, error_card
 from ..renderer.stylesheet import represent
 from .ports import GroupRole
 from .session import CloseCause, PreviewSession, SessionState
@@ -322,14 +322,18 @@ class UseCases:
             )
 
     def present_error(
-        self, session: PreviewSession, diagnostic: DiagnosticStage, message: str
+        self,
+        session: PreviewSession,
+        diagnostic: DiagnosticStage,
+        message: str,
+        note: str = ERROR_NOTE,
     ) -> None:
         stage = self._showing_stage(session)
         if stage is None:
             return
         previous = session.last_document.body_html if session.last_document else ""
         self._paint(stage, session, "{}{}".format(
-            error_card(diagnostic, message), previous
+            error_card(diagnostic, message, note), previous
         ))
 
     def represent(self, session: PreviewSession) -> None:

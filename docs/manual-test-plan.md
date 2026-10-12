@@ -2,9 +2,9 @@
 
 ## Matrix
 
-Run the release matrix on Linux, macOS and Windows with Sublime Text build
-4200/Python 3.8. The newest available dev build/Python 3.14 is optional
-forward-compatibility testing.
+Run the release matrix on Linux, macOS and Windows with the current stable
+Sublime Text, build 4215/Python 3.14 at the time of writing. Build 4200/Python
+3.8 is still supported: repeat steps 1, 14 and 15 on it.
 
 1. Open saved and unsaved Markdown in Side-by-Side and Full Screen; repeat open
    and toggles from source, preview and TOC focus.
@@ -112,8 +112,8 @@ forward-compatibility testing.
    `pymdown-extensions` libraries are installed with the package and that a
    preview renders without any other step; confirm the install note is the
    only message shown. In the console, `import markdown, pymdownx` and print
-   both `__version__` and `__file__`: 3.2.2 and 8.1.1, from the Python 3.8
-   library directory.
+   both `__version__` and `__file__`: 3.11 and 12.1 from `Lib/python314` on
+   build 4213 and later, 3.2.2 and 8.1.1 from `Lib/python38` on build 4200.
 15. Manual install without the libraries: clone into Packages and start
    Sublime Text. A dialog must name the two libraries and the fix; the console
    must show no traceback; the commands stay in the palette and repeat the
@@ -134,6 +134,18 @@ forward-compatibility testing.
    `plugin_unloaded` cannot help with; and once with a file dragged into the
    preview's group before quitting, whose group must survive holding the
    file.
+18. Upgrade from build 4200: on a build 4200 profile with the package and its
+   libraries installed through Package Control, replace Sublime Text with
+   build 4213 or later and start it. Package Control must empty
+   `Lib/python38`, install the pair into `Lib/python314` and ask for a
+   restart; MarkdownGlance must show no dialog of its own on that start, and a
+   preview must render once Package Control is done. Then the state Package
+   Control does not reach: quit, add `Package Control` to `ignored_packages`,
+   take `markdown` and `pymdownx` out of `Lib/python314`, and put the 3.8 pair
+   back with `pip install --target <Lib/python38> Markdown==3.2.2
+   pymdown-extensions==8.1.1`. Start again: opening a preview must give a
+   dialog with the exception, both libraries' locations marked `installed for
+   Python 3.8`, and the fix, and must open no pane.
 
 ## Automated prerequisites
 

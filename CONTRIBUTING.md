@@ -9,8 +9,8 @@ The parser is the Package Control `Markdown` library, so the tests need it and
 each plugin host; install the pair for the Python you are running:
 
 ```bash
-python -m pip install "Markdown==3.2.2" "pymdown-extensions==8.1.1"    # Python 3.8, build 4200
-python -m pip install "Markdown==3.10.3" "pymdown-extensions==11.0.2"  # Python 3.13 and later
+python -m pip install "Markdown==3.2.2" "pymdown-extensions==8.1.1"  # Python 3.8, build 4200
+python -m pip install "Markdown==3.11" "pymdown-extensions==12.1"    # Python 3.14, build 4213 and later
 ```
 
 The package imports itself as `MarkdownGlance.preview`, so the checkout
@@ -20,9 +20,10 @@ directory must be named `MarkdownGlance` and the tests run from its parent:
 python -m unittest discover -s MarkdownGlance/tests -t . -p 'test_*.py'
 ```
 
-CI runs the same suite on Linux, macOS and Windows against Python 3.8 — the
-Sublime Text 4200 runtime — and Python 3.14, each with the library pair its
-host receives. Code that has to run inside Sublime Text must stay valid on 3.8.
+CI runs the same suite on Linux, macOS and Windows against Python 3.14 — the
+runtime of Sublime Text 4213 and later — and Python 3.8, the runtime of build
+4200, each with the library pair its host receives. Code that has to run
+inside Sublime Text must stay valid on 3.8.
 
 ## Trying a change in Sublime Text
 
@@ -32,9 +33,10 @@ plugin on save. Before a release, walk the
 [manual test plan](docs/manual-test-plan.md).
 
 On Linux, `.claude/skills/run-markdownglance/` drives a portable Sublime Text
-4200 unattended: `setup.sh` builds a throwaway profile linked to the checkout,
-`drive.sh <scenario>` runs a scripted check against the live preview and
-leaves JSON snapshots and screenshots behind. Its `SKILL.md` has the details.
+unattended, build 4215 by default and 4200 on request: `setup.sh` builds a
+throwaway profile linked to the checkout, `drive.sh <scenario>` runs a
+scripted check against the live preview and leaves JSON snapshots and
+screenshots behind. Its `SKILL.md` has the details.
 
 ## Pull requests
 
