@@ -61,37 +61,10 @@ MarkdownGlance is on [Package Control](https://packagecontrol.io/packages/Markdo
 Package Control installs the libraries the preview needs, and updates the
 package when a new version is released.
 
-### Manual installation
-
-#### Download a ZIP
-
-No Git or command line is needed.
-
-1. Go to the [latest release](https://github.com/feibuilds/MarkdownGlance/releases/latest).
-2. Under **Assets**, download **Source code (zip)** and unzip it.
-3. Rename the extracted folder to exactly `MarkdownGlance`, removing the
-   version number from its name.
-4. In Sublime Text, open **Preferences → Browse Packages…** and move the
-   `MarkdownGlance` folder into the window that opens.
-5. Open the Command Palette (**Tools → Command Palette…**) and run
-   **Package Control: Satisfy Libraries**. This installs the libraries needed
-   for the preview.
-6. Restart Sublime Text.
-
-To update, replace the old `MarkdownGlance` folder with the new release and
-repeat steps 5–6.
-
-#### Using Git
-
-Open **Preferences → Browse Packages…**, then open a terminal in that directory
-and run:
-
-```bash
-git clone https://github.com/feibuilds/MarkdownGlance.git MarkdownGlance
-```
-
-Run **Package Control: Satisfy Libraries** from the Command Palette, then
-restart Sublime Text.
+If you installed MarkdownGlance by hand before it was on Package Control,
+delete its folder from the directory that **Preferences → Browse Packages…**
+opens, then install it as above so that updates reach you. To run it from a
+Git checkout instead, see [CONTRIBUTING.md](CONTRIBUTING.md#trying-a-change-in-sublime-text).
 
 ### Open your first preview
 

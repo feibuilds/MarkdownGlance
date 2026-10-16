@@ -28,8 +28,15 @@ inside Sublime Text must stay valid on 3.8.
 ## Trying a change in Sublime Text
 
 Clone or symlink the checkout into the directory that **Preferences → Browse
-Packages…** opens, under the name `MarkdownGlance`. Sublime Text reloads the
-plugin on save. Before a release, walk the
+Packages…** opens, under the name `MarkdownGlance`:
+
+```bash
+git clone https://github.com/feibuilds/MarkdownGlance.git MarkdownGlance
+```
+
+Run **Package Control: Satisfy Libraries** from the Command Palette, then
+restart Sublime Text. After that it reloads the plugin on save. Before a
+release, walk the
 [manual test plan](docs/manual-test-plan.md).
 
 On Linux, `.claude/skills/run-markdownglance/` drives a portable Sublime Text

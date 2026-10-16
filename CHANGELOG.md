@@ -6,6 +6,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- The README installs through Package Control only. The manual ZIP and Git
+  routes are gone from it, since both still needed Package Control for the
+  libraries. Running from a Git checkout is described in
+  [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## [0.6.0] - 2026-10-16
 
 ### Added
