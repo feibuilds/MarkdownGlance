@@ -57,6 +57,15 @@ produced. `UseCases.present` pushes each rendered document in through
 closes takes only the half that belonged to it. Both halves are one surface in
 one group, so switching is a repaint and nothing moves on screen.
 
+Fenced code is coloured during the parse. `renderer/highlight.py` collects
+every block that names a language and hands them, in one call, to the
+`Highlighter` the container injects; `adapter/highlighter.py` answers by
+tokenising them as Markdown fences in a hidden output panel that has the
+source's Markdown syntax and colour scheme, which it destroys again before
+returning. The colours land in the HTML as inline styles on generated spans,
+so a theme change re-renders a highlighted document rather than repainting
+it. See [ADR 0021](adr/0021-fenced-code-is-coloured-by-the-editors-syntaxes.md).
+
 ## Reliability and safety
 
 Each immutable `RenderRequest` contains a generation. A session has at most one

@@ -1,12 +1,19 @@
+from typing import Optional
+
 from ..assets.math import math_image_url
 from ..assets.mermaid import mermaid_image_url
 from ..domain.contracts import DiagnosticStage, PreviewDocument, RenderRequest
 from ..renderer import parse, serialise
+from ..renderer.highlight import Highlighter
 from .errors import RenderFailure
 from .ports import AssetResolverPort
 
 
-def render(request: RenderRequest, resolver: AssetResolverPort) -> PreviewDocument:
+def render(
+    request: RenderRequest,
+    resolver: AssetResolverPort,
+    highlighter: Optional[Highlighter] = None,
+) -> PreviewDocument:
     """Parse, resolve the assets, serialise -- naming the stage that fails.
 
     Each stage's exception becomes a `RenderFailure` carrying that stage and
@@ -19,6 +26,7 @@ def render(request: RenderRequest, resolver: AssetResolverPort) -> PreviewDocume
             request,
             mermaid_url_builder=mermaid_image_url,
             math_url_builder=math_image_url,
+            highlighter=highlighter,
         )
     except RenderFailure:
         raise

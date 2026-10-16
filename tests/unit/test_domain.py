@@ -72,6 +72,19 @@ class DomainTest(unittest.TestCase):
         self.assertTrue(parse_settings({"auto_width": 0.5}, warnings.append).auto_width)
         self.assertEqual(len(warnings), 1)
 
+    def test_highlighting_is_on_and_switched_off_by_a_boolean(self):
+        self.assertTrue(RenderSettings().enable_syntax_highlighting)
+        self.assertFalse(
+            parse_settings({"enable_syntax_highlighting": False}).enable_syntax_highlighting
+        )
+        warnings = []
+        self.assertTrue(
+            parse_settings(
+                {"enable_syntax_highlighting": "no"}, warnings.append
+            ).enable_syntax_highlighting
+        )
+        self.assertEqual(len(warnings), 1)
+
     def test_settings_are_frozen(self):
         with self.assertRaises(Exception):
             RenderSettings().update_delay_ms = 1

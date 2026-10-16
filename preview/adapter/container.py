@@ -31,6 +31,7 @@ from ..renderer.stylesheet import line_px, root_font_px
 from ..renderer.tables import budgets
 from .clock import SublimeClock
 from .executors import OwnedExecutors
+from .highlighter import SyntaxHighlighter
 from .settings import SettingsAdapter
 from .source_access import caret_row, read_source, reveal_line
 from .theme import theme_snapshot
@@ -62,6 +63,7 @@ class Container:
         self.executors = None
         self.resolver = None
         self.rasteriser = None
+        self.highlighter = None
         self.clock = None
         self.policy_revision = 0
         self.recent_stages = []
@@ -89,6 +91,7 @@ class Container:
         # One rasteriser for both halves, so that the renderer is looked up
         # once and a local drawing and a remote badge are drawn the same way.
         self.rasteriser = SvgRasteriser()
+        self.highlighter = SyntaxHighlighter()
         self.resolver = AssetResolver(
             cache,
             ImageFetcher(self.rasteriser),
@@ -298,7 +301,9 @@ class Container:
     def render(self, request: RenderRequest):
         """Render on the pool, timing the Python half of a repaint."""
         started = time.perf_counter()
-        document = render(request, resolver=self.resolver)
+        document = render(
+            request, resolver=self.resolver, highlighter=self.highlighter
+        )
         self.recent_renders.append(
             {
                 "source_bytes": len(request.markdown),

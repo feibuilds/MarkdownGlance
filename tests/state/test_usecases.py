@@ -852,6 +852,49 @@ class FormulaThemeTest(DiagramThemeTest):
         self.assertEqual(self.renders(session), before + ["theme"])
 
 
+class HighlightedThemeTest(RenderedSessionTest):
+    """Highlighted code carries the scheme's colour for every token in its
+    HTML, fixed when the document was parsed, so a new theme needs a render.
+    """
+
+    def highlighted(self):
+        session = self.open()
+        document = session.last_document
+        session.last_document = PreviewDocument(
+            document.generation,
+            document.body_html,
+            document.headings,
+            (),
+            (),
+            (),
+            highlighted=True,
+        )
+        return session
+
+    def renders(self, session):
+        return [reason for sid, reason in self.scheduler.requests if sid == session.id]
+
+    def test_a_new_scheme_colours_the_code_again(self):
+        session = self.highlighted()
+        before = self.renders(session)
+        self.usecases.theme_provider = lambda view: ThemeSnapshot(
+            scheme=(("color_scheme", "Breakers.sublime-color-scheme"),)
+        )
+
+        self.usecases.theme_changed(self.source)
+
+        self.assertEqual(self.renders(session), before + ["theme"])
+
+    def test_the_same_theme_asks_for_nothing(self):
+        session = self.highlighted()
+        before = self.renders(session)
+        self.usecases.theme_provider = lambda view: session.theme
+
+        self.usecases.theme_changed(self.source)
+
+        self.assertEqual(self.renders(session), before)
+
+
 class SurfaceColourSchemeTest(RenderedSessionTest):
     """A Markdown file can carry a colour scheme of its own -- MarkdownEditing
     writes one into `Markdown.sublime-settings`, and it beats the global one.

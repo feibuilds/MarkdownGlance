@@ -14,6 +14,7 @@ RENDER_KEYS = frozenset(
         "enable_math",
         "math_server",
         "table_max_columns",
+        "enable_syntax_highlighting",
         "enable_toc",
         "toc_minimum_length",
         "toc_minimum_headings",

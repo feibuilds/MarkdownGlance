@@ -16,6 +16,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   ([#6](https://github.com/feibuilds/MarkdownGlance/issues/6)). In your
   Markdown file they are Sublime Text's, as before.
 
+- **Fenced code is highlighted.** A block that names its language is coloured
+  with Sublime Text's own syntaxes and the source's colour scheme, so it looks
+  in the preview the way it looks in the editor: the same language names, the
+  same colours, any syntax the user has installed. A block with no language,
+  or one the editor does not know, stays plain. The tokens come from a hidden
+  panel that exists only for the length of a render; answers are cached per
+  block, so typing re-tokenises only the block being edited, and a new colour
+  scheme re-renders the document. On by default; `"enable_syntax_highlighting":
+  false` shows all code plain. Asked for in
+  [#7](https://github.com/feibuilds/MarkdownGlance/issues/7); see
+  [ADR 0021](docs/adr/0021-fenced-code-is-coloured-by-the-editors-syntaxes.md).
+
 ## [0.5.3] - 2026-10-12
 
 ### Fixed

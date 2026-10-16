@@ -246,6 +246,7 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
                 # the user's, and "my SVGs do not appear" only needs the
                 # boolean.
                 "svg_renderer_found": container.svg_renderer_found(),
+                "enable_syntax_highlighting": settings.enable_syntax_highlighting,
                 "toc_minimum_length": settings.toc_minimum_length,
                 "toc_minimum_headings": settings.toc_minimum_headings,
                 "debug_logging": settings.debug_logging,
@@ -258,6 +259,11 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
             "recent_paints": list(container.recent_paints),
             # The last render or snapshot failure with its traceback, or None.
             "last_error": container.last_error,
+            # The last time fenced code could not be tokenised, or None. Such
+            # a block is shown plain rather than failing the render.
+            "highlighter_error": container.highlighter.last_error
+            if container.highlighter is not None
+            else None,
             # Which Markdown and pymdown-extensions this host imports, from
             # where -- or why it cannot. `find_spec` at load only says the
             # module exists; an import is what a render actually does.

@@ -64,6 +64,11 @@ def _class_value(value: str) -> str:
     return " ".join(token for token in value.split() if CLASS_TOKEN.match(token))
 
 
+def hold_spaces(value: str) -> str:
+    """Every run of two or more spaces as U+00A0, which minihtml keeps."""
+    return _RUN_OF_SPACES.sub(lambda match: NBSP * len(match.group()), value)
+
+
 def _pre_text(value: str) -> str:
     """Serialise the text of a `pre` block, keeping its indentation.
 
@@ -80,9 +85,7 @@ def _pre_text(value: str) -> str:
     U+00A0 everywhere would stop a long code line wrapping at all, and minihtml
     gives a `pre` block no horizontal scrollbar to make up for it.
     """
-    return _RUN_OF_SPACES.sub(
-        lambda match: NBSP * len(match.group()), escape(value, quote=True)
-    ).replace("\n", "<br />")
+    return hold_spaces(escape(value, quote=True)).replace("\n", "<br />")
 
 
 def _relative_action(request: RenderRequest, index: int) -> str:
@@ -204,6 +207,11 @@ def _serialise_node(
     class_value = _class_value(node.attrs.get("class", ""))
     if class_value:
         attrs.append('class="{}"'.format(_attr(class_value)))
+    if node.generated and node.attrs.get("style"):
+        # Only a node the renderer made carries a style -- a highlighted run
+        # of code -- and the renderer wrote the value; the document's own
+        # `style` attributes never get this far.
+        attrs.append('style="{}"'.format(_attr(node.attrs["style"])))
     if node.tag in ("h1", "h2", "h3", "h4", "h5", "h6") and node.generated:
         attrs.append('id="{}"'.format(_attr(node.attrs.get("id", ""))))
     if node.tag == "a":
@@ -244,4 +252,5 @@ def serialise(
         structured.asset_keys,
         pending,
         structured.links,
+        highlighted=structured.highlighted,
     )

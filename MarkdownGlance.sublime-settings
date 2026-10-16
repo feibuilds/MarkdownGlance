@@ -31,6 +31,11 @@
     // upper bound, for keeping tables readable on a very wide screen.
     "table_max_columns": 200,
 
+    // Fenced code that names its language is coloured the way the editor
+    // colours it inside the source: the same syntaxes, the same colour scheme.
+    // It is tokenised here, by Sublime Text; nothing is sent anywhere.
+    "enable_syntax_highlighting": true,
+
     // The contents panel beside the preview is opt-in: it takes a group of
     // its own. This governs only whether it opens by itself; Ctrl+Shift+B
     // opens one whichever way it is set, and that one shows the rendered

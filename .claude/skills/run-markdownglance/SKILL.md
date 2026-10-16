@@ -71,6 +71,7 @@ every check passed. Evidence goes to `/tmp/mdglance-st/evidence/<scenario>-<time
 .claude/skills/run-markdownglance/drive.sh keyboard_scroll # arrows, pages, Home/End in a focused preview and panel
 .claude/skills/run-markdownglance/drive.sh svg_render      # local SVG, badge and WebP, needs network and resvg
 .claude/skills/run-markdownglance/drive.sh supsub          # raw <sup> and <sub> as raised and lowered spans
+.claude/skills/run-markdownglance/drive.sh highlight       # fenced code in the editor's colours, dark then light scheme, then off
 .claude/skills/run-markdownglance/drive.sh render_failure  # a broken engine: the card names the stage and the exception, diagnostics carry the traceback
 .claude/skills/run-markdownglance/drive.sh stale_libraries # a Markdown left by another Python: the dialog and the card name the fix
 .claude/skills/run-markdownglance/drive.sh math --xvfb   # same, on a private X server
@@ -179,6 +180,11 @@ nothing.
   checks that count three images, one `Unavailable` and one privacy caption
   fail with nothing wrong in the package. Offline, every formula shows
   `Unavailable` and the `math-on` checks fail too.
+- **`ctx.settled` counts the word "Loading" in the body**, which is how a
+  placeholder reads. A document whose own text says "Loading" -- this
+  repository's design documents do -- never settles, and every phase waits
+  out its timeout. Such a scenario needs a `done` of its own: a new
+  generation and nothing in `snap["pending"]`.
 - **The preview's privacy caption appears once per render**, on the first
   formula that is not ready. A document whose formulas all render never
   shows it, so `privacy_captions == 1` depends on the fixture's bad formula.

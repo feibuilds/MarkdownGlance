@@ -34,6 +34,9 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
   [resvg](#svg-images) on your machine, with nothing uploaded. An image in a
   format neither can draw, WebP most often, says so in place, and **Open in
   Browser** shows the document with those images drawn.
+- **Read code in colour**: a fenced block that names its language is
+  highlighted with the editor's own syntaxes and colour scheme, the way it
+  looks in the source.
 - **Add diagrams and formulas** with optional Mermaid and LaTeX math support.
 - **Open in Browser** when you want to see the document as a web page.
 
@@ -199,6 +202,7 @@ Common options:
 | `auto_width` | Fit the contents panel's width to its headings | `true` |
 | `enable_svg` | Draw SVG images with a local renderer | `true` |
 | `svg_renderer_path` | Where that renderer is, when it is not on your `PATH` | `""` |
+| `enable_syntax_highlighting` | Colour fenced code the way the editor does | `true` |
 
 Before enabling diagrams or math, read [Network and privacy](#network-and-privacy).
 
@@ -206,6 +210,19 @@ Before enabling diagrams or math, read [Network and privacy](#network-and-privac
 
 Markdown tables appear as aligned columns in a fixed-width font and adjust to
 the preview's width. For a traditional web-style table, use **Open in Browser**.
+
+## Code blocks
+
+A fenced block that names its language — ` ```python `, ` ```js `, ` ```sh ` —
+is coloured by Sublime Text itself, with the syntax and colour scheme the
+editor uses for that fence in the source. Any language the editor highlights
+is highlighted in the preview, under the same names, including syntaxes from
+packages you have installed. A block with no language, or one the editor does
+not know, stays plain. Change colour scheme and the code follows it.
+
+Nothing is sent anywhere. Colour costs the preview some work on very long
+documents with many blocks; set `"enable_syntax_highlighting": false` to
+show all code plain. **Open in Browser** shows code plain either way.
 
 ## SVG images
 

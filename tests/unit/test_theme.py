@@ -18,16 +18,25 @@ class Settings:
         return self.values.get(key, default)
 
 
+class Syntax:
+    def __init__(self, path):
+        self.path = path
+
+
 class View:
-    def __init__(self, style, settings=None):
+    def __init__(self, style, settings=None, syntax=None):
         self._style = style
         self._settings = Settings(settings or {})
+        self._syntax = syntax
 
     def style(self):
         return self._style
 
     def settings(self):
         return self._settings
+
+    def syntax(self):
+        return self._syntax
 
 
 class ThemeSnapshotTest(unittest.TestCase):
@@ -48,6 +57,14 @@ class ThemeSnapshotTest(unittest.TestCase):
         theme = theme_snapshot(View({"bluish": "#4078f2"}))
 
         self.assertEqual(theme.accent, "#4078f2")
+
+    def test_the_markdown_syntax_travels_with_the_palette(self):
+        # Fenced code is tokenised by the source's own Markdown syntax, which
+        # is MarkdownEditing's rather than the default one when it is installed.
+        path = "Packages/MarkdownEditing/syntaxes/Markdown.sublime-syntax"
+
+        self.assertEqual(theme_snapshot(View({}, syntax=Syntax(path))).syntax, path)
+        self.assertEqual(theme_snapshot(View({})).syntax, "")
 
     def test_the_scheme_the_source_resolved_travels_with_the_palette(self):
         # `markdownediting: select color scheme` writes `color_scheme` into

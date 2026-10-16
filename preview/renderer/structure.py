@@ -12,6 +12,7 @@ from ..domain.contracts import (
     ThemeSnapshot,
 )
 from ..domain.paths import HOST
+from .highlight import Highlighter, highlight
 from .markdown_engine import MarkdownEngine, default_engine
 from .model import ElementNode, Node, StructuredDoc, TextNode
 from .stylesheet import root_font_px
@@ -330,12 +331,20 @@ def parse(
     engine: Optional[MarkdownEngine] = None,
     mermaid_url_builder: Optional[MermaidUrlBuilder] = None,
     math_url_builder: Optional[MathUrlBuilder] = None,
+    highlighter: Optional[Highlighter] = None,
 ) -> StructuredDoc:
     parser = _TreeParser()
     parser.feed((engine or default_engine()).convert(request.markdown))
     parser.close()
     _replace_mermaid(parser.roots, request, mermaid_url_builder)
     _replace_math(parser.roots, request, math_url_builder)
+    # After both: a diagram is no longer a fence, and a formula shown as its
+    # source is a block the renderer made, which is not coloured.
+    highlighted = (
+        request.settings.enable_syntax_highlighting
+        and highlighter is not None
+        and highlight(parser.roots, request.theme, highlighter)
+    )
 
     elements = list(_walk(parser.roots))
     total_text = max(sum(len(_text(element)) for element in elements), 1)
@@ -389,5 +398,9 @@ def parse(
     replace_tables(parser.roots, latin, cjk)
 
     return StructuredDoc(
-        tuple(parser.roots), tuple(headings), tuple(assets), tuple(links)
+        tuple(parser.roots),
+        tuple(headings),
+        tuple(assets),
+        tuple(links),
+        bool(highlighted),
     )

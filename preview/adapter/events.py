@@ -12,6 +12,7 @@ from ..presentation.contexts import (
     preview_open,
 )
 from .container import container
+from .highlighter import HIGHLIGHTER_KEY
 
 CLOSE_COMMANDS = frozenset(
     (
@@ -33,12 +34,21 @@ def _ui(callback):
     sublime.set_timeout(callback, 0)
 
 
+def _highlighter_panel(view) -> bool:
+    """The hidden panel fenced code is tokenised in: a Markdown buffer, but
+    nobody's source, and gone again before the render that made it returns."""
+    return bool(view.settings().get(HIGHLIGHTER_KEY))
+
+
 class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
     @classmethod
     def is_applicable(cls, settings):
         return True
 
     def on_modified_async(self):
+        if _highlighter_panel(self.view):
+            return
+
         def modified():
             if not container.loaded:
                 return
@@ -48,6 +58,8 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
         _ui(modified)
 
     def on_selection_modified_async(self):
+        if _highlighter_panel(self.view):
+            return
         _ui(lambda: container.loaded and container.panel.sync_caret(self.view))
 
     def on_post_save_async(self):
@@ -60,7 +72,7 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
         _ui(saved)
 
     def on_pre_close(self):
-        if not container.loaded:
+        if not container.loaded or _highlighter_panel(self.view):
             return
         if self.view.settings().has(OWNER_KEY):
             surface_id = self.view.id()

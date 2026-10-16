@@ -150,6 +150,15 @@ Sublime Text, build 4215/Python 3.14 at the time of writing. Build 4200/Python
    pymdown-extensions==8.1.1`. Start again: opening a preview must give a
    dialog with the exception, both libraries' locations marked `installed for
    Python 3.8`, and the fix, and must open no pane.
+19. Fenced code: preview `.claude/skills/run-markdownglance/fixtures/highlight.md`.
+   Every block that names a language must be coloured as its fence is in the
+   source, the four-backtick block must keep its inner fences, and the blocks
+   with no language or an unknown one must be plain. Change colour scheme:
+   the code must follow it. With MarkdownEditing installed and its syntax on
+   the file, repeat. Set `enable_syntax_highlighting` to `false`: every block
+   plain. Type inside one block of a long document and confirm the preview
+   keeps up. The `highlight` scenario of the run-markdownglance skill runs all
+   of this but MarkdownEditing and the typing unattended.
 
 ## Automated prerequisites
 

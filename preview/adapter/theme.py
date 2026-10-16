@@ -27,6 +27,12 @@ def theme_snapshot(view) -> ThemeSnapshot:
     background = style.get("background", "#ffffff")
     foreground = style.get("foreground", "#222222")
     accent = style.get("accent", style.get("bluish", "#4f8cc9"))
+    syntax = view.syntax()
     return ThemeSnapshot(
-        background, foreground, _luminance(background) < 0.5, accent, _scheme(view)
+        background,
+        foreground,
+        _luminance(background) < 0.5,
+        accent,
+        _scheme(view),
+        syntax.path if syntax is not None else "",
     )

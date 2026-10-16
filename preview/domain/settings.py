@@ -138,6 +138,12 @@ def parse_settings(
             True,
             report,
         ),
+        enable_syntax_highlighting=_boolean(
+            values,
+            "enable_syntax_highlighting",
+            defaults.enable_syntax_highlighting,
+            report,
+        ),
         enable_toc=_boolean(values, "enable_toc", defaults.enable_toc, report),
         toc_minimum_length=_number(
             values,

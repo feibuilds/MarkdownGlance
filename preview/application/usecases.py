@@ -24,21 +24,26 @@ def _has_asset(document: Optional[PreviewDocument], kind: AssetKind) -> bool:
     )
 
 
-def _baked_assets_stale(
+def _baked_colours_stale(
     document: Optional[PreviewDocument], old: ThemeSnapshot, new: ThemeSnapshot
 ) -> bool:
-    """Whether a theme change reaches an image the server coloured.
+    """Whether a theme change reaches a colour fixed when the document was parsed.
 
     A Mermaid diagram is baked for one background and a formula in one
     foreground; each is stale only when the part of the theme it can see has
-    moved, and only when the document has one.
+    moved, and only when the document has one. Highlighted code carries the
+    scheme's colour for every token, and can see all of it.
     """
     return (
-        diagram_appearance(new) != diagram_appearance(old)
-        and _has_asset(document, AssetKind.MERMAID)
-    ) or (
-        formula_appearance(new) != formula_appearance(old)
-        and _has_asset(document, AssetKind.MATH)
+        (
+            diagram_appearance(new) != diagram_appearance(old)
+            and _has_asset(document, AssetKind.MERMAID)
+        )
+        or (
+            formula_appearance(new) != formula_appearance(old)
+            and _has_asset(document, AssetKind.MATH)
+        )
+        or (new != old and document is not None and document.highlighted)
     )
 
 
@@ -570,15 +575,14 @@ class UseCases:
                 # almost always the same one. Repainting anyway costs a full
                 # minihtml layout of the whole document.
                 return
-            stale_images = _baked_assets_stale(
-                session.last_document, session.theme, theme
-            )
+            stale = _baked_colours_stale(session.last_document, session.theme, theme)
             session.theme = theme
             self.represent(session)
-            if stale_images:
+            if stale:
                 # A repaint recolours the document, but not a Mermaid diagram
                 # or a formula: those are images the server baked for one
                 # palette, and their URLs are fixed when the Markdown is
-                # parsed. Without a render the document would come back in the
-                # new palette carrying images in the old one.
+                # parsed. Nor highlighted code, whose colours are written into
+                # the HTML at the same point. Without a render the document
+                # would come back in the new palette carrying those in the old.
                 self.scheduler.request_render(session.id, "theme")

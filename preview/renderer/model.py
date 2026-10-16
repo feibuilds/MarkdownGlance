@@ -27,3 +27,5 @@ class StructuredDoc:
     headings: Tuple[Heading, ...]
     asset_keys: Tuple[AssetKey, ...]
     links: Tuple[str, ...]
+    # Fenced code coloured in the theme it was parsed under.
+    highlighted: bool = False

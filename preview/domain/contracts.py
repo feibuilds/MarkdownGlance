@@ -43,6 +43,10 @@ class ThemeSnapshot:
     Markdown file often carries its own scheme -- MarkdownEditing writes one
     into `Markdown.sublime-settings`, and it wins over the global one -- so a
     surface left on the defaults would follow a different scheme entirely.
+
+    `syntax` is the source's Markdown syntax. Fenced code is tokenised by the
+    same one, so a language is recognised and coloured the way the editor
+    shows it inside the source.
     """
 
     background: str = "#ffffff"
@@ -50,6 +54,7 @@ class ThemeSnapshot:
     is_dark: bool = False
     accent: str = "#4f8cc9"
     scheme: Tuple[Tuple[str, str], ...] = ()
+    syntax: str = ""
 
 
 @dataclass(frozen=True)
@@ -67,6 +72,7 @@ class RenderSettings:
     remote_max_bytes: int = 10 * 1024 * 1024
     remote_max_dimension: int = 4096
     table_max_columns: int = 200
+    enable_syntax_highlighting: bool = True
     enable_toc: bool = False
     toc_minimum_length: int = 1200
     toc_minimum_headings: int = 3
@@ -176,3 +182,6 @@ class PreviewDocument:
     pending_assets: Tuple[AssetKey, ...]
     links: Tuple[str, ...]
     diagnostics: Tuple[RenderDiagnostic, ...] = ()
+    # Fenced code carries colours from the theme it was rendered under, so a
+    # new theme needs a render, not just a repaint.
+    highlighted: bool = False
