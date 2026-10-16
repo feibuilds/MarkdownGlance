@@ -116,9 +116,9 @@ class PanelController:
         return self._stages.get(window_id)
 
     def owns_surface(self, surface_id: int) -> bool:
-        return self._stage_for_surface(surface_id) is not None
+        return self.stage_for_surface(surface_id) is not None
 
-    def _stage_for_surface(self, surface_id: int) -> Optional[PanelStage]:
+    def stage_for_surface(self, surface_id: int) -> Optional[PanelStage]:
         return next(
             (
                 stage
@@ -262,7 +262,7 @@ class PanelController:
 
     def surface_closed(self, surface_id: int) -> bool:
         """True when the closed view was the panel this controller owned."""
-        stage = self._stage_for_surface(surface_id)
+        stage = self.stage_for_surface(surface_id)
         if stage is None:
             return False
         stage.surface = None

@@ -6,6 +6,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **The keyboard scrolls the preview.** With the preview or the contents
+  panel focused, `Up` and `Down` move a line, `Page Up` and `Page Down` a
+  screen, and `Home` and `End` -- `Ctrl+Home` and `Ctrl+End` too, and
+  `Cmd+Up` and `Cmd+Down` on macOS -- go to the top and the bottom. They used
+  to do nothing there
+  ([#6](https://github.com/feibuilds/MarkdownGlance/issues/6)). In your
+  Markdown file they are Sublime Text's, as before.
+
 ## [0.5.3] - 2026-10-12
 
 ### Fixed

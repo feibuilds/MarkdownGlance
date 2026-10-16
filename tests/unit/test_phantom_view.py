@@ -73,7 +73,9 @@ from MarkdownGlance.preview.application.ports import SurfaceHandle  # noqa: E402
 from MarkdownGlance.preview.domain.contracts import ThemeSnapshot  # noqa: E402
 from MarkdownGlance.preview.presentation.phantom_view import (  # noqa: E402
     PhantomViewBackend,
+    scroll_target,
 )
+from MarkdownGlance.preview.renderer.stylesheet import line_px  # noqa: E402
 
 
 class Settings:
@@ -227,6 +229,101 @@ class ColourSchemeTest(unittest.TestCase):
         self.backend.apply_theme(self.handle, ThemeSnapshot(scheme=self.SCHEME))
 
         self.assertEqual(self.view.settings().writes, [])
+
+
+class ScrollTargetTest(unittest.TestCase):
+    """A surface is an empty buffer under one phantom, so the navigation keys
+    move the viewport rather than a caret (#6). Heights are those measured on
+    `toc-long.md` in build 4215: a 519 px viewport over a 4688 px document."""
+
+    VIEWPORT = 519.0
+    EXTENT = 4688.0
+    BOTTOM = EXTENT - VIEWPORT
+    LINE = 24.8
+
+    def target(self, top, by, forward):
+        return scroll_target(top, self.VIEWPORT, self.EXTENT, by, forward, self.LINE)
+
+    def test_an_arrow_moves_one_line(self):
+        self.assertEqual(self.target(100.0, "lines", True), 124.8)
+        self.assertEqual(self.target(100.0, "lines", False), 75.2)
+
+    def test_a_page_keeps_one_line_of_the_last_on_screen(self):
+        self.assertEqual(self.target(0.0, "pages", True), self.VIEWPORT - self.LINE)
+        self.assertEqual(self.target(1000.0, "pages", False), 1000.0 - 494.2)
+
+    def test_home_and_end_go_to_either_end(self):
+        self.assertEqual(self.target(1000.0, "document", False), 0.0)
+        self.assertEqual(self.target(1000.0, "document", True), self.BOTTOM)
+
+    def test_neither_end_is_overshot(self):
+        self.assertEqual(self.target(10.0, "lines", False), 0.0)
+        self.assertEqual(self.target(10.0, "pages", False), 0.0)
+        self.assertEqual(self.target(self.BOTTOM - 5.0, "lines", True), self.BOTTOM)
+        self.assertEqual(self.target(self.BOTTOM, "pages", True), self.BOTTOM)
+
+    def test_a_document_shorter_than_the_viewport_stays_put(self):
+        for by in ("lines", "pages", "document"):
+            for forward in (True, False):
+                self.assertEqual(
+                    scroll_target(0.0, 519.0, 300.0, by, forward, self.LINE), 0.0
+                )
+
+    def test_a_page_in_a_viewport_shorter_than_two_lines_still_moves(self):
+        self.assertEqual(scroll_target(0.0, 30.0, 4688.0, "pages", True, 24.8), 24.8)
+
+    def test_a_line_follows_the_zoom(self):
+        self.assertEqual(line_px(1.0), 24.8)
+        self.assertEqual(line_px(2.0), 49.6)
+
+
+class ScrollView(View):
+    def __init__(self, identifier, top=0.0):
+        super().__init__(identifier)
+        self.position = (0.0, top)
+        self.moves = []
+
+    def viewport_position(self):
+        return self.position
+
+    def viewport_extent(self):
+        return (339.0, 519.0)
+
+    def layout_extent(self):
+        return (331.0, 4688.0)
+
+    def set_viewport_position(self, xy, animate=True):
+        self.moves.append((xy, animate))
+        self.position = xy
+
+
+class BackendScrollTest(unittest.TestCase):
+    def setUp(self):
+        self.backend = PhantomViewBackend()
+        self.view = ScrollView(7, top=100.0)
+        self.handle = SurfaceHandle("phantom_view", 7, 1)
+        self.backend._view = lambda handle: self.view
+
+    def test_an_arrow_is_not_animated_so_a_held_key_keeps_up(self):
+        self.backend.scroll(self.handle, "lines", True, 24.8)
+        self.assertEqual(self.view.moves, [((0.0, 124.8), False)])
+
+    def test_a_page_and_an_end_are_animated(self):
+        self.backend.scroll(self.handle, "pages", True, 24.8)
+        self.backend.scroll(self.handle, "document", False, 24.8)
+        self.assertEqual(
+            self.view.moves, [((0.0, 100.0 + 494.2), True), ((0.0, 0.0), True)]
+        )
+
+    def test_presses_accumulate(self):
+        for _ in range(3):
+            self.backend.scroll(self.handle, "lines", True, 24.8)
+        self.assertAlmostEqual(self.view.position[1], 100.0 + 3 * 24.8)
+
+    def test_a_dead_surface_is_left_alone(self):
+        self.backend._view = lambda handle: None
+        self.backend.scroll(self.handle, "lines", True, 24.8)
+        self.assertEqual(self.view.moves, [])
 
 
 if __name__ == "__main__":

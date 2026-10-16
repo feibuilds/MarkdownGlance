@@ -13,9 +13,23 @@ body { padding: 0.7rem 0.8rem; }
 """
 
 
+# `body { line-height }` in `resources/preview.css`.
+BODY_LINE_REM = 1.55
+
+
 def root_font_px(zoom: float) -> int:
     """The px value of 1rem in the preview, which minihtml needs in px."""
     return round(max(0.5, min(3.0, zoom)) * 16)
+
+
+def line_px(zoom: float) -> float:
+    """The line height body text is given, which an arrow key scrolls by.
+
+    minihtml sets lines a little closer than this -- 21.9 px of 24.8 at zoom 1,
+    measured on build 4215 -- so an arrow moves a little over one line; see
+    ADR 0020.
+    """
+    return BODY_LINE_REM * root_font_px(zoom)
 
 
 def stylesheet(

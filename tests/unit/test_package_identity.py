@@ -13,6 +13,9 @@ PLATFORMS = ("Linux", "OSX", "Windows")
 # Sublime names the "=" and "-" keys on macOS; the literal characters Linux and
 # Windows accept never match there, so the OSX keymap must spell them out.
 MACOS_KEY_NAMES = {"=": "equals", "-": "minus"}
+# Cmd+Up and Cmd+Down are how macOS goes to the top and bottom of a document,
+# and there is no Linux or Windows key to spell them from (ADR 0020).
+MACOS_ONLY_KEYS = frozenset({"super+up", "super+down"})
 # ADR 0009: the Full Screen toggle deliberately shadows paste_and_indent, and
 # ADR 0010: the panel toggle shadows Build With…, both only while a Markdown
 # source view is focused. ADR 0016: the two zoom keys shadow Sublime's own font
@@ -167,9 +170,44 @@ class PackageIdentityTest(unittest.TestCase):
             self.assertEqual(
                 self.load("Default (Windows).{}".format(suffix)), linux, suffix
             )
+            macos = [
+                item
+                for item in self.load("Default (OSX).{}".format(suffix))
+                if not set(item.get("keys", ())) & MACOS_ONLY_KEYS
+            ]
+            self.assertEqual(macos, as_macos(linux), suffix)
+
+    def test_macos_only_keys_scroll_a_surface_and_do_nothing_else(self):
+        extra = [
+            item
+            for item in self.load("Default (OSX).sublime-keymap")
+            if set(item["keys"]) & MACOS_ONLY_KEYS
+        ]
+        self.assertEqual(
+            sorted(key for item in extra for key in item["keys"]),
+            sorted(MACOS_ONLY_KEYS),
+        )
+        for item in extra:
+            self.assertEqual(item["command"], "mdglance_scroll")
             self.assertEqual(
-                self.load("Default (OSX).{}".format(suffix)), as_macos(linux), suffix
+                [entry["key"] for entry in item["context"]],
+                ["mdglance.preview_focused"],
             )
+
+    def test_every_scroll_key_fires_only_inside_a_surface(self):
+        # Up, Down, Page Up and the rest are the most used keys in any buffer;
+        # outside a view this package made they must stay Sublime's.
+        for platform in PLATFORMS:
+            name = "Default ({}).sublime-keymap".format(platform)
+            scroll = [
+                item for item in self.load(name) if item["command"] == "mdglance_scroll"
+            ]
+            self.assertTrue(scroll, name)
+            for item in scroll:
+                contexts = {entry["key"] for entry in item["context"]}
+                self.assertEqual(contexts, {"mdglance.preview_focused"}, name)
+                self.assertIn(item["args"]["by"], ("lines", "pages", "document"))
+                self.assertIsInstance(item["args"]["forward"], bool)
 
     def test_shipped_settings_keep_mermaid_opt_in(self):
         # The default settings file is what users actually get; a "true" here

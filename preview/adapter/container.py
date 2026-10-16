@@ -27,7 +27,7 @@ from ..presentation.layout import LayoutOwner
 from ..presentation.phantom_view import PhantomViewBackend
 from ..renderer.errors import ERROR_NOTE, LIBRARIES_NOTE
 from ..renderer.markdown_engine import library_failure
-from ..renderer.stylesheet import root_font_px
+from ..renderer.stylesheet import line_px, root_font_px
 from ..renderer.tables import budgets
 from .clock import SublimeClock
 from .executors import OwnedExecutors
@@ -399,6 +399,17 @@ class Container:
             return
         if href.startswith(("http://", "https://")):
             sublime.run_command("open_url", {"url": href})
+
+    def scroll_surface(self, surface_id: int, by: str, forward: bool) -> None:
+        """A navigation key pressed in the preview or the panel.
+
+        Each has a zoom of its own, and an arrow moves a line at that zoom.
+        """
+        stage = self.manager.stage_for_surface(
+            surface_id
+        ) or self.panel.stage_for_surface(surface_id)
+        if stage is not None and stage.surface is not None:
+            self.backend.scroll(stage.surface, by, forward, line_px(stage.zoom))
 
     def unload(self) -> None:
         if not self.loaded:

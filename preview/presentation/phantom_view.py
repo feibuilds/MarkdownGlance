@@ -24,6 +24,22 @@ CHROME_SUPPRESSION = {
 }
 
 
+def scroll_target(
+    top: float, viewport: float, extent: float, by: str, forward: bool, line: float
+) -> float:
+    """Where one press of a navigation key puts the top of the viewport.
+
+    `by` is `lines` for an arrow key, `pages` for Page Up and Page Down, and
+    `document` for Home and End. A page keeps one line of the last one on
+    screen, so the eye has somewhere to land.
+    """
+    bottom = max(0.0, extent - viewport)
+    if by == "document":
+        return bottom if forward else 0.0
+    step = line if by == "lines" else max(line, viewport - line)
+    return max(0.0, min(bottom, top + step if forward else top - step))
+
+
 class PhantomViewBackend:
     name = "phantom_view"
     navigation = NavigationCapability.PROGRAMMATIC
@@ -150,6 +166,25 @@ class PhantomViewBackend:
         y = max(0.0, document_height * ratio - viewport_height * 0.1)
         view.set_viewport_position((0.0, y), True)
         return True
+
+    def scroll(
+        self, handle: SurfaceHandle, by: str, forward: bool, line: float
+    ) -> None:
+        """Move the viewport for a navigation key.
+
+        A surface is an empty buffer under one block phantom, so Sublime's own
+        `move` and `move_to` have no text to take the caret through and the
+        keys did nothing at all. An arrow is not animated, so that a held key
+        keeps up with its own repeat.
+        """
+        view = self._view(handle)
+        if view is None:
+            return
+        x, top = view.viewport_position()
+        y = scroll_target(
+            top, view.viewport_extent()[1], view.layout_extent()[1], by, forward, line
+        )
+        view.set_viewport_position((x, y), by != "lines")
 
     def scroll_ratio(self, handle: SurfaceHandle) -> float:
         """Where the surface is scrolled to, as a fraction of its own height.

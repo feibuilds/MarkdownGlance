@@ -7,7 +7,11 @@ Sublime Text, build 4215/Python 3.14 at the time of writing. Build 4200/Python
 3.8 is still supported: repeat steps 1, 14 and 15 on it.
 
 1. Open saved and unsaved Markdown in Side-by-Side and Full Screen; repeat open
-   and toggles from source, preview and TOC focus.
+   and toggles from source, preview and TOC focus. In a focused preview and
+   panel, `Up`/`Down` scroll a line, `Page Up`/`Page Down` a screen, and
+   `Home`/`End` (on macOS also `Cmd+Up`/`Cmd+Down`) to either end; in the
+   source the same keys still move the caret. Automated, except the macOS
+   keys, as `run-markdownglance`'s `keyboard_scroll` scenario.
 2. Edit, save, Save As, rename and delete on disk. Confirm the latest edit wins,
    the title/base path update, and the source is never closed or recreated.
 3. Check default light, default dark and one third-party scheme; change scheme

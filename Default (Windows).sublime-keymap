@@ -154,5 +154,141 @@
                 "operand": true
             }
         ]
+    },
+    {
+        "keys": [
+            "up"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "lines",
+            "forward": false
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "down"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "lines",
+            "forward": true
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "pageup"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "pages",
+            "forward": false
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "pagedown"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "pages",
+            "forward": true
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "home"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "document",
+            "forward": false
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "end"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "document",
+            "forward": true
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "ctrl+home"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "document",
+            "forward": false
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
+    },
+    {
+        "keys": [
+            "ctrl+end"
+        ],
+        "command": "mdglance_scroll",
+        "args": {
+            "by": "document",
+            "forward": true
+        },
+        "context": [
+            {
+                "key": "mdglance.preview_focused",
+                "operator": "equal",
+                "operand": true
+            }
+        ]
     }
 ]

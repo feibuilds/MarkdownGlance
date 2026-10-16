@@ -185,6 +185,15 @@ class MdglanceZoomCommand(sublime_plugin.WindowCommand):
         )
 
 
+class MdglanceScrollCommand(sublime_plugin.TextCommand):
+    """The arrow keys, Page Up and Page Down, and Home and End in the preview
+    or the panel. `by` is `lines`, `pages` or `document`."""
+
+    def run(self, edit, by="lines", forward=True):
+        if container.loaded:
+            container.scroll_surface(self.view.id(), str(by), bool(forward))
+
+
 class MdglanceNavigateCommand(sublime_plugin.WindowCommand):
     def run(self, token="", slug="", event=None):
         if container.loaded:

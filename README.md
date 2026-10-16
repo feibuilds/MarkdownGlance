@@ -125,6 +125,12 @@ it first. With no preview open they are Sublime's own font size. `Ctrl+0`
 resets the zoom from inside the preview; in your file it stays Sublime's
 **Focus Side Bar**.
 
+**Scrolling with the keyboard**: in the preview and the contents panel, `Up`
+and `Down` move a line, `Page Up` and `Page Down` a screen, and `Home` and
+`End` go to the top and the bottom (`Ctrl+Home` and `Ctrl+End` too, and
+`Cmd+Up` and `Cmd+Down` on macOS). A preview has the focus when it opens, and
+`Ctrl+K`, `V` in your file gives it back the focus.
+
 A window has one preview, however many Markdown files you have open in it. It
 shows whichever one you are working on and is named for it, and it remembers
 where you had scrolled to in each. Files you have not looked at yet are
