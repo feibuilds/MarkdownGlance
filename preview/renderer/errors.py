@@ -9,6 +9,8 @@ STATUS_LABELS = {
     AssetStatus.UNSUPPORTED_FORMAT: "Not a PNG, JPEG or GIF",
     AssetStatus.SVG_RENDERER_MISSING: "No SVG renderer",
     AssetStatus.RENDER_FAILED: "Could not be drawn",
+    AssetStatus.MERMAID_RENDERER_MISSING: "No Mermaid renderer",
+    AssetStatus.DIAGRAM_FAILED: "Could not be drawn",
     AssetStatus.BLOCKED: "Blocked by settings",
     AssetStatus.TOO_LARGE: "Too large",
     AssetStatus.TIMEOUT: "Timed out",
@@ -23,6 +25,10 @@ STATUS_NOTES = {
         "Install resvg, or set svg_renderer_path to one."
     ),
     AssetStatus.RENDER_FAILED: "The SVG renderer could not draw it.",
+    AssetStatus.MERMAID_RENDERER_MISSING: (
+        "Set mermaid_renderer_path to merman-cli or mmdc."
+    ),
+    AssetStatus.DIAGRAM_FAILED: "The Mermaid renderer rejected it; check its syntax.",
 }
 
 

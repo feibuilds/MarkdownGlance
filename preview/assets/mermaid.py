@@ -2,8 +2,9 @@ import base64
 import json
 from string import hexdigits
 from typing import Tuple
+from urllib.parse import parse_qs, urlsplit
 
-from ..domain.contracts import ThemeSnapshot
+from ..domain.contracts import LOCAL_MERMAID_SCHEME, RenderSettings, ThemeSnapshot
 
 # mermaid.ink renders on a transparent background unless asked otherwise, and
 # its light theme draws sequence message labels straight onto it in #333. On a
@@ -34,13 +35,59 @@ def diagram_appearance(theme: ThemeSnapshot) -> Tuple[str, str]:
     return ("dark" if theme.is_dark else "default", background_hex(theme))
 
 
-def mermaid_image_url(diagram: str, server: str, theme: ThemeSnapshot) -> str:
-    name, background = diagram_appearance(theme)
+def _encode(diagram: str, name: str, look: str) -> str:
     payload = json.dumps(
-        {"code": diagram, "mermaid": {"theme": name}},
+        {"code": diagram, "mermaid": {"theme": name, "look": look}},
         separators=(",", ":"),
     ).encode("utf-8")
-    encoded = base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+    return base64.urlsafe_b64encode(payload).decode("ascii").rstrip("=")
+
+
+def mermaid_image_url(
+    diagram: str, server: str, theme: ThemeSnapshot, look: str = "classic"
+) -> str:
+    name, background = diagram_appearance(theme)
     return "{}/img/{}?type=png&bgColor={}".format(
-        server.rstrip("/"), encoded, background
+        server.rstrip("/"), _encode(diagram, name, look), background
+    )
+
+
+def local_mermaid_locator(
+    diagram: str, theme: ThemeSnapshot, look: str = "classic"
+) -> str:
+    """The locator of a diagram drawn on this machine (ADR 0022).
+
+    The same payload as the server's URL, under a scheme of our own: the
+    diagram and the pair from `diagram_appearance` are the whole of what the
+    image depends on, so two themes that agree share it as they share a URL.
+    """
+    name, background = diagram_appearance(theme)
+    return "{}:{}?theme={}&bgColor={}".format(
+        LOCAL_MERMAID_SCHEME, _encode(diagram, name, look), name, background
+    )
+
+
+def parse_local_mermaid_locator(locator: str) -> Tuple[str, str, str, str]:
+    """The diagram, theme name, background hex and look a local locator
+    carries."""
+    parts = urlsplit(locator)
+    if parts.scheme != LOCAL_MERMAID_SCHEME:
+        raise ValueError("not a local Mermaid locator")
+    encoded = parts.path
+    payload = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
+    state = json.loads(payload.decode("utf-8"))
+    query = parse_qs(parts.query)
+    look = state["mermaid"].get("look", "classic")
+    return state["code"], query["theme"][0], query["bgColor"][0], look
+
+
+def mermaid_locator(
+    diagram: str, settings: RenderSettings, theme: ThemeSnapshot
+) -> str:
+    """Where a diagram comes from: the local renderer when one is named, the
+    server otherwise."""
+    if settings.mermaid_renderer_path.strip():
+        return local_mermaid_locator(diagram, theme, settings.mermaid_look)
+    return mermaid_image_url(
+        diagram, settings.mermaid_server, theme, settings.mermaid_look
     )

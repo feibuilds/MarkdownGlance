@@ -11,6 +11,11 @@ RENDER_KEYS = frozenset(
     (
         "enable_mermaid",
         "mermaid_server",
+        # Which renderer draws a diagram is part of its locator, so a change
+        # re-parses; it is a policy key as well, so that a diagram that said
+        # the renderer was missing asks again.
+        "mermaid_renderer_path",
+        "mermaid_look",
         "enable_math",
         "math_server",
         "table_max_columns",
@@ -31,6 +36,8 @@ POLICY_KEYS = frozenset(
         "enable_svg",
         "svg_renderer_path",
         "svg_timeout_seconds",
+        "mermaid_renderer_path",
+        "mermaid_timeout_seconds",
     )
 )
 

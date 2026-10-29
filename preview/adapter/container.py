@@ -17,6 +17,7 @@ from ..assets import (
     AssetCache,
     AssetResolver,
     ImageFetcher,
+    MermaidRenderer,
     NetworkPolicy,
     SvgRasteriser,
 )
@@ -63,6 +64,7 @@ class Container:
         self.executors = None
         self.resolver = None
         self.rasteriser = None
+        self.mermaid_renderer = None
         self.highlighter = None
         self.clock = None
         self.policy_revision = 0
@@ -91,6 +93,7 @@ class Container:
         # One rasteriser for both halves, so that the renderer is looked up
         # once and a local drawing and a remote badge are drawn the same way.
         self.rasteriser = SvgRasteriser()
+        self.mermaid_renderer = MermaidRenderer()
         self.highlighter = SyntaxHighlighter()
         self.resolver = AssetResolver(
             cache,
@@ -100,6 +103,7 @@ class Container:
             lambda callback: sublime.set_timeout(callback, 0),
             lambda key, waiters: self.scheduler.asset_available(key, waiters),
             self.rasteriser,
+            self.mermaid_renderer,
         )
         self.manager = SessionManager(
             self.backend,
@@ -178,6 +182,12 @@ class Container:
         if self.rasteriser is None or self.settings is None:
             return False
         return self.rasteriser.backend(self.settings.get()) is not None
+
+    def mermaid_renderer_found(self) -> bool:
+        """Whether a diagram would be drawn locally, for diagnostics."""
+        if self.mermaid_renderer is None or self.settings is None:
+            return False
+        return self.mermaid_renderer.backend(self.settings.get()) is not None
 
     def policy(self) -> NetworkPolicy:
         return NetworkPolicy(self.settings.get(), self.policy_revision)

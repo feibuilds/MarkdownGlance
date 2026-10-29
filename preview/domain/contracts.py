@@ -18,6 +18,19 @@ class AssetKind(Enum):
     MATH = "math"
 
 
+# The scheme of a Mermaid locator drawn by a renderer on this machine rather
+# than fetched from `mermaid_server` (ADR 0022). It is never a URL anything
+# opens: the locator only carries the diagram and its appearance to the job
+# that runs the renderer, and keeps the cache key apart from the server's.
+LOCAL_MERMAID_SCHEME = "mermaid-local"
+
+
+def is_local_mermaid(key: "AssetKey") -> bool:
+    return key.kind == AssetKind.MERMAID and key.locator.startswith(
+        LOCAL_MERMAID_SCHEME + ":"
+    )
+
+
 @dataclass(frozen=True)
 class AssetKey:
     kind: AssetKind
@@ -28,6 +41,8 @@ class AssetKey:
         digest = sha256(self.locator.encode("utf-8", "surrogatepass")).hexdigest()[:8]
         if self.kind == AssetKind.LOCAL_IMAGE:
             identity = basename(self.locator) or "local"
+        elif is_local_mermaid(self):
+            identity = "local"
         else:
             identity = urlsplit(self.locator).hostname or "remote"
         return "{}:{}:{}".format(self.kind.value, identity, digest)
@@ -62,6 +77,9 @@ class RenderSettings:
     update_delay_ms: int = 100
     enable_mermaid: bool = False
     mermaid_server: str = "https://mermaid.ink"
+    mermaid_renderer_path: str = ""
+    mermaid_timeout_seconds: float = 10.0
+    mermaid_look: str = "classic"
     enable_math: bool = False
     math_server: str = "https://latex.codecogs.com"
     allow_insecure_remote_images: bool = False
@@ -152,6 +170,8 @@ class AssetStatus(Enum):
     UNSUPPORTED_FORMAT = "unsupported_format"
     SVG_RENDERER_MISSING = "svg_renderer_missing"
     RENDER_FAILED = "render_failed"
+    MERMAID_RENDERER_MISSING = "mermaid_renderer_missing"
+    DIAGRAM_FAILED = "diagram_failed"
     BLOCKED = "blocked"
     TOO_LARGE = "too_large"
     TIMEOUT = "timeout"

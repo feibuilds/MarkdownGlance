@@ -14,24 +14,28 @@ from ..domain.contracts import (
     FetchedAsset,
     Pending,
     Ready,
+    is_local_mermaid,
 )
 from ..domain.paths import HOST
 from .cache import AssetCache
 from .fetcher import ImageFetcher
 from .images import InvalidImage, SvgImage, UnsupportedImage, detect
+from .mermaid_local import MermaidRenderer
 from .policy import NetworkPolicy
 from .svg import SvgRasteriser, SvgRenderFailed
 
 # Statuses a settings change can lift, and which are therefore re-evaluated
 # rather than served from the cache when the policy revision moves on. The
 # three about an SVG all follow settings: whether the renderer runs at all,
-# which one runs, and how large the image it draws may be.
+# which one runs, and how large the image it draws may be. A missing Mermaid
+# renderer is the same kind of answer.
 POLICY_DERIVED = frozenset(
     (
         AssetStatus.BLOCKED,
         AssetStatus.TOO_LARGE,
         AssetStatus.UNSUPPORTED_FORMAT,
         AssetStatus.SVG_RENDERER_MISSING,
+        AssetStatus.MERMAID_RENDERER_MISSING,
     )
 )
 
@@ -50,10 +54,12 @@ class AssetResolver:
         run_on_ui: Callable[[Callable[[], None]], None],
         on_available: Callable[[AssetKey, Set[str]], None],
         rasteriser: Optional[SvgRasteriser] = None,
+        mermaid: Optional[MermaidRenderer] = None,
     ) -> None:
         self._cache = cache
         self._fetcher = fetcher
         self._svg = rasteriser or SvgRasteriser()
+        self._mermaid = mermaid or MermaidRenderer()
         self._policy_provider = policy_provider
         self._executor = network_executor
         self._run_on_ui = run_on_ui
@@ -63,11 +69,12 @@ class AssetResolver:
         self._waiters: Dict[AssetKey, Set[str]] = {}
 
     def _submit(self, key: AssetKey, policy: NetworkPolicy) -> None:
-        job = (
-            self._draw_local
-            if key.kind == AssetKind.LOCAL_IMAGE
-            else self._fetcher.fetch
-        )
+        if key.kind == AssetKind.LOCAL_IMAGE:
+            job = self._draw_local
+        elif is_local_mermaid(key):
+            job = self._mermaid.render
+        else:
+            job = self._fetcher.fetch
         future = self._executor.submit(job, key, policy)
         self._inflight[key] = future
         future.add_done_callback(

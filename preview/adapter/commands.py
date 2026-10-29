@@ -235,6 +235,9 @@ class MdglanceCopyDiagnosticsCommand(sublime_plugin.WindowCommand):
             "settings": {
                 "update_delay_ms": settings.update_delay_ms,
                 "enable_mermaid": settings.enable_mermaid,
+                "mermaid_timeout_seconds": settings.mermaid_timeout_seconds,
+                # As for the SVG renderer: found or not, never the path.
+                "mermaid_renderer_found": container.mermaid_renderer_found(),
                 "enable_math": settings.enable_math,
                 "allow_insecure_remote_images": settings.allow_insecure_remote_images,
                 "remote_timeout_seconds": settings.remote_timeout_seconds,

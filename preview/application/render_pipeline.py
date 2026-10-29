@@ -1,7 +1,7 @@
 from typing import Optional
 
 from ..assets.math import math_image_url
-from ..assets.mermaid import mermaid_image_url
+from ..assets.mermaid import mermaid_locator
 from ..domain.contracts import DiagnosticStage, PreviewDocument, RenderRequest
 from ..renderer import parse, serialise
 from ..renderer.highlight import Highlighter
@@ -24,7 +24,7 @@ def render(
     try:
         parsed = parse(
             request,
-            mermaid_url_builder=mermaid_image_url,
+            mermaid_url_builder=mermaid_locator,
             math_url_builder=math_image_url,
             highlighter=highlighter,
         )

@@ -171,6 +171,7 @@ Common options:
 | --- | --- | --- |
 | `enable_toc` | Open the contents panel by itself for longer previews | `false` |
 | `enable_mermaid` | Render Mermaid diagrams using an online service | `false` |
+| `mermaid_renderer_path` | Draw diagrams locally with `merman-cli` or `mmdc` instead | `""` |
 | `enable_math` | Render LaTeX formulas using an online service | `false` |
 | `auto_width` | Fit the contents panel's width to its headings | `true` |
 | `enable_svg` | Draw SVG images with a local renderer | `true` |
@@ -228,6 +229,38 @@ drawn as empty boxes rather than an error. An image the renderer rejects reads
 *Could not be drawn*. **Open in Browser** shows any of these as a browser
 would. Set `"enable_svg": false` to turn the whole thing off.
 
+## Local Mermaid diagrams
+
+With `enable_mermaid` on, diagrams go to `mermaid_server` unless you name a
+renderer on your own machine. Set `mermaid_renderer_path` to
+[merman-cli](https://github.com/Latias94/merman) or to mermaid-cli's `mmdc`,
+and the diagram is drawn there instead; its source is not sent anywhere:
+
+```json
+{
+    "enable_mermaid": true,
+    "mermaid_renderer_path": "/opt/homebrew/bin/merman-cli"
+}
+```
+
+merman-cli (`brew install merman-cli`, or `cargo binstall merman-cli`) is a
+single native binary and draws a typical diagram in tens of milliseconds. It
+does not run a browser, so text measurement and HTML labels can differ
+slightly from Mermaid in one. `mmdc` (`npm install -g
+@mermaid-js/mermaid-cli`) runs Mermaid itself in headless Chrome: exact, but a
+second or more per diagram. A bare name is looked up on the `PATH`; give the
+full path if Sublime Text cannot see it.
+
+Diagrams use Mermaid's `classic` look, with plain borders. Set
+`"mermaid_look": "neo"` for Mermaid 12's gradient borders and drop shadows,
+which merman-cli would otherwise default to; a diagram's own front matter
+overrides either.
+
+Like an SVG, a diagram is drawn at twice the size it is shown at, off the
+editor's thread, and a run that outlives `mermaid_timeout_seconds` is ended. A
+diagram the renderer rejects -- usually a syntax error -- reads *Could not be
+drawn* until it is fixed.
+
 ## Math
 
 Set `"enable_math": true` to display LaTeX formulas written as `$...$`
@@ -249,7 +282,8 @@ the network are:
 - **Diagrams and math in the live preview** are off by default. Enabling them
   sends the diagram or formula text and a theme colour to the configured
   service: `mermaid_server` (default: `https://mermaid.ink`) or `math_server`
-  (default: `https://latex.codecogs.com`).
+  (default: `https://latex.codecogs.com`). With `mermaid_renderer_path` set,
+  diagrams are drawn on your machine instead and are not sent anywhere.
 - **Open in Browser** downloads Mermaid and KaTeX from jsDelivr when needed,
   then renders diagrams and formulas in your browser without sending their
   text to a rendering service. Remote images may still load from their URLs.

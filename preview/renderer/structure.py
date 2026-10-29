@@ -9,6 +9,7 @@ from ..domain.contracts import (
     AssetKind,
     Heading,
     RenderRequest,
+    RenderSettings,
     ThemeSnapshot,
 )
 from ..domain.paths import HOST
@@ -18,10 +19,12 @@ from .model import ElementNode, Node, StructuredDoc, TextNode
 from .stylesheet import root_font_px
 from .tables import budgets, replace_tables
 
-# The theme reaches the builders because a mermaid.ink diagram is baked at
-# request time: it cannot adapt to the preview background the way CSS does.
-# A formula is baked the same way, in the foreground colour.
-MermaidUrlBuilder = Callable[[str, str, ThemeSnapshot], str]
+# The theme reaches the builders because a diagram is baked at request time:
+# it cannot adapt to the preview background the way CSS does. A formula is
+# baked the same way, in the foreground colour. The Mermaid builder gets the
+# settings whole, since they say whether the server or a local renderer
+# draws it.
+MermaidUrlBuilder = Callable[[str, RenderSettings, ThemeSnapshot], str]
 MathUrlBuilder = Callable[[str, bool, str, ThemeSnapshot], str]
 
 # arithmatex wraps a formula in the delimiters MathJax expects.
@@ -198,7 +201,7 @@ def _replace_mermaid(
             ):
                 url = mermaid_url_builder(
                     _raw_text(code),
-                    request.settings.mermaid_server,
+                    request.settings,
                     request.theme,
                 )
                 key = AssetKey(AssetKind.MERMAID, url)

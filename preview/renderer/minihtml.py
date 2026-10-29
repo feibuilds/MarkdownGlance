@@ -14,6 +14,7 @@ from ..domain.contracts import (
     PreviewDocument,
     Ready,
     RenderRequest,
+    is_local_mermaid,
 )
 from ..assets.math import SCALE as MATH_SCALE
 from .errors import asset_placeholder
@@ -158,7 +159,11 @@ def _serialise_image(
     if isinstance(result, Failed):
         status = result.status
     privacy = None
-    disclose = key is not None and key.kind in PRIVACY_CAPTIONS
+    # A diagram drawn by the local renderer goes nowhere, so it has nothing to
+    # disclose (ADR 0022).
+    disclose = (
+        key is not None and key.kind in PRIVACY_CAPTIONS and not is_local_mermaid(key)
+    )
     if disclose and key.kind not in privacy_seen:
         privacy_seen.add(key.kind)
         privacy = PRIVACY_CAPTIONS[key.kind].format(

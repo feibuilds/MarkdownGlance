@@ -6,6 +6,18 @@
     "enable_mermaid": false,
     "mermaid_server": "https://mermaid.ink",
 
+    // Draw diagrams on this machine instead, with merman-cli or mermaid-cli's
+    // mmdc: a bare name looked up on the PATH, or the path to one. Set, it
+    // replaces mermaid_server and nothing is sent anywhere. A Sublime Text
+    // started from the Dock may have a short PATH, so a full path is safest.
+    "mermaid_renderer_path": "",
+    "mermaid_timeout_seconds": 10.0,
+
+    // "classic" draws plain borders, as Mermaid 11 does by default; "neo" is
+    // Mermaid 12's look, with gradient borders and drop shadows. A diagram's
+    // own front matter (`config: look: ...`) still wins.
+    "mermaid_look": "classic",
+
     // LaTeX math ($...$ and $$...$$) is opt-in for the same reason: formula
     // source is sent to math_server, which typesets it as an image. Off, a
     // formula is shown as its source.

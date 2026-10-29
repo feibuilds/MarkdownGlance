@@ -58,10 +58,12 @@ screenshots behind. Its `SKILL.md` has the details.
 
 MarkdownGlance renders Markdown with the Sublime API alone: no browser, no
 WebView, and no runtime dependency outside the standard library and the two
-Package Control libraries it declares. It starts a process in two places, both
-of them narrow: `Open in Browser`, which is an export off the preview path,
-and the SVG renderer, which converts an image the preview cannot decode into
+Package Control libraries it declares. It starts a process in three places, all
+of them narrow: `Open in Browser`, which is an export off the preview path;
+the SVG renderer, which converts an image the preview cannot decode into
 one it can and is described in
-[ADR 0019](docs/adr/0019-svg-is-drawn-by-a-local-renderer.md). A change that
+[ADR 0019](docs/adr/0019-svg-is-drawn-by-a-local-renderer.md); and the local
+Mermaid renderer, opt-in, described in
+[ADR 0022](docs/adr/0022-mermaid-can-be-drawn-locally.md). A change that
 needs more than this is unlikely to be accepted — open an issue first and let
 us talk it through.
