@@ -193,7 +193,8 @@ pre code {
 
 /* A table holding CJK needs a font whose wide glyphs are exactly two Latin
    advances; that font also draws curly quotes and dashes full width, which is
-   why a Latin-only table keeps the plain monospace above. */
+   why a Latin-only table keeps the plain monospace above. Only a Linux
+   desktop installs these; `CJK_FONT_SHIPS` in renderer/tables.py budgets for the rest. */
 .md-table-cjk {
     font-family: "Noto Sans Mono CJK SC", "Sarasa Mono SC", "Noto Sans Mono CJK TC",
         monospace;
