@@ -661,7 +661,14 @@ class PanelController:
         self.backend.apply_theme(stage.surface, theme)
         self.backend.update(
             stage.surface,
-            represent(html, theme, stage.zoom, self.base_css, panel=True),
+            represent(
+                html,
+                theme,
+                stage.zoom,
+                self.base_css,
+                panel=True,
+                font_family=self.settings_provider().font_family,
+            ),
         )
         self._fit(stage, record)
         self._remember(stage, source)

@@ -52,6 +52,14 @@
     // group. Set to false to give them the fixed share always.
     "auto_width": true,
 
+    // The font for the preview's text and the contents panel, as you would
+    // write a CSS font-family: "Inter", or "Inter, Noto Sans CJK SC, sans-serif"
+    // to name fallbacks. Empty keeps the package's own. Code and tables stay
+    // monospace, since their columns are laid out in it. The contents panel
+    // sizes itself for the package's fonts, so a much wider one may wrap its
+    // longest heading.
+    "font_family": "",
+
     // Diagnostics still redact document text and Mermaid URLs when enabled.
     "debug_logging": false
 }

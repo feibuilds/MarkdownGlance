@@ -85,6 +85,27 @@ class DomainTest(unittest.TestCase):
         )
         self.assertEqual(len(warnings), 1)
 
+    def test_font_family_becomes_a_quoted_css_list(self):
+        self.assertEqual(RenderSettings().font_family, "")
+        self.assertEqual(parse_settings({"font_family": ""}).font_family, "")
+        self.assertEqual(parse_settings({"font_family": "Inter"}).font_family, '"Inter"')
+        self.assertEqual(
+            parse_settings(
+                {"font_family": " 'Source Han Sans', 微软雅黑 , Sans-Serif, "}
+            ).font_family,
+            '"Source Han Sans", "微软雅黑", sans-serif',
+        )
+
+    def test_font_family_cannot_reach_past_its_declaration(self):
+        # It is written into the preview's <style> block.
+        warnings = []
+        for value in ("Inter; color: red", 'Inter"} p {', "a</style><p>", ["Inter"]):
+            self.assertEqual(
+                parse_settings({"font_family": value}, warnings.append).font_family,
+                "",
+            )
+        self.assertEqual(len(warnings), 4)
+
     def test_settings_are_frozen(self):
         with self.assertRaises(Exception):
             RenderSettings().update_delay_ms = 1

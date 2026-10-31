@@ -176,6 +176,7 @@ Common options:
 | `enable_svg` | Draw SVG images with a local renderer | `true` |
 | `svg_renderer_path` | Where that renderer is, when it is not on your `PATH` | `""` |
 | `enable_syntax_highlighting` | Colour fenced code the way the editor does | `true` |
+| `font_family` | The font for the preview's text, such as `"Inter"` | `""` |
 
 Before enabling diagrams or math, read [Network and privacy](#network-and-privacy).
 
