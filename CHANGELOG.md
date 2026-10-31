@@ -13,6 +13,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   libraries. Running from a Git checkout is described in
   [CONTRIBUTING.md](CONTRIBUTING.md).
 
+### Fixed
+
+- **The settings menu joins Preferences > Package Settings** instead of
+  adding a second "Package Settings" there with only MarkdownGlance in it
+  ([#8](https://github.com/feibuilds/MarkdownGlance/issues/8)).
+
 ## [0.6.0] - 2026-10-16
 
 ### Added
