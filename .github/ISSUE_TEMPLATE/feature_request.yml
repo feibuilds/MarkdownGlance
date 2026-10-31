@@ -21,7 +21,11 @@ body:
       label: Scope
       description: >
         MarkdownGlance renders with the Sublime API alone — no browser, no
-        WebView, no external process, no runtime dependency outside the standard
-        library and the vendored parser.
+        WebView, no runtime dependency outside the standard library and its two
+        Package Control libraries. It starts a process in two narrow places:
+        Open in Browser, and the local SVG renderer
+        ([ADR 0019](https://github.com/feibuilds/MarkdownGlance/blob/main/docs/adr/0019-svg-is-drawn-by-a-local-renderer.md)).
+        See [Scope](https://github.com/feibuilds/MarkdownGlance/blob/main/CONTRIBUTING.md#scope)
+        in CONTRIBUTING.md.
       options:
         - label: This can be built within that constraint, as far as I can tell.
