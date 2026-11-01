@@ -76,3 +76,24 @@ them as one.
   debounce.
 - Wrapping splits markup: `**one two**` becomes two `<strong>` runs when it
   breaks across lines. Glued runs such as `**bold**;` are kept together.
+
+## Amendments, issue #9
+
+The consequence above -- a host that substitutes a wider monospace font would
+overflow -- was every Windows and macOS host with a CJK table. Neither ships
+`Noto Sans Mono CJK` or `Sarasa Mono`, so `md-table-cjk` falls through to
+`monospace` (Consolas, Menlo, Courier), whose advance is the Latin one, while
+the budget was counted at 0.5 em: a fifth too many columns. A row with a space
+in it was re-wrapped by the host; a row without one ran past the edge, and its
+last cell was clipped. An emoji alone was enough to trigger it, since emoji
+are East Asian Wide too.
+
+- **The CJK budget assumes the CJK font only on Linux** (`CJK_FONT_SHIPS`),
+  where desktop CJK support installs it. Elsewhere it is the Latin budget,
+  which no fallback monospace font exceeds. A Windows or macOS reader who has
+  installed one of the fonts gets a table a little narrower than the group; a
+  Linux host without one still overflows.
+- **Emoji do not make a table CJK.** They come from a colour font whichever
+  stack is named, so they keep the Latin font and still count two columns.
+  `_is_cjk` treats the wide characters below U+2E80 (except Hangul Jamo) and
+  those from U+1F000 to U+1FFFF as emoji.

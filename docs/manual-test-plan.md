@@ -25,7 +25,9 @@ Sublime Text, build 4215/Python 3.14 at the time of writing. Build 4200/Python
    test below-threshold, nested and duplicate headings and top/middle/bottom
    navigation.
 5. Check tables: narrow, wider than the preview, right/centre aligned, CJK and
-   mixed CJK/Latin, links and bold inside cells, and a raw HTML table. Confirm
+   mixed CJK/Latin, links and bold inside cells, and a raw HTML table. Include
+   one wide enough to wrap with an emoji, and one with CJK, in a header cell
+   (#9), on Windows and macOS as well as Linux. Confirm
    every row stays on the column grid and no row is wrapped by the host. Resize
    and maximise the window, and zoom in and out: the table refits within about
    a second and still fills the group.

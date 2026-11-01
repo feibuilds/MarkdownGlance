@@ -2,8 +2,10 @@ import os.path
 import re
 import unicodedata
 import unittest
+from unittest import mock
 
 from MarkdownGlance.preview.application.render_pipeline import render
+from MarkdownGlance.preview.renderer import tables
 from MarkdownGlance.preview.renderer.tables import budgets
 from MarkdownGlance.preview.domain.contracts import (
     AssetStatus,
@@ -32,6 +34,17 @@ CJK = """| 中文表头 | 说明 | Note |
 | 预览 | 等宽对齐 | ok |
 | 混合 abc | 中文 123 | fine |
 """
+
+# Issue #9: wide enough to wrap, with one wide glyph in the header.
+LONG_HEADER = "very " * 19 + "very long header"
+EMOJI_HEADER = """| h1 | emoji 😀 | {} | x |
+|:--|--:|:-:|---|
+| a | b | c | d |
+""".format(LONG_HEADER)
+CJK_HEADER = """| 日本語 | h2 | {} | x |
+|:--|--:|:-:|---|
+| a | b | c | d |
+""".format(LONG_HEADER)
 
 
 class FakeResolver:
@@ -161,6 +174,32 @@ class TableTest(unittest.TestCase):
         self.assertIn('class="md-table"', html)
         self.assertNotIn("md-table-cjk", html)
 
+    def test_an_emoji_does_not_put_a_table_in_the_cjk_font(self):
+        # It comes from a colour font whichever stack the table names.
+        for emoji in ("😀", "⭐", "☕", "🈁"):
+            html = body("| a {} | b |\n| --- | --- |\n| 1 | 2 |\n".format(emoji))
+            self.assertNotIn("md-table-cjk", html, emoji)
+
+    def test_cjk_beside_an_emoji_still_takes_the_cjk_font(self):
+        for text in ("中文 😀", "かな", "한국어", "１２", "ᄀ"):
+            html = body("| {} | b |\n| --- | --- |\n| 1 | 2 |\n".format(text))
+            self.assertIn("md-table-cjk", html, text)
+
+    def test_an_emoji_header_wraps_within_the_latin_budget(self):
+        # Issue #9: the emoji used to buy the table the CJK budget, a fifth
+        # wider than the Latin font it is drawn in, and the host re-wrapped it.
+        columns = budgets(950.0, 16, 200)[0]
+        self.assertNotIn("md-table-cjk", body(EMOJI_HEADER, viewport_width=950.0))
+        for _, cells in rows(EMOJI_HEADER, viewport_width=950.0):
+            self.assertLessEqual(sum(width(cell) for cell in cells), columns, cells)
+
+    def test_without_the_cjk_font_a_cjk_table_wraps_within_the_latin_budget(self):
+        with mock.patch.object(tables, "CJK_FONT_SHIPS", False):
+            columns = budgets(950.0, 16, 200)[0]
+            lines = rows(CJK_HEADER, viewport_width=950.0)
+        for _, cells in lines:
+            self.assertLessEqual(sum(width(cell, 2) for cell in cells), columns, cells)
+
     def test_cjk_wraps_between_characters(self):
         markdown = "| 说明 | b |\n| --- | --- |\n| 一二三四五六七八九十 | x |\n"
         lines = rows(markdown, RenderSettings(table_max_columns=16))
@@ -193,8 +232,16 @@ class BudgetTest(unittest.TestCase):
         self.assertLess(narrow[1], wide[1])
 
     def test_the_cjk_font_fits_more_columns_than_the_latin_one(self):
-        latin, cjk = budgets(900.0, 16, 200)
+        with mock.patch.object(tables, "CJK_FONT_SHIPS", True):
+            latin, cjk = budgets(900.0, 16, 200)
         self.assertGreater(cjk, latin)
+
+    def test_a_host_without_the_cjk_font_counts_cjk_at_the_latin_advance(self):
+        # Windows and macOS ship none of the CJK stack, so a CJK table there is
+        # set in `monospace`, no narrower than the Latin font (issue #9).
+        with mock.patch.object(tables, "CJK_FONT_SHIPS", False):
+            latin, cjk = budgets(900.0, 16, 200)
+        self.assertEqual(cjk, latin)
 
     def test_the_advance_is_rounded_up_to_whole_pixels(self):
         # A 904 px preview measured on ST 4200: 82 columns of 10 px fit inside

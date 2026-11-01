@@ -23,6 +23,7 @@ yet it falls back to a width that suits a narrow group.
 
 import math
 import re
+import sys
 import unicodedata
 from typing import List, Optional, Sequence, Tuple
 
@@ -42,6 +43,11 @@ WIDE_WIDTHS = frozenset(("W", "F"))
 # at a 16 px root — so `budgets` rounds the same way rather than overshooting.
 LATIN_ADVANCE = 0.6023
 CJK_ADVANCE = 0.5
+# The CJK stack names fonts that a Linux desktop installs with its CJK support
+# and that neither Windows nor macOS ships. Without one the table is set in
+# `monospace` -- Consolas, Menlo, Courier -- at no more than the Latin advance,
+# and a budget counted at 0.5 em overflows the preview by a fifth.
+CJK_FONT_SHIPS = sys.platform.startswith("linux")
 # Body padding (1.5rem each side), table padding (1rem) and border (0.08rem).
 CHROME_REM = 5.16
 # One column for the scrollbar and for rounding in the host's own measurement.
@@ -97,9 +103,25 @@ def _longest_unit(text: str, ambiguous: int) -> int:
     return longest
 
 
-def _has_wide(rows: Sequence[Row]) -> bool:
+def _is_cjk(char: str) -> bool:
+    """A wide glyph from a CJK script, as against a wide emoji.
+
+    Emoji are East Asian Wide too, but they come from a colour font whatever
+    the stack says, so they are no reason to set a table in the CJK one. They
+    sit below the CJK blocks (⌚, ☕, ⭐) and in the pictograph planes from
+    U+1F000; Hangul Jamo is the one CJK block below U+2E80.
+    """
+    if unicodedata.east_asian_width(char) not in WIDE_WIDTHS:
+        return False
+    point = ord(char)
+    if point < 0x2E80:
+        return 0x1100 <= point <= 0x115F
+    return not 0x1F000 <= point < 0x20000
+
+
+def _has_cjk(rows: Sequence[Row]) -> bool:
     return any(
-        unicodedata.east_asian_width(char) in WIDE_WIDTHS
+        _is_cjk(char)
         for _, cells in rows
         for cell in cells
         for char in _cell_text(cell)
@@ -401,24 +423,25 @@ def budgets(viewport_width: float, rem_px: int, cap: int) -> Tuple[int, int]:
 
     The two fonts have different advances, and which one a table uses is only
     known once its content has been read, so both are worked out here and the
-    table picks one.
+    table picks one. Where the CJK font is not shipped, both are the Latin one.
     """
     fallback = min(cap, FALLBACK_COLUMNS)
     if viewport_width <= 0 or rem_px <= 0:
         return fallback, fallback
     content = viewport_width - CHROME_REM * rem_px
+    cjk_advance = CJK_ADVANCE if CJK_FONT_SHIPS else LATIN_ADVANCE
     return tuple(  # type: ignore[return-value]
         max(
             MIN_COLUMN,
             min(cap, int(content // math.ceil(advance * rem_px)) - SAFETY_COLUMNS),
         )
-        for advance in (LATIN_ADVANCE, CJK_ADVANCE)
+        for advance in (LATIN_ADVANCE, cjk_advance)
     )
 
 
 def _table_node(table: ElementNode, latin: int, cjk: int) -> ElementNode:
     rows = _rows(table)
-    wide = _has_wide(rows)
+    wide = _has_cjk(rows)
     ambiguous = 2 if wide else 1
     natural, longest = _column_extents(rows, ambiguous)
     widths = _allocate(natural, longest, cjk if wide else latin)

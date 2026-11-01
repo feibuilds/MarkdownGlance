@@ -13,6 +13,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   libraries. Running from a Git checkout is described in
   [CONTRIBUTING.md](CONTRIBUTING.md).
 
+### Fixed
+
+- **A table that wraps keeps every cell on Windows and macOS.** A table with
+  CJK in it was given columns for a CJK monospace font that only a Linux
+  desktop installs; elsewhere it is drawn in a wider one, so the row ran past
+  the edge of the preview, the header was re-wrapped out of its columns and
+  the last cell was cut off. Such a table now gets the columns the Latin font
+  gives it. An emoji no longer counts as CJK at all, so it does not move a
+  table to that font on any platform
+  ([#9](https://github.com/feibuilds/MarkdownGlance/issues/9)).
+- **The settings menu joins Preferences > Package Settings** instead of
+  adding a second "Package Settings" there with only MarkdownGlance in it
+  ([#8](https://github.com/feibuilds/MarkdownGlance/issues/8)).
+
 ## [0.6.0] - 2026-10-16
 
 ### Added

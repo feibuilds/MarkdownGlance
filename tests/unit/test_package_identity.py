@@ -209,6 +209,18 @@ class PackageIdentityTest(unittest.TestCase):
                 self.assertIn(item["args"]["by"], ("lines", "pages", "document"))
                 self.assertIsInstance(item["args"]["forward"], bool)
 
+    def test_the_settings_menu_joins_the_shared_package_settings_menu(self):
+        # Sublime merges menu items by id; without one, "Package Settings"
+        # appears a second time under Preferences, holding only this package.
+        preferences = self.load("Main.sublime-menu")[0]
+        self.assertEqual(preferences["id"], "preferences")
+        package_settings = preferences["children"][0]
+        self.assertEqual(package_settings["id"], "package-settings")
+        self.assertEqual(
+            [item["caption"] for item in package_settings["children"]],
+            ["MarkdownGlance"],
+        )
+
     def test_shipped_settings_keep_mermaid_opt_in(self):
         # The default settings file is what users actually get; a "true" here
         # sends diagram source to mermaid_server without anyone opting in.
