@@ -77,6 +77,8 @@ class RenderSettings:
     toc_minimum_length: int = 1200
     toc_minimum_headings: int = 3
     auto_width: bool = True
+    # A CSS font-family list for body text, "" for the stylesheet's own.
+    font_family: str = ""
     debug_logging: bool = False
 
 

@@ -23,7 +23,7 @@ from MarkdownGlance.preview.domain.contracts import (
     ThemeSnapshot,
 )
 from MarkdownGlance.preview.renderer import parse, serialise
-from MarkdownGlance.preview.renderer.stylesheet import represent
+from MarkdownGlance.preview.renderer.stylesheet import BODY_FONTS, represent
 from MarkdownGlance.preview.renderer.toc import build_toc
 
 # A base path that is absolute on every host, so the suite runs from any of them.
@@ -128,6 +128,28 @@ Unicode: 中文 café 😀
             represent(first.body_html, ThemeSnapshot(), 1.0, ""),
             represent(second.body_html, ThemeSnapshot(), 2.0, ""),
         )
+
+    def test_a_font_family_overrides_the_body_font_and_falls_back_to_it(self):
+        base_css = "body { font-family: base; }"
+        override = 'body {{ font-family: "Inter", {}; }}'.format(BODY_FONTS)
+        for panel in (False, True):
+            html = represent(
+                "<p>x</p>", ThemeSnapshot(), 1.0, base_css, panel, '"Inter"'
+            )
+            # Same selector, so it wins only by coming after the stylesheet.
+            self.assertGreater(html.index(override), html.index(base_css))
+        default = represent("<p>x</p>", ThemeSnapshot(), 1.0, base_css)
+        self.assertEqual(default.count("font-family"), 1)
+
+    def test_the_fallback_fonts_are_the_stylesheets_own(self):
+        path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            "resources",
+            "preview.css",
+        )
+        with open(path, encoding="utf-8") as source:
+            body_rule = source.read().split("body {", 1)[1].split("}", 1)[0]
+        self.assertIn("font-family: {};".format(BODY_FONTS), body_rule)
 
     def test_mermaid_is_opt_in_and_encodes_expected_payload(self):
         markdown = "```mermaid\nflowchart LR\nA --> B\n```\n"

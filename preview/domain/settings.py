@@ -66,6 +66,39 @@ def _path(
     return value
 
 
+GENERIC_FAMILIES = frozenset(
+    ("serif", "sans-serif", "monospace", "cursive", "fantasy", "system-ui")
+)
+
+
+def _font_family(
+    values: Mapping[str, Any],
+    key: str,
+    default: str,
+    warn: Callable[[str], None],
+) -> str:
+    """Font names for body text, as the CSS `font-family` list they become.
+
+    The list is written into the preview's stylesheet, so a name may hold only
+    letters, digits, spaces, hyphens, underscores and dots: nothing that could
+    close the declaration or the `<style>` around it. Names are quoted, except
+    the generic families, which a quote would turn into a font called that.
+    """
+    value = values.get(key, default)
+    if not isinstance(value, str):
+        warn("Invalid setting {!r}; using default".format(key))
+        return default
+    names = [name.strip().strip("\"'").strip() for name in value.split(",")]
+    names = [name for name in names if name]
+    if not all(char.isalnum() or char in " -_." for name in names for char in name):
+        warn("Invalid setting {!r}; using default".format(key))
+        return default
+    return ", ".join(
+        name.lower() if name.lower() in GENERIC_FAMILIES else '"{}"'.format(name)
+        for name in names
+    )
+
+
 def parse_settings(
     values: Mapping[str, Any], warn: Optional[Callable[[str], None]] = None
 ) -> RenderSettings:
@@ -164,5 +197,6 @@ def parse_settings(
             report,
         ),
         auto_width=_boolean(values, "auto_width", defaults.auto_width, report),
+        font_family=_font_family(values, "font_family", defaults.font_family, report),
         debug_logging=_boolean(values, "debug_logging", defaults.debug_logging, report),
     )

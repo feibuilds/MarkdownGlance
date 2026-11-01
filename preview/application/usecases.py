@@ -299,7 +299,13 @@ class UseCases:
         self.backend.apply_theme(stage.surface, session.theme)
         self.backend.update(
             stage.surface,
-            represent(body_html, session.theme, stage.zoom, self.base_css),
+            represent(
+                body_html,
+                session.theme,
+                stage.zoom,
+                self.base_css,
+                font_family=session.settings.font_family,
+            ),
         )
 
     def _showing_stage(self, session: PreviewSession):

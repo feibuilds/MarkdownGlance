@@ -15,6 +15,9 @@ body { padding: 0.7rem 0.8rem; }
 
 # `body { line-height }` in `resources/preview.css`.
 BODY_LINE_REM = 1.55
+# `body { font-family }` there, kept behind a `font_family` setting so that a
+# name the host does not have falls back to the package's fonts, not minihtml's.
+BODY_FONTS = '"Ubuntu", "DejaVu Sans", "Open Sans", sans-serif'
 
 
 def root_font_px(zoom: float) -> int:
@@ -33,19 +36,36 @@ def line_px(zoom: float) -> float:
 
 
 def stylesheet(
-    theme: ThemeSnapshot, zoom: float, base_css: str, panel: bool = False
+    theme: ThemeSnapshot,
+    zoom: float,
+    base_css: str,
+    panel: bool = False,
+    font_family: str = "",
 ) -> str:
+    """The `<style>` block a surface is painted with.
+
+    `font_family` comes from the settings, already a validated CSS list. It
+    follows `base_css` so that it wins over the stylesheet's `body` rule, and
+    reaches only what inherits from `body`: code and tables name monospace
+    fonts of their own, which their alignment depends on.
+    """
+    font = (
+        "body {{ font-family: {}, {}; }}\n".format(font_family, BODY_FONTS)
+        if font_family
+        else ""
+    )
     return """<style>
     html {{ font-size: {}px; }}
 body {{ background-color: {}; color: {}; }}
 a {{ color: {}; }}
-{}{}
+{}{}{}
 </style>""".format(
         root_font_px(zoom),
         escape(theme.background),
         escape(theme.foreground),
         escape(theme.accent),
         base_css,
+        font,
         PANEL_CSS if panel else "",
     )
 
@@ -56,5 +76,8 @@ def represent(
     zoom: float,
     base_css: str,
     panel: bool = False,
+    font_family: str = "",
 ) -> str:
-    return "{}\n{}".format(stylesheet(theme, zoom, base_css, panel), body_html)
+    return "{}\n{}".format(
+        stylesheet(theme, zoom, base_css, panel, font_family), body_html
+    )

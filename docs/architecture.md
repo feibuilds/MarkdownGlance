@@ -66,6 +66,12 @@ returning. The colours land in the HTML as inline styles on generated spans,
 so a theme change re-renders a highlighted document rather than repainting
 it. See [ADR 0021](adr/0021-fenced-code-is-coloured-by-the-editors-syntaxes.md).
 
+The stylesheet is the package's own. The one part a user can change is the
+body font: `font_family`, validated into a CSS list in `domain/settings.py`,
+is written after `preview.css` by `renderer/stylesheet.py` and reaches what
+inherits from `body`, never code or tables. See
+[ADR 0022](adr/0022-the-preview-font-is-a-setting-not-a-stylesheet.md).
+
 ## Reliability and safety
 
 Each immutable `RenderRequest` contains a generation. A session has at most one

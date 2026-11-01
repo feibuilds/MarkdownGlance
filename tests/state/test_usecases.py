@@ -926,5 +926,21 @@ class SurfaceColourSchemeTest(RenderedSessionTest):
         self.assertEqual(self.backend.themes[self.surface().id].scheme, moved)
 
 
+class FontFamilyTest(RenderedSessionTest):
+    """`font_family` lives in the stylesheet, not the document, so it reaches
+    the preview through the paint that follows the render a change asks for."""
+
+    def test_a_changed_font_is_rendered_for_and_then_painted(self):
+        session = self.open()
+        self.assertNotIn('"Inter"', self.backend.updates[-1][1])
+        self.settings = RenderSettings(enable_toc=True, font_family='"Inter"')
+
+        self.usecases.settings_changed(True, False)
+        self.assertIn((session.id, "settings"), self.scheduler.requests)
+        self.usecases.present(session, session.last_document)
+
+        self.assertIn('font-family: "Inter", ', self.backend.updates[-1][1])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -6,6 +6,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **The preview's font can be changed.** `"font_family"` takes a font name,
+  or several separated by commas as in CSS, and sets the text of the preview
+  and the contents panel. Empty, the default, keeps the package's fonts. Code
+  and tables stay monospace, since their columns are laid out in it. Asked
+  for in [#11](https://github.com/feibuilds/MarkdownGlance/issues/11); see
+  [ADR 0022](docs/adr/0022-the-preview-font-is-a-setting-not-a-stylesheet.md).
+
 ### Changed
 
 - The README installs through Package Control only. The manual ZIP and Git
