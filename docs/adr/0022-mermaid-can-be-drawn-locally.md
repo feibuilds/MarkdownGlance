@@ -4,7 +4,7 @@ Date: 2026-10-29
 
 ## Status
 
-Accepted. Extends [ADR 0005](0005-mermaid-default-and-privacy.md), which
+Proposed. Extends [ADR 0005](0005-mermaid-default-and-privacy.md), which
 stands for the server path, and takes the shape of
 [ADR 0019](0019-svg-is-drawn-by-a-local-renderer.md).
 
