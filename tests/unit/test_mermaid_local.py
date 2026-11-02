@@ -293,6 +293,84 @@ class ResolverTest(unittest.TestCase):
         self.assertEqual(executor.calls[0][0], subject.render)
 
 
+class RunningExecutor:
+    """Runs each job as it is submitted, so a test sees the whole round trip."""
+
+    def submit(self, fn, key, policy):
+        from concurrent.futures import Future
+
+        future = Future()
+        future.set_result(fn(key, policy))
+        return future
+
+
+class NoNetwork:
+    def fetch(self, key, policy):
+        raise AssertionError("diagram source reached the fetcher: " + key.locator)
+
+
+def document_keys(markdown, settings=LOCAL, theme=DARK):
+    request = RenderRequest("session", 1, markdown, None, 1.0, settings, theme)
+    return parse(request, mermaid_url_builder=mermaid_locator).asset_keys
+
+
+class CachingAndLocalityTest(unittest.TestCase):
+    """The two promises a reader relies on while typing beside a diagram."""
+
+    FENCE = "```mermaid\n" + DIAGRAM + "\n```\n"
+
+    def resolver(self, subject, settings=LOCAL):
+        return AssetResolver(
+            AssetCache(),
+            NoNetwork(),
+            lambda: NetworkPolicy(settings, 0),
+            RunningExecutor(),
+            lambda callback: callback(),
+            lambda key, waiters: None,
+            mermaid=subject,
+        )
+
+    def test_an_unchanged_diagram_is_drawn_once(self):
+        subject, runner = renderer()
+        resolver = self.resolver(subject)
+        # Typing elsewhere in the document re-renders it; the diagram's key,
+        # and so its cached PNG, stays the same.
+        for prose in ("Draft", "Draft one", "Draft one two"):
+            keys = document_keys(prose + "\n\n" + self.FENCE)
+            results = resolver.resolve(keys, "session")
+        self.assertIsInstance(results[keys[0]], Ready)
+        self.assertEqual(len(runner.commands), 1)
+
+    def test_a_new_appearance_or_diagram_is_drawn_again(self):
+        subject, runner = renderer()
+        resolver = self.resolver(subject)
+        resolver.resolve(document_keys(self.FENCE), "session")
+        light = document_keys(self.FENCE, theme=ThemeSnapshot())
+        resolver.resolve(light, "session")
+        resolver.resolve(document_keys(self.FENCE.replace("B", "C")), "session")
+        self.assertEqual(len(runner.commands), 3)
+
+    def test_no_source_reaches_the_server_when_the_renderer_fails(self):
+        cases = (
+            (renderer(backend=None)[0], AssetStatus.MERMAID_RENDERER_MISSING),
+            (
+                renderer(Completed(returncode=1, stdout=b""))[0],
+                AssetStatus.DIAGRAM_FAILED,
+            ),
+            (renderer(subprocess.TimeoutExpired("mmdc", 10))[0], AssetStatus.TIMEOUT),
+        )
+        for subject, status in cases:
+            [diagram] = document_keys(self.FENCE)
+            self.assertNotIn("mermaid.ink", diagram.locator)
+            resolver = self.resolver(subject)
+            first = resolver.resolve([diagram], "session")[diagram]
+            self.assertIsInstance(first, Pending)
+            # The answer is the one cached for the next render: said in place,
+            # with nothing sent to the fetcher on the way.
+            result = resolver.resolve([diagram], "session")[diagram]
+            self.assertEqual(result, Failed(status))
+
+
 class ParseAndSerialiseTest(unittest.TestCase):
     def request(self, settings):
         return RenderRequest(

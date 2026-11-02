@@ -243,13 +243,14 @@ and the diagram is drawn there instead; its source is not sent anywhere:
 }
 ```
 
-merman-cli (`brew install merman-cli`, or `cargo binstall merman-cli`) is a
-single native binary and draws a typical diagram in tens of milliseconds. It
-does not run a browser, so text measurement and HTML labels can differ
-slightly from Mermaid in one. `mmdc` (`npm install -g
-@mermaid-js/mermaid-cli`) runs Mermaid itself in headless Chrome: exact, but a
-second or more per diagram. A bare name is looked up on the `PATH`; give the
-full path if Sublime Text cannot see it.
+merman-cli (`brew install merman-cli`, `scoop install merman-cli`, or `cargo
+binstall merman-cli`) is a single native binary and the quicker of the two. It
+does not run a browser: bold and italic in a label are drawn plain, Font
+Awesome icons are left out, and a label can wrap a little differently.
+`mmdc` (`npm install -g @mermaid-js/mermaid-cli`) runs Mermaid itself in
+headless Chromium, so it draws exactly what Mermaid does, at around a second
+per diagram. A bare name is looked up on the `PATH`; give the full path if
+Sublime Text cannot see it.
 
 Diagrams use Mermaid's `classic` look, with plain borders. Set
 `"mermaid_look": "neo"` for Mermaid 12's gradient borders and drop shadows,
