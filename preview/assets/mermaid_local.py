@@ -22,7 +22,7 @@ from .policy import NetworkPolicy
 from .svg import SUPERSAMPLE, _hidden_window, zoom_for
 
 # A Mermaid diagram drawn here, as a PNG, by a command line tool the reader
-# names (ADR 0022): merman-cli, or mermaid-cli's `mmdc`. The arguments below
+# names (ADR 0023): merman-cli, or mermaid-cli's `mmdc`. The arguments below
 # are mmdc's, which merman-cli accepts as well, so either can be named without
 # the package having to tell them apart.
 

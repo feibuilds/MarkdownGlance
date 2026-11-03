@@ -64,6 +64,6 @@ the SVG renderer, which converts an image the preview cannot decode into
 one it can and is described in
 [ADR 0019](docs/adr/0019-svg-is-drawn-by-a-local-renderer.md); and the local
 Mermaid renderer, opt-in, described in
-[ADR 0022](docs/adr/0022-mermaid-can-be-drawn-locally.md). A change that
+[ADR 0023](docs/adr/0023-mermaid-can-be-drawn-locally.md). A change that
 needs more than this is unlikely to be accepted — open an issue first and let
 us talk it through.

@@ -55,7 +55,7 @@ def mermaid_image_url(
 def local_mermaid_locator(
     diagram: str, theme: ThemeSnapshot, look: str = "classic"
 ) -> str:
-    """The locator of a diagram drawn on this machine (ADR 0022).
+    """The locator of a diagram drawn on this machine (ADR 0023).
 
     The same payload as the server's URL, under a scheme of our own: the
     diagram and the pair from `diagram_appearance` are the whole of what the

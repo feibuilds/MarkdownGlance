@@ -19,7 +19,7 @@ class AssetKind(Enum):
 
 
 # The scheme of a Mermaid locator drawn by a renderer on this machine rather
-# than fetched from `mermaid_server` (ADR 0022). It is never a URL anything
+# than fetched from `mermaid_server` (ADR 0023). It is never a URL anything
 # opens: the locator only carries the diagram and its appearance to the job
 # that runs the renderer, and keeps the cache key apart from the server's.
 LOCAL_MERMAID_SCHEME = "mermaid-local"

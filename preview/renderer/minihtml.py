@@ -160,7 +160,7 @@ def _serialise_image(
         status = result.status
     privacy = None
     # A diagram drawn by the local renderer goes nowhere, so it has nothing to
-    # disclose (ADR 0022).
+    # disclose (ADR 0023).
     disclose = (
         key is not None and key.kind in PRIVACY_CAPTIONS and not is_local_mermaid(key)
     )
