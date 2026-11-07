@@ -252,15 +252,22 @@ headless Chromium, so it draws exactly what Mermaid does, at around a second
 per diagram. A bare name is looked up on the `PATH`; give the full path if
 Sublime Text cannot see it.
 
+On Linux, merman-cli's prebuilt binary needs glibc 2.38 or later; on an older
+system such as Ubuntu 22.04, `cargo install merman-cli` builds one that runs.
+merman-cli 0.9.3 can fail every diagram on a desktop with many fonts
+installed, with `native font limit system-cmap-bytes exceeded` in the
+console; 0.9.2 is not affected.
+
 Diagrams use Mermaid's `classic` look, with plain borders. Set
 `"mermaid_look": "neo"` for Mermaid 12's gradient borders and drop shadows,
-which merman-cli would otherwise default to; a diagram's own front matter
-overrides either.
+which merman-cli and mermaid.ink would otherwise default to; a diagram's own
+front matter overrides either.
 
 Like an SVG, a diagram is drawn at twice the size it is shown at, off the
-editor's thread, and a run that outlives `mermaid_timeout_seconds` is ended. A
-diagram the renderer rejects -- usually a syntax error -- reads *Could not be
-drawn* until it is fixed.
+editor's thread, and a run that outlives `mermaid_timeout_seconds` is ended,
+along with any browser it started. A diagram the renderer cannot draw --
+usually a syntax error -- reads *Could not be drawn*, and the renderer's own
+message is in the console (**View → Show Console**).
 
 ## Math
 

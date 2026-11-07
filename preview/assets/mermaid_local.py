@@ -26,6 +26,61 @@ from .svg import SUPERSAMPLE, _hidden_window, zoom_for
 # are mmdc's, which merman-cli accepts as well, so either can be named without
 # the package having to tell them apart.
 
+# How long a renderer that has run out of time gets to close what it started
+# before it is killed.
+GRACE_SECONDS = 2.0
+# How much of a failed run's stderr reaches the console.
+STDERR_LINES = 5
+
+
+def run_bounded(command, input=None, timeout=None, **kwargs):
+    """`subprocess.run`, except that a timeout ends what the renderer started.
+
+    `subprocess.run` kills only its own child. mmdc's child is `node`, and the
+    headless Chromium that puppeteer starts sits in a process group of its own,
+    so it outlived every timed-out run -- eight processes each, on Linux.
+    """
+    with subprocess.Popen(command, stdin=subprocess.PIPE, **kwargs) as process:
+        try:
+            stdout, stderr = process.communicate(input, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            end(process)
+            raise
+        except BaseException:
+            process.kill()
+            raise
+    return subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
+
+
+def end(process, windows: bool = os.name == "nt", run=subprocess.run) -> None:
+    """End a renderer that has run out of time, and whatever it started.
+
+    POSIX: SIGTERM first, which puppeteer catches to close its browser, and a
+    kill only if that is not enough. A kill of the process group would not do:
+    the browser is not in it. Windows has nothing to catch, so taskkill ends
+    the tree from the top.
+    """
+    if windows:
+        try:
+            run(
+                ["taskkill", "/T", "/F", "/PID", str(process.pid)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=GRACE_SECONDS * 5,
+                **_hidden_window()
+            )
+        except (OSError, subprocess.SubprocessError):
+            pass
+        process.kill()
+        process.communicate()
+        return
+    process.terminate()
+    try:
+        process.wait(timeout=GRACE_SECONDS)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+
 
 class MermaidRenderer:
     """Draws a diagram by running the configured renderer as a child process.
@@ -39,9 +94,19 @@ class MermaidRenderer:
         self,
         run: Optional[Callable[..., subprocess.CompletedProcess]] = None,
         which: Optional[Callable[[str], Optional[str]]] = None,
+        log: Optional[Callable[[str], None]] = None,
     ) -> None:
-        self._run = run or subprocess.run
+        self._run = run or run_bounded
         self._which = which or shutil.which
+        self._log = log or print
+        self._last_logged = None
+
+    def _report(self, message: str) -> None:
+        """Say in the console why a diagram could not be drawn, once in a row:
+        a diagram being typed fails the same way at each pause."""
+        if message != self._last_logged:
+            self._last_logged = message
+            self._log(message)
 
     def backend(self, settings: RenderSettings) -> Optional[str]:
         """The renderer to run, or `None` when the setting names nothing runnable.
@@ -104,6 +169,17 @@ class MermaidRenderer:
             **_hidden_window()
         )
         if completed.returncode != 0 or not completed.stdout:
+            # A syntax error and a renderer that cannot run at all exit the
+            # same way, so the preview says only that it was not drawn and the
+            # renderer's own words go to the console.
+            lines = (completed.stderr or b"").decode("utf-8", "replace").strip()
+            self._report(
+                "MarkdownGlance: {} could not draw a diagram (exit {})\n{}".format(
+                    os.path.basename(backend),
+                    completed.returncode,
+                    "\n".join(lines.splitlines()[:STDERR_LINES]) or "(no message)",
+                )
+            )
             return None
         return completed.stdout
 
@@ -152,6 +228,11 @@ class MermaidRenderer:
         except subprocess.TimeoutExpired:
             return Failed(AssetStatus.TIMEOUT)
         except InvalidImage:
+            self._report(
+                "MarkdownGlance: {} did not write a PNG".format(
+                    os.path.basename(backend)
+                )
+            )
             return Failed(AssetStatus.DIAGRAM_FAILED)
         except (OSError, ValueError, KeyError, subprocess.SubprocessError):
             return Failed(AssetStatus.UNAVAILABLE)

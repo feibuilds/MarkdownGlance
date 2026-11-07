@@ -28,7 +28,9 @@ STATUS_NOTES = {
     AssetStatus.MERMAID_RENDERER_MISSING: (
         "Set mermaid_renderer_path to merman-cli or mmdc."
     ),
-    AssetStatus.DIAGRAM_FAILED: "The Mermaid renderer rejected it; check its syntax.",
+    AssetStatus.DIAGRAM_FAILED: (
+        "The Mermaid renderer could not draw it; its message is in the console."
+    ),
 }
 
 

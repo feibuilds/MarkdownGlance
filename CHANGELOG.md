@@ -14,12 +14,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   being sent to `mermaid_server`. It follows the colour scheme as before, is
   drawn at twice its size for a high-DPI display, and carries no privacy
   caption, since nothing leaves the machine. A missing renderer reads *No
-  Mermaid renderer*; a diagram it rejects reads *Could not be drawn*.
-  `mermaid_timeout_seconds` bounds each run.
-- **`mermaid_look` chooses Mermaid's look.** `classic`, the default, keeps the
-  plain borders mermaid.ink has always drawn; `neo` gives Mermaid 12's
-  gradient borders and drop shadows. It applies to the server and to a local
-  renderer alike.
+  Mermaid renderer*; a diagram it cannot draw reads *Could not be drawn*, with
+  the renderer's own message in the console. `mermaid_timeout_seconds` bounds
+  each run, and a run it ends takes any browser it started with it.
+- **`mermaid_look` chooses Mermaid's look.** `classic`, the default, draws
+  plain borders; `neo` gives Mermaid 12's gradient borders and drop shadows.
+  It applies to the server and to a local renderer alike. mermaid.ink has
+  lately drawn `neo` when not told otherwise, so its diagrams now come with
+  plain borders unless you choose `neo`.
 
 ## [0.7.0] - 2026-11-01
 

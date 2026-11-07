@@ -4,7 +4,9 @@ import os
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
+import time
 import unittest
 
 from MarkdownGlance.preview.assets.cache import AssetCache
@@ -13,7 +15,13 @@ from MarkdownGlance.preview.assets.mermaid import (
     mermaid_locator,
     parse_local_mermaid_locator,
 )
-from MarkdownGlance.preview.assets.mermaid_local import MermaidRenderer
+from MarkdownGlance.preview.assets.mermaid_local import (
+    GRACE_SECONDS,
+    STDERR_LINES,
+    MermaidRenderer,
+    end,
+    run_bounded,
+)
 from MarkdownGlance.preview.assets.policy import NetworkPolicy
 from MarkdownGlance.preview.assets.resolver import AssetResolver
 from MarkdownGlance.preview.domain.contracts import (
@@ -41,10 +49,10 @@ def png(width, height):
 
 
 class Completed:
-    def __init__(self, returncode=0, stdout=None):
+    def __init__(self, returncode=0, stdout=None, stderr=b""):
         self.returncode = returncode
         self.stdout = png(80, 40) if stdout is None else stdout
-        self.stderr = b""
+        self.stderr = stderr
 
 
 class Runner:
@@ -72,7 +80,11 @@ class Runner:
 
 def renderer(*outcomes, backend="/opt/bin/merman-cli"):
     runner = Runner(*outcomes)
-    return MermaidRenderer(run=runner, which=lambda name: backend), runner
+    runner.logged = []
+    subject = MermaidRenderer(
+        run=runner, which=lambda name: backend, log=runner.logged.append
+    )
+    return subject, runner
 
 
 def key(theme=DARK):
@@ -218,6 +230,41 @@ class RenderTest(unittest.TestCase):
             subject.render(key(), policy()), Failed(AssetStatus.DIAGRAM_FAILED)
         )
 
+    def test_a_failed_run_puts_the_renderers_words_in_the_console(self):
+        stderr = b"I/O error: native font limit exceeded\n" + b"detail\n" * 10
+        subject, runner = renderer(Completed(returncode=3, stdout=b"", stderr=stderr))
+        subject.render(key(), policy())
+        [message] = runner.logged
+        self.assertIn("merman-cli could not draw a diagram (exit 3)", message)
+        self.assertIn("native font limit exceeded", message)
+        self.assertNotIn("/opt/bin", message)
+        self.assertEqual(len(message.splitlines()), 1 + STDERR_LINES)
+
+    def test_the_same_failure_is_reported_once_in_a_row(self):
+        failed = Completed(returncode=1, stdout=b"", stderr=b"Parse error on line 2")
+        subject, runner = renderer(failed)
+        for _ in range(3):
+            subject.render(key(), policy())
+        self.assertEqual(len(runner.logged), 1)
+        subject.render(key(theme=ThemeSnapshot()), policy())
+        self.assertEqual(len(runner.logged), 1)
+        runner.outcomes = [Completed(returncode=1, stdout=b"", stderr=b"other")]
+        subject.render(key(), policy())
+        self.assertEqual(len(runner.logged), 2)
+
+    def test_output_that_is_not_a_png_is_reported(self):
+        subject, runner = renderer(Completed(stdout=b"<svg/>"))
+        subject.render(key(), policy())
+        self.assertEqual(runner.logged, ["MarkdownGlance: merman-cli did not write a PNG"])
+
+    def test_a_drawn_diagram_says_nothing(self):
+        subject, runner = renderer()
+        subject.render(key(), policy())
+        self.assertEqual(runner.logged, [])
+
+    def test_the_default_run_ends_what_it_started(self):
+        self.assertIs(MermaidRenderer()._run, run_bounded)
+
     def test_timeout_and_launch_failure(self):
         subject, _ = renderer(subprocess.TimeoutExpired("merman-cli", 10))
         self.assertEqual(subject.render(key(), policy()), Failed(AssetStatus.TIMEOUT))
@@ -250,6 +297,120 @@ class RenderTest(unittest.TestCase):
         result = subject.render(key(), policy(settings))
         self.assertEqual(result, Failed(AssetStatus.TOO_LARGE))
         self.assertEqual(runner.commands[1][-2], "1")
+
+
+class Process:
+    """A stand-in for a timed-out `Popen` that records how it was ended."""
+
+    pid = 4321
+
+    def __init__(self, exits_on_term=True):
+        self.exits_on_term = exits_on_term
+        self.calls = []
+
+    def terminate(self):
+        self.calls.append("terminate")
+
+    def kill(self):
+        self.calls.append("kill")
+
+    def wait(self, timeout=None):
+        self.calls.append(("wait", timeout))
+        if timeout is not None and not self.exits_on_term:
+            raise subprocess.TimeoutExpired("mmdc", timeout)
+        return 0
+
+    def communicate(self):
+        self.calls.append("communicate")
+        return b"", b""
+
+
+class EndTest(unittest.TestCase):
+    def test_posix_asks_first_so_puppeteer_can_close_its_browser(self):
+        process = Process()
+        end(process, windows=False)
+        self.assertEqual(process.calls, ["terminate", ("wait", GRACE_SECONDS)])
+
+    def test_posix_kills_a_renderer_that_will_not_stop(self):
+        process = Process(exits_on_term=False)
+        end(process, windows=False)
+        self.assertEqual(
+            process.calls,
+            ["terminate", ("wait", GRACE_SECONDS), "kill", ("wait", None)],
+        )
+
+    def test_windows_ends_the_whole_tree(self):
+        runner = Runner(Completed())
+        process = Process()
+        end(process, windows=True, run=runner)
+        self.assertEqual(runner.commands, [["taskkill", "/T", "/F", "/PID", "4321"]])
+        self.assertEqual(process.calls, ["kill", "communicate"])
+
+    def test_windows_still_kills_when_taskkill_cannot_run(self):
+        process = Process()
+        end(process, windows=True, run=Runner(OSError("no taskkill")))
+        self.assertEqual(process.calls, ["kill", "communicate"])
+
+
+# A renderer in miniature: it starts a grandchild in a session of its own, as
+# puppeteer starts Chromium, and closes it on SIGTERM, as puppeteer does.
+RENDERER_WITH_A_BROWSER = """
+import signal, subprocess, sys, time
+browser = subprocess.Popen(
+    [sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True
+)
+def close(signum, frame):
+    browser.kill()
+    browser.wait()
+    sys.exit(0)
+signal.signal(signal.SIGTERM, close)
+with open(sys.argv[1], "w") as handle:
+    handle.write(str(browser.pid))
+time.sleep(60)
+"""
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+class RunBoundedTest(unittest.TestCase):
+    def test_a_run_that_finishes_is_returned_whole(self):
+        completed = run_bounded(
+            [sys.executable, "-c", "import sys; sys.stdout.write(sys.stdin.read())"],
+            input=b"flowchart LR",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=30,
+        )
+        self.assertEqual((completed.returncode, completed.stdout), (0, b"flowchart LR"))
+
+    @unittest.skipIf(os.name == "nt", "the browser is ended by taskkill on Windows")
+    def test_a_timeout_ends_the_browser_the_renderer_started(self):
+        directory = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, directory)
+        pid_file = os.path.join(directory, "browser.pid")
+        # Long enough for the renderer to start its browser and its handler
+        # on a slow CI runner before the timeout sends SIGTERM.
+        timeout = 2.0
+        started = time.monotonic()
+        with self.assertRaises(subprocess.TimeoutExpired):
+            run_bounded(
+                [sys.executable, "-c", RENDERER_WITH_A_BROWSER, pid_file],
+                input=b"",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=timeout,
+            )
+        with open(pid_file) as handle:
+            browser = int(handle.read())
+        self.addCleanup(lambda: alive(browser) and os.kill(browser, 9))
+        self.assertFalse(alive(browser))
+        self.assertLess(time.monotonic() - started, timeout + GRACE_SECONDS)
 
 
 class PolicyTest(unittest.TestCase):
