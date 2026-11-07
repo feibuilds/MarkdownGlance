@@ -1,4 +1,4 @@
-from typing import Any, Callable, Mapping, Optional
+from typing import Any, Callable, Mapping, Optional, Tuple
 
 from .contracts import RenderSettings
 
@@ -29,6 +29,20 @@ def _boolean(
 ) -> bool:
     value = values.get(key, default)
     if not isinstance(value, bool):
+        warn("Invalid setting {!r}; using default".format(key))
+        return default
+    return value
+
+
+def _choice(
+    values: Mapping[str, Any],
+    key: str,
+    default: str,
+    choices: Tuple[str, ...],
+    warn: Callable[[str], None],
+) -> str:
+    value = values.get(key, default)
+    if value not in choices:
         warn("Invalid setting {!r}; using default".format(key))
         return default
     return value
@@ -113,6 +127,25 @@ def parse_settings(
         ),
         mermaid_server=_https_server(
             values, "mermaid_server", defaults.mermaid_server, report
+        ),
+        mermaid_renderer_path=_path(
+            values, "mermaid_renderer_path", defaults.mermaid_renderer_path, report
+        ),
+        mermaid_look=_choice(
+            values,
+            "mermaid_look",
+            defaults.mermaid_look,
+            ("classic", "neo"),
+            report,
+        ),
+        mermaid_timeout_seconds=_number(
+            values,
+            "mermaid_timeout_seconds",
+            defaults.mermaid_timeout_seconds,
+            1,
+            120,
+            False,
+            report,
         ),
         enable_math=_boolean(values, "enable_math", defaults.enable_math, report),
         math_server=_https_server(values, "math_server", defaults.math_server, report),

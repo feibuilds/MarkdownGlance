@@ -7,6 +7,7 @@ from ..domain.contracts import (
     AssetStatus,
     FetchedAsset,
     RenderSettings,
+    is_local_mermaid,
 )
 
 
@@ -20,7 +21,7 @@ class NetworkPolicy:
             return AssetStatus.BLOCKED
         if key.kind == AssetKind.MATH and not self.settings.enable_math:
             return AssetStatus.BLOCKED
-        if key.kind == AssetKind.LOCAL_IMAGE:
+        if key.kind == AssetKind.LOCAL_IMAGE or is_local_mermaid(key):
             return None
         scheme = urlsplit(key.locator).scheme.lower()
         if scheme == "https":

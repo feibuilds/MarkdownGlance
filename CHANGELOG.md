@@ -6,6 +6,21 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Mermaid diagrams can be drawn on your machine.** Set
+  `mermaid_renderer_path` to [merman-cli](https://github.com/Latias94/merman)
+  or mermaid-cli's `mmdc` and a diagram is drawn by it, as a PNG, instead of
+  being sent to `mermaid_server`. It follows the colour scheme as before, is
+  drawn at twice its size for a high-DPI display, and carries no privacy
+  caption, since nothing leaves the machine. A missing renderer reads *No
+  Mermaid renderer*; a diagram it rejects reads *Could not be drawn*.
+  `mermaid_timeout_seconds` bounds each run.
+- **`mermaid_look` chooses Mermaid's look.** `classic`, the default, keeps the
+  plain borders mermaid.ink has always drawn; `neo` gives Mermaid 12's
+  gradient borders and drop shadows. It applies to the server and to a local
+  renderer alike.
+
 ## [0.7.0] - 2026-11-01
 
 ### Added

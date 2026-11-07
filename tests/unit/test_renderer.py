@@ -10,7 +10,7 @@ from MarkdownGlance.preview.assets.math import (
     math_image_url,
     normalise_formula,
 )
-from MarkdownGlance.preview.assets.mermaid import background_hex, mermaid_image_url
+from MarkdownGlance.preview.assets.mermaid import background_hex, mermaid_locator
 from MarkdownGlance.preview.domain.contracts import (
     AssetKind,
     AssetStatus,
@@ -158,7 +158,7 @@ Unicode: 中文 café 😀
         enabled_settings = RenderSettings(enable_mermaid=True)
         parsed = parse(
             request(markdown, settings=enabled_settings),
-            mermaid_url_builder=mermaid_image_url,
+            mermaid_url_builder=mermaid_locator,
         )
         key = parsed.asset_keys[0]
         encoded = key.locator.split("/img/", 1)[1].split("?", 1)[0]
@@ -174,7 +174,7 @@ Unicode: 中文 café 😀
         def locator(theme):
             parsed = parse(
                 request(markdown, settings=settings, theme=theme),
-                mermaid_url_builder=mermaid_image_url,
+                mermaid_url_builder=mermaid_locator,
             )
             return parsed.asset_keys[0].locator
 
@@ -365,7 +365,7 @@ class MathTest(unittest.TestCase):
         settings = RenderSettings(enable_math=True, enable_mermaid=True)
         parsed = parse(
             request(markdown, settings=settings),
-            mermaid_url_builder=mermaid_image_url,
+            mermaid_url_builder=mermaid_locator,
             math_url_builder=math_image_url,
         )
         pending = {key: Pending() for key in parsed.asset_keys}
