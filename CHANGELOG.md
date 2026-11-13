@@ -8,6 +8,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **GFM task lists render as theme-coloured checkboxes.** Checked `[x]` and
+  unchecked `[ ]` items are drawn as web-style boxes in the preview. They are
+  read-only; edit the source to change a task.
 - **Mermaid diagrams can be drawn on your machine.** Set
   `mermaid_renderer_path` to [merman-cli](https://github.com/Latias94/merman)
   or mermaid-cli's `mmdc` and a diagram is drawn by it, as a PNG, instead of

@@ -80,6 +80,23 @@ Unicode: 中文 café 😀
         ):
             self.assertIn(expected, document.body_html)
 
+    def test_task_lists_render_as_theme_styled_checkboxes(self):
+        markdown = """1. [x] checked parent
+   1. [ ] unchecked child
+"""
+        body = render(request(markdown), FakeResolver()).body_html
+
+        self.assertIn(
+            '<span class="mg-task-checkbox mg-task-checkbox-checked">✓</span>',
+            body,
+        )
+        self.assertIn('<span class="mg-task-checkbox"></span>', body)
+        self.assertEqual(body.count('class="task-list mg-ordered-list"'), 2)
+        self.assertEqual(body.count("mg-ordered-item"), 2)
+        self.assertNotIn("<input", body)
+        self.assertNotIn("[x]", body)
+        self.assertNotIn("[ ]", body)
+
     def test_duplicate_headings_have_stable_unique_slugs(self):
         document = render(request("# Same\n\n# Same\n\n## Same\n"), FakeResolver())
         self.assertEqual(

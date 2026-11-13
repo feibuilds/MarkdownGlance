@@ -16,6 +16,7 @@ MARKDOWN_EXTENSIONS = (
     "pymdownx.superfences",
     "pymdownx.highlight",
     "pymdownx.arithmatex",
+    "pymdownx.tasklist",
     "tables",
     "sane_lists",
 )

@@ -189,6 +189,13 @@ def _serialise_node(
         return ""
     if node.tag == "img":
         return _serialise_image(node, results, privacy_seen)
+    if node.tag == "input" and node.attrs.get("type") == "checkbox":
+        checked = "checked" in node.attrs
+        checkbox_class = " mg-task-checkbox-checked" if checked else ""
+        mark = "✓" if checked else ""
+        return '<span class="mg-task-checkbox{}">{}</span>'.format(
+            checkbox_class, mark
+        )
     body = "".join(
         _serialise_node(
             child,

@@ -131,6 +131,27 @@ li {
     margin: 0.2rem 0;
 }
 
+.mg-task-checkbox {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-right: 0.45rem;
+    border: 0.08rem solid var(--preview-muted);
+    border-radius: 0.18rem;
+    line-height: 0.72rem;
+    text-align: center;
+    vertical-align: -0.08rem;
+    font-size: 0.75rem;
+}
+
+.mg-task-checkbox-checked {
+    color: var(--background);
+    background-color: var(--preview-link);
+    border-color: var(--preview-link);
+    font-weight: bold;
+}
+
 /* minihtml has no decimal list markers; the renderer inserts number text. */
 .mg-ordered-list {
     margin-left: 1.5rem;
