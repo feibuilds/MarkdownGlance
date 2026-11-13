@@ -198,6 +198,13 @@ class UseCases:
             return False
         return self._active_view_id(window.active_sheet()) == stage.surface.id
 
+    def open_on_load(self, window, source, enabled: bool) -> bool:
+        """Open a just-loaded Markdown source when the setting asks for it."""
+        if not enabled or not self._is_markdown(source):
+            return False
+        self.open_side_by_side(window, source)
+        return True
+
     def open_side_by_side(self, window, source=None) -> None:
         self.reconcile(window)
         stage = self.manager.stage(window.id())

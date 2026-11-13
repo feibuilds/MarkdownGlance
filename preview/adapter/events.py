@@ -34,6 +34,14 @@ def _ui(callback):
     sublime.set_timeout(callback, 0)
 
 
+def _auto_open_preview_enabled() -> bool:
+    return bool(
+        sublime.load_settings("MarkdownGlance.sublime-settings").get(
+            "auto_open_preview_on_open", False
+        )
+    )
+
+
 def _highlighter_panel(view) -> bool:
     """The hidden panel fenced code is tokenised in: a Markdown buffer, but
     nobody's source, and gone again before the render that made it returns."""
@@ -96,16 +104,24 @@ class SourceAndSurfaceListener(sublime_plugin.ViewEventListener):
         it is still loading, before Sublime has given it a syntax, so the
         activation above sees a view that is not Markdown yet and leaves it
         alone. No second activation follows -- the view is already active --
-        so the load is the only other chance to notice."""
-        _ui(self._settled)
+        so the load is the only other chance to notice and auto-open a preview."""
+        _ui(lambda: self._settled(auto_open=True))
 
-    def _settled(self):
+    def _settled(self, auto_open=False):
         if not container.loaded or self.view.window() is None:
             return
         window = self.view.window()
+        active = window.active_view()
+        loaded_source_active = (
+            active is not None and active.id() == self.view.id()
+        )
         container.reconcile(window)
         container.panel.source_renamed(self.view)
         container.panel.refresh_source(self.view)
+        if auto_open and loaded_source_active:
+            container.usecases.open_on_load(
+                window, self.view, _auto_open_preview_enabled()
+            )
         container.usecases.follow_focus(self.view)
         container.panel.focus_changed(self.view)
         session = container.manager.for_source(window.id(), self.view.buffer_id())

@@ -161,6 +161,13 @@ Sublime Text, build 4215/Python 3.14 at the time of writing. Build 4200/Python
    plain. Type inside one block of a long document and confirm the preview
    keeps up. The `highlight` scenario of the run-markdownglance skill runs all
    of this but MarkdownEditing and the typing unattended.
+20. Auto-open: with `auto_open_preview_on_open` false, opening a Markdown file
+   must leave the source alone. With it true, opening the active Markdown file
+   from the sidebar, Goto Anything and Open File must create/reuse one
+   side-by-side preview. Opening another Markdown file must retarget that
+   preview; switching back to an already-open source tab must not reopen or
+   steal focus. Non-Markdown files and Markdown views opened in the background
+   must not open a preview.
 
 ## Automated prerequisites
 
