@@ -169,6 +169,7 @@ Common options:
 
 | Setting | What it does | Default |
 | --- | --- | --- |
+| `auto_open_preview_on_open` | Open a side-by-side preview when the active Markdown file is opened | `false` |
 | `enable_toc` | Open the contents panel by itself for longer previews | `false` |
 | `enable_mermaid` | Render Mermaid diagrams using an online service | `false` |
 | `mermaid_renderer_path` | Draw diagrams locally with `merman-cli` or `mmdc` instead | `""` |
@@ -179,7 +180,9 @@ Common options:
 | `enable_syntax_highlighting` | Colour fenced code the way the editor does | `true` |
 | `font_family` | The font for the preview's text, such as `"Inter"` | `""` |
 
-Before enabling diagrams or math, read [Network and privacy](#network-and-privacy).
+With `auto_open_preview_on_open` enabled, opening the active Markdown file opens
+its side-by-side preview. Switching back to an already-open source tab does not
+reopen the preview. Before enabling diagrams or math, read [Network and privacy](#network-and-privacy).
 
 ## Tables
 

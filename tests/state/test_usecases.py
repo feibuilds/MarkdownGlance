@@ -336,6 +336,26 @@ class Fixture(unittest.TestCase):
 
 
 class UseCasesTest(Fixture):
+    def test_auto_preview_on_load_is_configurable(self):
+        self.assertFalse(
+            self.usecases.open_on_load(self.window, self.source, enabled=False)
+        )
+        self.assertIsNone(self.stage())
+
+        self.assertTrue(
+            self.usecases.open_on_load(self.window, self.source, enabled=True)
+        )
+        self.assertEqual(self.stage().mode, PreviewMode.SIDE_BY_SIDE)
+        self.assertEqual(len(self.manager.sessions_in(self.window.id())), 1)
+
+    def test_auto_preview_on_load_ignores_non_markdown_views(self):
+        plain = View(20, filename=os.path.join(BASE, "notes.txt"), markdown=False)
+        window = Window(2, plain)
+        self.windows[window.id()] = window
+
+        self.assertFalse(self.usecases.open_on_load(window, plain, enabled=True))
+        self.assertIsNone(self.stage(window.id()))
+
     def test_open_repeat_open_and_switch_modes_keep_one_session(self):
         self.usecases.open_side_by_side(self.window)
         session = self.manager.for_source(1, 10)

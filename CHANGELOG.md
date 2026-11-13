@@ -8,6 +8,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`auto_open_preview_on_open` opens Markdown in a side-by-side preview.** It
+  is opt-in, and only applies when a Markdown source is opened, not whenever
+  the user switches back to its tab.
 - **Mermaid diagrams can be drawn on your machine.** Set
   `mermaid_renderer_path` to [merman-cli](https://github.com/Latias94/merman)
   or mermaid-cli's `mmdc` and a diagram is drawn by it, as a PNG, instead of

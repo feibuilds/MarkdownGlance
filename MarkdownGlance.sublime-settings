@@ -1,4 +1,8 @@
 {
+    // Open a side-by-side preview when the active Markdown file is opened.
+    // This does not reopen the preview merely when returning to the source tab.
+    "auto_open_preview_on_open": false,
+
     // Delay after the latest edit before a render begins.
     "update_delay_ms": 100,
 
