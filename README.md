@@ -34,6 +34,9 @@ and [light](docs/screenshots/preview-and-toc-light.png) themes.
   [resvg](#svg-images) on your machine, with nothing uploaded. An image in a
   format neither can draw, WebP most often, says so in place, and **Open in
   Browser** shows the document with those images drawn.
+- **See task-list status at a glance**: `[x]` and `[ ]` render as checked
+  and unchecked boxes, coloured to match the preview. They are read-only; edit
+  the Markdown source to change a task.
 - **Read code in colour**: a fenced block that names its language is
   highlighted with the editor's own syntaxes and colour scheme, the way it
   looks in the source.
