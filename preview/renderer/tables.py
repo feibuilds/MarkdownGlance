@@ -454,6 +454,10 @@ def _table_node(table: ElementNode, latin: int, cjk: int) -> ElementNode:
         last_head = row[0] and (index + 1 == len(rows) or not rows[index + 1][0])
         if last_head and nodes:
             nodes[-1].attrs["class"] += " md-table-rule"
+        elif nodes and not row[0] and index + 1 < len(rows):
+            # A body row wrapped over several lines would otherwise run into
+            # the next one; its last line carries the separator.
+            nodes[-1].attrs["class"] += " md-table-row-end"
         children.extend(nodes)
     classes = "md-table md-table-cjk" if wide else "md-table"
     return ElementNode("div", {"class": classes}, children, generated=True)
