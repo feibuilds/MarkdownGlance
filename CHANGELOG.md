@@ -6,6 +6,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- **A link clicked in the preview keeps the project's path to the file.** A
+  document reached through a symlinked folder, such as `project/docs` linking
+  to a folder kept elsewhere, used to open its linked documents by their real
+  path, outside every project folder, where the side bar cannot reveal them.
+  They now open through the same link. A link that climbs out of the linked
+  folder with `..` still opens the file it names at the real location.
+
 ## [0.8.0] - 2026-11-25
 
 ### Added

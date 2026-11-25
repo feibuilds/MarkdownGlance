@@ -4,6 +4,7 @@ import os
 import os.path
 import pathlib
 import posixpath
+import tempfile
 import unittest
 from unittest import mock
 
@@ -42,6 +43,16 @@ class PathFlavourTest(unittest.TestCase):
         )
         self.assertEqual(
             POSIX.resolve("/mdglance/docs/sub", "../images/a.png"),
+            "/mdglance/docs/images/a.png",
+        )
+
+    def test_a_link_target_collapses_parent_traversal_like_resolve(self):
+        self.assertEqual(
+            WINDOWS.resolve_keeping_links("C:\\docs\\sub", "../images/a.png"),
+            "C:\\docs\\images\\a.png",
+        )
+        self.assertEqual(
+            POSIX.resolve_keeping_links("/mdglance/docs/sub", "../images/a.png"),
             "/mdglance/docs/images/a.png",
         )
 
@@ -100,6 +111,47 @@ class PathFlavourTest(unittest.TestCase):
         self.assertTrue(POSIX.is_absolute("/mdglance/docs/a.png"))
         self.assertFalse(WINDOWS.is_absolute("images/a.png"))
         self.assertFalse(POSIX.is_absolute("images/a.png"))
+
+
+class SymlinkedFolderTest(unittest.TestCase):
+    """A project that reaches documents kept elsewhere through a folder link."""
+
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        root = os.path.realpath(temp.name)
+        self.elsewhere = os.path.join(root, "elsewhere")
+        os.makedirs(os.path.join(self.elsewhere, "docs", "sub"))
+        for name in ("README.md", os.path.join("docs", "b.md")):
+            open(os.path.join(self.elsewhere, name), "w").close()
+        os.makedirs(os.path.join(root, "project"))
+        self.docs = os.path.join(root, "project", "docs")
+        try:
+            os.symlink(
+                os.path.join(self.elsewhere, "docs"), self.docs, target_is_directory=True
+            )
+        except (OSError, NotImplementedError):
+            self.skipTest("this host cannot create a symlink")
+
+    def test_a_neighbour_keeps_the_path_through_the_link(self):
+        self.assertEqual(
+            HOST.resolve_keeping_links(os.path.join(self.docs, "sub"), "../b.md"),
+            os.path.join(self.docs, "b.md"),
+        )
+
+    def test_climbing_out_through_the_link_names_the_file_the_host_would_open(self):
+        # POSIX resolves `docs/..` to the link's real parent; Windows collapses
+        # it first. Either way the answer is the file the host itself means.
+        target = HOST.resolve_keeping_links(self.docs, "../README.md")
+        self.assertEqual(target, HOST.resolve(self.docs, "../README.md"))
+        if os.name != "nt":
+            self.assertEqual(target, os.path.join(self.elsewhere, "README.md"))
+
+    def test_resolve_itself_still_follows_the_link(self):
+        self.assertEqual(
+            HOST.resolve(self.docs, "b.md"),
+            os.path.join(self.elsewhere, "docs", "b.md"),
+        )
 
 
 class RendererPathTest(unittest.TestCase):

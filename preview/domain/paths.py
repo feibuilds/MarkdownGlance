@@ -44,5 +44,20 @@ class PathFlavour:
     def resolve(self, base_path: str, source: str) -> str:
         return self.module.realpath(self.module.join(base_path, self.expand(source)))
 
+    def resolve_keeping_links(self, base_path: str, source: str) -> str:
+        """`resolve`, but spelled through the base path's symlinks when it can be.
+
+        A document opened as `project/docs/a.md`, where `docs` links outside
+        the project, should open its neighbours as `project/docs/...`: a
+        resolved path lies outside every project folder, where Sublime Text
+        cannot reveal it in the side bar. A `..` that climbs back out through
+        the link names the link's real parent, not the project, so when the
+        two spellings part company the resolved one wins.
+        """
+        joined = self.module.join(base_path, self.expand(source))
+        resolved = self.module.realpath(joined)
+        logical = self.module.normpath(joined)
+        return logical if self.module.realpath(logical) == resolved else resolved
+
 
 HOST = PathFlavour()

@@ -399,7 +399,7 @@ class UseCases:
         target = HOST.expand(session.last_document.links[path])
         if session.base_path is None or HOST.is_absolute(target):
             return
-        window.open_file(HOST.resolve(session.base_path, target))
+        window.open_file(HOST.resolve_keeping_links(session.base_path, target))
 
     def source_modified(self, view) -> None:
         window = view.window()

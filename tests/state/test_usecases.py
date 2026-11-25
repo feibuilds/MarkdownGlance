@@ -1,5 +1,6 @@
 import os
 import os.path
+import tempfile
 import unittest
 from unittest import mock
 
@@ -412,6 +413,27 @@ class UseCasesTest(Fixture):
             for index in (0, 1):
                 self.usecases.open_relative(self.window, session.action_token, index)
         self.assertEqual(self.window.opened, [])
+
+    def test_a_relative_link_opens_through_the_folder_link_the_document_was_opened_by(self):
+        temp = tempfile.TemporaryDirectory()
+        self.addCleanup(temp.cleanup)
+        root = os.path.realpath(temp.name)
+        elsewhere = os.path.join(root, "elsewhere")
+        os.makedirs(elsewhere)
+        linked = os.path.join(root, "project-docs")
+        try:
+            os.symlink(elsewhere, linked, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("this host cannot create a symlink")
+        self.usecases.open_side_by_side(self.window)
+        session = self.manager.for_source(1, 10)
+        session.base_path = linked
+        session.last_document = PreviewDocument(1, "", (), (), (), ("next.md",))
+        self.focus_surface()
+
+        self.usecases.open_relative(self.window, session.action_token, 0)
+
+        self.assertEqual(self.window.opened, [os.path.join(linked, "next.md")])
 
     def test_the_panel_scrolls_the_document_on_the_stage(self):
         self.usecases.open_side_by_side(self.window)
