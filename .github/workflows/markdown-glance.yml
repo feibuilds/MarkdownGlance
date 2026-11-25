@@ -12,7 +12,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # ubuntu-latest became 26.04, for which setup-python publishes no 3.8
+        # build, so Linux is pinned to the last image that has one.
+        os: [ubuntu-24.04, windows-latest, macos-latest]
         python-version: ["3.8", "3.14"]
         # The parser is a Package Control library, and the channel serves a
         # different release to each plugin host: this pins what each host gets.
