@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-25
+
 ### Added
 
 - **Mermaid diagrams can be drawn on your machine.** Set
@@ -16,18 +18,25 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   caption, since nothing leaves the machine. A missing renderer reads *No
   Mermaid renderer*; a diagram it cannot draw reads *Could not be drawn*, with
   the renderer's own message in the console. `mermaid_timeout_seconds` bounds
-  each run, and a run it ends takes any browser it started with it.
+  each run, and a run it ends takes any browser it started with it. Asked
+  for in [#10](https://github.com/feibuilds/MarkdownGlance/issues/10);
+  contributed by [@JamesHopkin](https://github.com/JamesHopkin) in
+  [#15](https://github.com/feibuilds/MarkdownGlance/pull/15).
 - **`mermaid_look` chooses Mermaid's look.** `classic`, the default, draws
   plain borders; `neo` gives Mermaid 12's gradient borders and drop shadows.
   It applies to the server and to a local renderer alike. mermaid.ink has
   lately drawn `neo` when not told otherwise, so its diagrams now come with
-  plain borders unless you choose `neo`.
+  plain borders unless you choose `neo`. Contributed by
+  [@JamesHopkin](https://github.com/JamesHopkin) in
+  [#15](https://github.com/feibuilds/MarkdownGlance/pull/15).
 
 ### Changed
 
 - **Table rows are separated by a hairline.** A row that wraps onto several
   lines used to run straight into the next one, so a wide table read as one
   block of text. Each body row but the last now ends with a thin rule.
+  Contributed by [@DiegoOliveiras](https://github.com/DiegoOliveiras) in
+  [#19](https://github.com/feibuilds/MarkdownGlance/pull/19).
 
 ## [0.7.0] - 2026-11-01
 
@@ -599,7 +608,8 @@ First public release.
 - `MarkdownGlance: Copy Diagnostics`, which redacts source text, paths, URLs
   and Mermaid payloads.
 
-[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.7.0...HEAD
+[Unreleased]: https://github.com/feibuilds/MarkdownGlance/compare/0.8.0...HEAD
+[0.8.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.3...0.6.0
 [0.5.3]: https://github.com/feibuilds/MarkdownGlance/compare/0.5.2...0.5.3
