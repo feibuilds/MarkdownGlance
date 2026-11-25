@@ -114,6 +114,29 @@ class TableTest(unittest.TestCase):
         self.assertEqual(classes.count("md-table-row md-table-head md-table-rule"), 1)
         self.assertEqual(classes[-1], "md-table-row")
 
+    def test_body_rows_but_the_last_end_with_a_separator(self):
+        table = "| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n"
+        classes = [class_value for class_value, _ in rows(table)]
+        self.assertEqual(
+            classes,
+            [
+                "md-table-row md-table-head md-table-rule",
+                "md-table-row md-table-row-end",
+                "md-table-row",
+            ],
+        )
+
+    def test_a_wrapped_row_carries_its_separator_on_its_last_line_only(self):
+        settings = RenderSettings(table_max_columns=40)
+        classes = [class_value for class_value, _ in rows(SOURCES, settings)]
+        body_lines = [c for c in classes if "md-table-head" not in c]
+        self.assertGreater(len(body_lines), 2)
+        self.assertEqual(classes.count("md-table-row md-table-row-end"), 1)
+        first_end = body_lines.index("md-table-row md-table-row-end")
+        self.assertGreater(first_end, 0)
+        self.assertTrue(all(c == "md-table-row" for c in body_lines[:first_end]))
+        self.assertEqual(body_lines[-1], "md-table-row")
+
     def test_columns_are_the_same_width_on_every_line(self):
         measured = [[width(cell) for cell in cells] for _, cells in rows(SOURCES)]
         self.assertGreater(len(measured), 3)

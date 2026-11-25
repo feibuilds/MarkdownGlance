@@ -221,6 +221,14 @@ pre code {
     margin-bottom: 0.3rem;
 }
 
+/* The last line of each body row but the last: a hairline between rows, so a
+   row that wrapped onto several lines reads as one. */
+.md-table-row-end {
+    border-bottom: 0.08rem solid var(--preview-border);
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
 /* Padding is measured in monospace cells, so cell runs must not add width. */
 .md-table code {
     background-color: var(--preview-surface);

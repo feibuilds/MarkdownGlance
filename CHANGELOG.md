@@ -23,6 +23,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   lately drawn `neo` when not told otherwise, so its diagrams now come with
   plain borders unless you choose `neo`.
 
+### Changed
+
+- **Table rows are separated by a hairline.** A row that wraps onto several
+  lines used to run straight into the next one, so a wide table read as one
+  block of text. Each body row but the last now ends with a thin rule.
+
 ## [0.7.0] - 2026-11-01
 
 ### Added
